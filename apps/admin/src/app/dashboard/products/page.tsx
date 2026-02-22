@@ -1,7 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Plus, Edit2, Trash2, Search } from "lucide-react";
+import { useState } from 'react';
+import { Plus, Edit2, Trash2, Search } from 'lucide-react';
+import { useProducts, useDeleteProduct } from '@/hooks/queries';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface Product {
   id: string;
@@ -18,166 +23,138 @@ interface Product {
 }
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const { data: products = [], isLoading, error } = useProducts();
+  const deleteProductMutation = useDeleteProduct();
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const token = localStorage.getItem("admin_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (!res.ok) throw new Error("Failed to fetch products");
-      setProducts(await res.json());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error loading products");
-    } finally {
-      setLoading(false);
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) return;
+    deleteProductMutation.mutate(id);
   };
 
-  const deleteProduct = async (id: string) => {
-    if (!confirm("Are you sure?")) return;
-    try {
-      const token = localStorage.getItem("admin_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/admin/products/${id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (!res.ok) throw new Error("Failed to delete product");
-      setProducts(products.filter((p) => p.id !== id));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error deleting product");
-    }
-  };
-
-  const filteredProducts = products.filter(
-    (p) =>
+  const filteredProducts = (products || []).filter(
+    (p: Product) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.sku.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (loading) return <div className="py-12 text-center">Loading products...</div>;
+  if (isLoading) {
+    return <div className="py-12 text-center">Loading products...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Products</h1>
-        <button
+        <Button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-white hover:bg-brand-primary-light"
+          className="bg-red-600 hover:bg-red-700"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="h-5 w-5 mr-2" />
           Add Product
-        </button>
+        </Button>
       </div>
 
-      {error && <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>}
+      {error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">
+          Error loading products: {error.message}
+        </div>
+      )}
+
+      {deleteProductMutation.error && (
+        <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">
+          Error deleting product
+        </div>
+      )}
 
       {/* Search */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-        <input
+        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+        <Input
           type="text"
           placeholder="Search by name or SKU..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full rounded-lg border border-border bg-background py-2 pl-10 pr-4"
+          className="pl-10"
         />
       </div>
 
       {/* Products Table */}
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-muted/50">
-            <tr>
-              <th className="px-6 py-3 text-left">Name</th>
-              <th className="px-6 py-3 text-left">SKU</th>
-              <th className="px-6 py-3 text-right">Retail Price</th>
-              <th className="px-6 py-3 text-right">Wholesale Price</th>
-              <th className="px-6 py-3 text-right">Stock</th>
-              <th className="px-6 py-3">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((product) => (
-                <tr key={product.id} className="border-b border-border hover:bg-muted/50">
-                  <td className="px-6 py-3">
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {product.category.name}
-                      </p>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 font-mono text-xs">{product.sku}</td>
-                  <td className="px-6 py-3 text-right">
-                    ${product.retailPrice.toFixed(2)}
-                    {product.retailDiscount > 0 && (
-                      <span className="ml-1 text-xs text-red-600">
-                        -{product.retailDiscount}%
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-3 text-right">
-                    ${product.wholesalePrice.toFixed(2)}
-                    {product.wholesaleDiscount > 0 && (
-                      <span className="ml-1 text-xs text-red-600">
-                        -{product.wholesaleDiscount}%
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-3 text-right">
-                    <span
-                      className={
-                        product.stock < 10
-                          ? "font-bold text-red-600"
-                          : "font-medium"
-                      }
-                    >
-                      {product.stock}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="flex items-center gap-2">
-                      <button className="rounded p-1 hover:bg-muted">
-                        <Edit2 className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => deleteProduct(product.id)}
-                        className="rounded p-1 hover:bg-red-50 text-red-600"
+      <Card>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left font-semibold">Name</th>
+                <th className="px-6 py-3 text-left font-semibold">SKU</th>
+                <th className="px-6 py-3 text-right font-semibold">Retail Price</th>
+                <th className="px-6 py-3 text-right font-semibold">Wholesale Price</th>
+                <th className="px-6 py-3 text-right font-semibold">Stock</th>
+                <th className="px-6 py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map((product: Product) => (
+                  <tr key={product.id} className="border-b hover:bg-gray-50">
+                    <td className="px-6 py-3">
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-xs text-gray-500">{product.category.name}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-3 font-mono text-xs">{product.sku}</td>
+                    <td className="px-6 py-3 text-right">
+                      ${product.retailPrice.toFixed(2)}
+                      {product.retailDiscount > 0 && (
+                        <span className="ml-1 text-xs text-red-600">
+                          -{product.retailDiscount}%
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      ${product.wholesalePrice.toFixed(2)}
+                      {product.wholesaleDiscount > 0 && (
+                        <span className="ml-1 text-xs text-red-600">
+                          -{product.wholesaleDiscount}%
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-3 text-right">
+                      <Badge
+                        variant={product.stock < 10 ? 'destructive' : 'secondary'}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+                        {product.stock}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-3">
+                      <div className="flex items-center gap-2">
+                        <button className="rounded p-1 hover:bg-gray-100">
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          disabled={deleteProductMutation.isPending}
+                          className="rounded p-1 hover:bg-red-50 text-red-600 disabled:opacity-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    No products found
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-muted-foreground">
-                  No products found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </Card>
     </div>
   );
 }
