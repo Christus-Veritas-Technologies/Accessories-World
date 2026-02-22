@@ -1,102 +1,274 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+import Link from "next/link";
+import {
+  Headphones,
+  Speaker,
+  Radio,
+  BatteryCharging,
+  Smartphone,
+  Shield,
+  Truck,
+  Star,
+  ArrowRight,
+  MapPin,
+  Phone,
+  Package,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
+const categories = [
+  {
+    icon: Headphones,
+    title: "Earphones & Earpods",
+    description: "Wired and wireless earphones for every budget",
+    href: "/products?category=earphones",
+  },
+  {
+    icon: Speaker,
+    title: "Bluetooth Speakers",
+    description: "Portable speakers with powerful sound",
+    href: "/products?category=speakers",
+  },
+  {
+    icon: Radio,
+    title: "Radios",
+    description: "AM/FM radios for news and entertainment",
+    href: "/products?category=radios",
+  },
+  {
+    icon: BatteryCharging,
+    title: "Chargers & Cables",
+    description: "Fast chargers, USB cables and power banks",
+    href: "/products?category=chargers",
+  },
+  {
+    icon: Smartphone,
+    title: "Phone Cases",
+    description: "Protective cases for all phone models",
+    href: "/products?category=cases",
+  },
+  {
+    icon: Shield,
+    title: "Screen Protectors",
+    description: "Tempered glass and film protectors",
+    href: "/products?category=protectors",
+  },
+];
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
+const features = [
+  {
+    icon: Star,
+    title: "Quality Products",
+    description:
+      "We source the best mobile accessories and gadgets to ensure durability and performance.",
+  },
+  {
+    icon: Truck,
+    title: "Wholesale Available",
+    description:
+      "Special pricing for bulk orders. Register as a wholesaler to access exclusive rates.",
+  },
+  {
+    icon: Shield,
+    title: "Trusted by Thousands",
+    description:
+      "Serving Mutare and all of Zimbabwe with reliable products and excellent service.",
+  },
+];
+
+export default function Home() {
+  const wholesalerUrl =
+    process.env.NEXT_PUBLIC_WHOLESALER_URL ?? "/wholesale";
 
   return (
     <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
-};
-
-export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.dev/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-brand-primary via-brand-primary-dark to-brand-primary py-20 sm:py-28 lg:py-36">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <Badge
+              variant="secondary"
+              className="mb-6 px-4 py-1.5 text-sm font-medium"
+            >
+              🇿🇼 Proudly Zimbabwean
+            </Badge>
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+              Every Accessory at an{" "}
+              <span className="text-brand-secondary-light">
+                Affordable Price
+              </span>
+            </h1>
+            <p className="mt-6 text-lg leading-relaxed text-blue-100 sm:text-xl">
+              Your one-stop shop for mobile accessories and gadgets in Mutare,
+              Zimbabwe. From earphones to Bluetooth speakers, we have everything
+              you need.
+            </p>
+            <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="w-full sm:w-auto text-base font-semibold"
+                asChild
+              >
+                <Link href="/products">
+                  Browse Products
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full border-white/30 text-white hover:bg-white/10 hover:text-white sm:w-auto text-base"
+                asChild
+              >
+                <a href={wholesalerUrl}>
+                  <Package className="mr-2 h-5 w-5" />
+                  Wholesale Portal
+                </a>
+              </Button>
+            </div>
+          </div>
         </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.dev?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.dev →
-        </a>
-      </footer>
-    </div>
+      </section>
+
+      {/* Categories Section */}
+      <section className="py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Shop by Category
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              Find exactly what you need from our wide range of mobile
+              accessories
+            </p>
+          </div>
+          <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category) => (
+              <Link key={category.title} href={category.href}>
+                <Card className="group h-full transition-all duration-200 hover:shadow-lg hover:border-brand-primary/30 hover:-translate-y-1">
+                  <CardHeader>
+                    <div className="mb-2 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors group-hover:bg-brand-primary group-hover:text-white">
+                      <category.icon className="h-6 w-6" />
+                    </div>
+                    <CardTitle className="text-xl">{category.title}</CardTitle>
+                    <CardDescription>{category.description}</CardDescription>
+                  </CardHeader>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="bg-muted/50 py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Why Choose Accessories World?
+            </h2>
+            <p className="mt-4 text-lg text-muted-foreground">
+              We&apos;re committed to providing the best value in mobile
+              accessories
+            </p>
+          </div>
+          <div className="mt-12 grid grid-cols-1 gap-8 md:grid-cols-3">
+            {features.map((feature) => (
+              <div key={feature.title} className="text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-secondary/10 text-brand-secondary">
+                  <feature.icon className="h-7 w-7" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="mt-2 text-muted-foreground leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-16 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="rounded-2xl bg-gradient-to-r from-brand-primary to-brand-accent p-8 sm:p-12 lg:p-16">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                Are You a Wholesaler?
+              </h2>
+              <p className="mt-4 text-lg text-blue-100">
+                Get access to our exclusive wholesale pricing. Sign in to your
+                wholesaler account to view bulk rates and place orders.
+              </p>
+              <div className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+                <Button
+                  size="lg"
+                  variant="secondary"
+                  className="w-full sm:w-auto text-base font-semibold"
+                  asChild
+                >
+                  <a href={wholesalerUrl}>
+                    <Package className="mr-2 h-5 w-5" />
+                    Wholesaler Sign In
+                  </a>
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full border-white/30 text-white hover:bg-white/10 hover:text-white sm:w-auto text-base"
+                  asChild
+                >
+                  <Link href="/contact">Contact Us</Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Location Section */}
+      <section className="border-t border-border bg-muted/30 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center gap-8 lg:flex-row lg:justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
+                Visit Our Store
+              </h2>
+              <div className="mt-4 space-y-2 text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-5 w-5 text-brand-primary" />
+                  <span>49, 51 Second St, Mutare, Zimbabwe</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Phone className="h-5 w-5 text-brand-primary" />
+                  <a
+                    href="tel:+263784923973"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    +263 78 492 3973
+                  </a>
+                </div>
+              </div>
+            </div>
+            <Button size="lg" asChild>
+              <Link href="/contact">
+                Get Directions
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

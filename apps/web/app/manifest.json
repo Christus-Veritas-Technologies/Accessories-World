@@ -1,6 +1,8 @@
 {
-  "name": "Accessories World",
+  "name": "Accessories World Zimbabwe",
   "short_name": "Accessories World",
+  "description": "Every accessory at an affordable price. Mobile accessories and gadgets in Mutare, Zimbabwe.",
+  "start_url": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -15,7 +17,7 @@
       "purpose": "maskable"
     }
   ],
-  "theme_color": "#ffffff",
+  "theme_color": "#1E40AF",
   "background_color": "#ffffff",
   "display": "standalone"
 }
