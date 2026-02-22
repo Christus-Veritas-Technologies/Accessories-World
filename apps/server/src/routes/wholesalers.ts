@@ -236,4 +236,42 @@ wholesalers.get("/profile", async (c) => {
   return c.json(wholesaler);
 });
 
+/**
+ * PATCH /api/wholesalers/profile
+ * Update the authenticated wholesaler's profile
+ */
+wholesalers.patch("/profile", async (c) => {
+  const session = c.get("session") as any;
+  const wholesalerId = session.wholesalerId!;
+
+  const { businessName, contactPerson, phone, address } = await c.req.json<{
+    businessName?: string;
+    contactPerson?: string;
+    phone?: string;
+    address?: string;
+  }>();
+
+  const wholesaler = await prisma.wholesaler.update({
+    where: { id: wholesalerId },
+    data: {
+      ...(businessName && { businessName }),
+      ...(contactPerson && { contactPerson }),
+      ...(phone && { phone }),
+      ...(address && { address }),
+    },
+    select: {
+      id: true,
+      email: true,
+      businessName: true,
+      contactPerson: true,
+      phone: true,
+      address: true,
+      approved: true,
+      createdAt: true,
+    },
+  });
+
+  return c.json(wholesaler);
+});
+
 export default wholesalers;

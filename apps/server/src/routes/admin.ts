@@ -261,25 +261,19 @@ admin.get("/wholesalers", async (c) => {
   return c.json(wholesalers);
 });
 
-/** PATCH /api/admin/wholesalers/:id/approve */
-admin.patch("/wholesalers/:id/approve", async (c) => {
+/** PATCH /api/admin/wholesalers/:id */
+admin.patch("/wholesalers/:id", async (c) => {
   const { id } = c.req.param();
+  const { approved } = await c.req.json<{ approved: boolean }>();
+  
+  // If revoking, kill any active sessions
+  if (approved === false) {
+    await prisma.session.deleteMany({ where: { wholesalerId: id } });
+  }
+  
   const wholesaler = await prisma.wholesaler.update({
     where: { id },
-    data: { approved: true },
-    select: { id: true, email: true, businessName: true, approved: true },
-  });
-  return c.json(wholesaler);
-});
-
-/** PATCH /api/admin/wholesalers/:id/revoke */
-admin.patch("/wholesalers/:id/revoke", async (c) => {
-  const { id } = c.req.param();
-  // Also kill any active sessions
-  await prisma.session.deleteMany({ where: { wholesalerId: id } });
-  const wholesaler = await prisma.wholesaler.update({
-    where: { id },
-    data: { approved: false },
+    data: { approved },
     select: { id: true, email: true, businessName: true, approved: true },
   });
   return c.json(wholesaler);
