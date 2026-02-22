@@ -1,9 +1,117 @@
-import { Hono } from 'hono'
+import { Hono } from "hono";
+import { logger } from "hono/logger";
+import { Client, LocalAuth } from "whatsapp-web.js";
 
-const app = new Hono()
+const app = new Hono();
+app.use("*", logger());
 
-app.get('/', (c) => {
-  return c.text('Hello Hono!')
-})
+// ─── WhatsApp Client ──────────────────────────────────────────────────────────
 
-export default app
+let whatsappReady = false;
+let qrCode: string | null = null;
+
+const client = new Client({
+  authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
+  puppeteer: {
+    headless: true,
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  },
+});
+
+client.on("qr", (qr) => {
+  qrCode = qr;
+  console.log("📱 WhatsApp QR Code received. Scan via GET /api/whatsapp/qr");
+  console.log("QR:", qr);
+});
+
+client.on("ready", () => {
+  whatsappReady = true;
+  qrCode = null;
+  console.log("✅ WhatsApp client is ready!");
+});
+
+client.on("disconnected", (reason) => {
+  whatsappReady = false;
+  console.log("❌ WhatsApp disconnected:", reason);
+});
+
+client.on("auth_failure", (msg) => {
+  console.error("🔒 WhatsApp auth failure:", msg);
+});
+
+// Initialize the client
+client.initialize().catch((err) => {
+  console.error("Failed to initialize WhatsApp client:", err);
+});
+
+// ─── Routes ───────────────────────────────────────────────────────────────────
+
+/** Health check */
+app.get("/", (c) =>
+  c.json({
+    name: "Accessories World Agent",
+    version: "1.0.0",
+    whatsapp: whatsappReady ? "connected" : "disconnected",
+  })
+);
+
+/** GET /api/whatsapp/status — check WhatsApp connection status */
+app.get("/api/whatsapp/status", (c) =>
+  c.json({
+    ready: whatsappReady,
+    hasQR: !!qrCode,
+  })
+);
+
+/** GET /api/whatsapp/qr — get QR code for scanning */
+app.get("/api/whatsapp/qr", (c) => {
+  if (whatsappReady) {
+    return c.json({ message: "WhatsApp is already connected" });
+  }
+  if (!qrCode) {
+    return c.json({ message: "No QR code available yet. Initializing..." });
+  }
+  return c.json({ qr: qrCode });
+});
+
+/**
+ * POST /api/whatsapp/send
+ * Body: { phone: string, message: string }
+ * Phone format: country code + number, e.g. "263784923973"
+ */
+app.post("/api/whatsapp/send", async (c) => {
+  if (!whatsappReady) {
+    return c.json({ error: "WhatsApp client is not connected" }, 503);
+  }
+
+  const { phone, message } = await c.req.json<{
+    phone: string;
+    message: string;
+  }>();
+
+  if (!phone || !message) {
+    return c.json({ error: "Phone and message are required" }, 400);
+  }
+
+  try {
+    // Normalize phone: remove +, spaces, dashes
+    const cleanPhone = phone.replace(/[\s\-\+]/g, "");
+    const chatId = `${cleanPhone}@c.us`;
+
+    await client.sendMessage(chatId, message);
+    return c.json({ success: true, chatId });
+  } catch (err: any) {
+    console.error("WhatsApp send error:", err);
+    return c.json({ error: "Failed to send message", details: err.message }, 500);
+  }
+});
+
+// ─── Start ────────────────────────────────────────────────────────────────────
+
+const port = Number(process.env.PORT ?? 3004);
+console.log(`🤖 Accessories World Agent running on http://localhost:${port}`);
+
+export default {
+  port,
+  fetch: app.fetch,
+};
