@@ -10,10 +10,12 @@
   },
   "dependencies": {
     "@repo/db": "*",
-    "hono": "^4.12.1"
+    "hono": "^4.12.1",
+    "nodemailer": "^8.0.1"
   },
   "devDependencies": {
     "@repo/typescript-config": "*",
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/nodemailer": "^7.0.11"
   }
 }
