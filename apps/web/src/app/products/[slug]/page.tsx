@@ -3,9 +3,11 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Heart, MessageSquare, Share2, ArrowLeft, MessageCircle, Star } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ArrowLeft, Star, Loader } from 'lucide-react';
 import { useProductDetail } from '@/hooks/queries';
-import { useCart } from '@/hooks/useCart';
+import { useCart } from '@/store/cart';
+import { WhatsAppDialog } from '@/components/WhatsAppDialog';
+import { SuccessModal } from '@/components/SuccessModal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -50,8 +52,12 @@ const RELATED_PRODUCTS = [
 export default function ProductDetail({ params }: { params: { slug: string } }) {
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successPhoneNumber, setSuccessPhoneNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { data: product, isLoading, error } = useProductDetail(params.slug);
-  const { addToCart } = useCart();
+  const { addItem, getWhatsAppMessage, clearCart } = useCart();
 
   if (isLoading) {
     return (
@@ -82,7 +88,7 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
   }
 
   const handleAddToCart = () => {
-    addToCart({
+    addItem({
       id: product.id,
       name: product.name,
       price: product.price,
@@ -92,9 +98,42 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
     setQuantity(1);
   };
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '263710000000';
-  const message = encodeURIComponent(`Hi! I'm interested in purchasing: ${product.name} (ZWL ${product.price}) - Quantity: ${quantity}`);
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
+  const handleCompleteOrder = async (phoneNumber: string) => {
+    setIsSubmitting(true);
+    try {
+      addItem({
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        quantity,
+        image: product.image || '/placeholder.jpg',
+      });
+
+      const message = getWhatsAppMessage();
+      const response = await fetch('/api/whatsapp/send-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: `263${phoneNumber}`,
+          message,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send WhatsApp message');
+
+      setSuccessPhoneNumber(phoneNumber);
+      setShowSuccessModal(true);
+      clearCart();
+      setShowWhatsAppDialog(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    setSuccessPhoneNumber('');
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -193,15 +232,15 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
                   >
                     Add to Cart
                   </Button>
-                  <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full">
-                    <Button
-                      variant="whatsapp"
-                      className="w-full h-12"
-                    >
-                      <MessageCircle className="w-5 h-5" />
-                      Complete Order on WhatsApp
-                    </Button>
-                  </a>
+                  <Button
+                    onClick={() => setShowWhatsAppDialog(true)}
+                    variant="whatsapp"
+                    className="w-full h-12"
+                    disabled={isSubmitting}
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    Complete Order on WhatsApp
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -286,6 +325,18 @@ export default function ProductDetail({ params }: { params: { slug: string } }) 
           </div>
         </div>
       </div>
+
+      <WhatsAppDialog
+        isOpen={showWhatsAppDialog}
+        onClose={() => setShowWhatsAppDialog(false)}
+        onSubmit={handleCompleteOrder}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        phoneNumber={successPhoneNumber}
+      />
     </div>
   );
 }

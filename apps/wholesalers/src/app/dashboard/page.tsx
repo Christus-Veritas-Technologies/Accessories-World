@@ -6,6 +6,8 @@ import { MessageCircle, ShoppingCart, Search, Loader } from 'lucide-react';
 import { useWholesalerProducts } from '@/hooks/queries';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { WhatsAppDialog } from '@/components/WhatsAppDialog';
+import { SuccessModal } from '@/components/SuccessModal';
 
 interface Product {
   id: string;
@@ -27,6 +29,10 @@ export default function DealsPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<Map<string, number>>(new Map());
+  const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successPhoneNumber, setSuccessPhoneNumber] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -96,11 +102,37 @@ export default function DealsPage() {
       })
       .join('%0A');
 
-    return `Hi! I'd like to place a wholesale order:%0A%0A${items}%0A%0ATotal: ZWL ${cartTotal.toLocaleString()}`;
+    return `Hello! I'd like to place a wholesale order:%0A%0A${items}%0A%0ATotal: ZWL ${cartTotal.toLocaleString()}%0A%0APlease confirm.`;
   };
 
-  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '263710000000';
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${getWhatsAppMessage()}`;
+  const handleCompleteOrder = async (phoneNumber: string) => {
+    setIsSubmitting(true);
+    try {
+      const message = getWhatsAppMessage();
+      const response = await fetch(`/api/whatsapp/send-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phoneNumber: `263${phoneNumber}`,
+          message,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to send WhatsApp message');
+
+      setSuccessPhoneNumber(phoneNumber);
+      setShowSuccessModal(true);
+      setCart(new Map());
+      setShowWhatsAppDialog(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccessModal(false);
+    setSuccessPhoneNumber('');
+  };
 
   if (loading) {
     return (
@@ -121,12 +153,15 @@ export default function DealsPage() {
           <p className="text-muted-foreground">Premium bulk pricing for your business</p>
         </div>
         {cartCount > 0 && (
-          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-            <Button variant="whatsapp" className="gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Cart ({cartCount}) - ZWL {cartTotal.toLocaleString()}
-            </Button>
-          </a>
+          <Button
+            onClick={() => setShowWhatsAppDialog(true)}
+            variant="whatsapp"
+            className="gap-2"
+            disabled={isSubmitting}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            Cart ({cartCount}) - ZWL {cartTotal.toLocaleString()}
+          </Button>
         )}
       </div>
 
@@ -260,6 +295,18 @@ export default function DealsPage() {
           <p className="text-gray-600">No products found</p>
         </div>
       )}
+
+      <WhatsAppDialog
+        isOpen={showWhatsAppDialog}
+        onClose={() => setShowWhatsAppDialog(false)}
+        onSubmit={handleCompleteOrder}
+      />
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessClose}
+        phoneNumber={successPhoneNumber}
+      />
     </div>
   );
 }
