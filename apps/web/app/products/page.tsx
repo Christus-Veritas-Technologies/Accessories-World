@@ -1,8 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Search, Filter, ShoppingCart } from "lucide-react";
-import Link from "next/link";
+import { useState } from 'react';
+import { Search, Filter, ShoppingCart } from 'lucide-react';
+import Link from 'next/link';
+import { useProducts, useCategories } from '@/hooks/queries';
 
 interface Product {
   id: string;
@@ -18,73 +19,35 @@ interface Product {
   images: Array<{ url: string; alt: string }>;
 }
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  productCount: number;
-}
-
 export default function ProductsPage({
   searchParams,
 }: {
   searchParams: Record<string, string>;
 }) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(searchParams.search || "");
+  const [search, setSearch] = useState(searchParams.search || '');
   const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.category || ""
+    searchParams.category || ''
   );
 
-  useEffect(() => {
-    fetchData();
-  }, [selectedCategory, search]);
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({
+    category: selectedCategory,
+    search: search,
+  });
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (selectedCategory) params.append("category", selectedCategory);
-      if (search) params.append("search", search);
-
-      const [productsRes, categoriesRes] = await Promise.all([
-        fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/products?${params.toString()}`
-        ),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/categories`),
-      ]);
-
-      if (!productsRes.ok || !categoriesRes.ok) {
-        throw new Error("Failed to fetch data");
-      }
-
-      const productsData = await productsRes.json();
-      const categoriesData = await categoriesRes.json();
-
-      setProducts(productsData.items);
-      setCategories(categoriesData);
-    } catch (err) {
-      console.error("Error fetching products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const products = productsData?.items || [];
 
   const discountedPrice = (product: Product) => {
-    return (
-      product.retailPrice * (1 - (product.retailDiscount || 0) / 100)
-    );
+    return product.retailPrice * (1 - (product.retailDiscount || 0) / 100);
   };
 
   return (
     <>
       {/* Header */}
-      <section className="bg-gradient-to-br from-brand-primary to-brand-primary-dark py-12">
+      <section className="bg-gradient-to-br from-red-600 to-red-700 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold text-white">Products</h1>
-          <p className="mt-2 text-brand-secondary-light">
+          <p className="mt-2 text-red-100">
             Browse our full collection of mobile accessories
           </p>
         </div>
@@ -98,13 +61,13 @@ export default function ProductsPage({
             <div>
               <label className="mb-2 block text-sm font-semibold">Search</label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Product name..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-lg border border-border pl-10 pr-3 py-2"
+                  className="w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 focus:border-red-600 focus:ring-1 focus:ring-red-600"
                 />
               </div>
             </div>
@@ -117,55 +80,66 @@ export default function ProductsPage({
               </label>
               <div className="space-y-2">
                 <button
-                  onClick={() => setSelectedCategory("")}
+                  onClick={() => setSelectedCategory('')}
                   className={`block w-full text-left rounded-lg px-3 py-2 text-sm transition-colors ${
                     !selectedCategory
-                      ? "bg-brand-primary text-white"
-                      : "hover:bg-muted"
+                      ? 'bg-red-600 text-white'
+                      : 'hover:bg-gray-100'
                   }`}
                 >
                   All Products
                 </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedCategory(cat.slug)}
-                    className={`block w-full text-left rounded-lg px-3 py-2 text-sm transition-colors ${
-                      selectedCategory === cat.slug
-                        ? "bg-brand-primary text-white"
-                        : "hover:bg-muted"
-                    }`}
-                  >
-                    {cat.name}
-                    <span className="text-xs opacity-75">
-                      ({cat.productCount})
-                    </span>
-                  </button>
-                ))}
+                {categoriesLoading ? (
+                  <div className="text-sm text-gray-500">Loading categories...</div>
+                ) : (
+                  categories.map((cat: any) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setSelectedCategory(cat.slug)}
+                      className={`block w-full text-left rounded-lg px-3 py-2 text-sm transition-colors ${
+                        selectedCategory === cat.slug
+                          ? 'bg-red-600 text-white'
+                          : 'hover:bg-gray-100'
+                      }`}
+                    >
+                      {cat.name}
+                      <span className="text-xs opacity-75">
+                        ({cat.productCount || 0})
+                      </span>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
           </div>
 
           {/* Products Grid */}
           <div className="lg:col-span-3">
-            {loading ? (
-              <div className="flex h-64 items-center justify-center text-muted-foreground">
-                Loading products...
+            {productsLoading ? (
+              <div className="flex h-64 items-center justify-center text-gray-500">
+                <div className="text-center">
+                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mb-2"></div>
+                  <p>Loading products...</p>
+                </div>
+              </div>
+            ) : productsError ? (
+              <div className="flex h-64 items-center justify-center text-red-600">
+                Error loading products. Please try again.
               </div>
             ) : products.length === 0 ? (
-              <div className="flex h-64 items-center justify-center text-muted-foreground">
+              <div className="flex h-64 items-center justify-center text-gray-500">
                 No products found
               </div>
             ) : (
               <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {products.map((product) => (
+                {products.map((product: Product) => (
                   <Link
                     key={product.id}
                     href={`/products/${product.slug}`}
-                    className="group overflow-hidden rounded-lg border border-border bg-card transition-all hover:shadow-lg hover:-translate-y-1"
+                    className="group overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-all hover:shadow-lg hover:-translate-y-1"
                   >
                     {/* Image */}
-                    <div className="aspect-square overflow-hidden bg-muted">
+                    <div className="aspect-square overflow-hidden bg-gray-100">
                       {product.images.length > 0 ? (
                         <img
                           src={product.images[0].url}
@@ -173,7 +147,7 @@ export default function ProductsPage({
                           className="h-full w-full object-cover transition-transform group-hover:scale-105"
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                        <div className="flex h-full w-full items-center justify-center text-gray-400">
                           No image
                         </div>
                       )}
@@ -181,20 +155,20 @@ export default function ProductsPage({
 
                     {/* Details */}
                     <div className="p-4">
-                      <h3 className="font-semibold line-clamp-2">
+                      <h3 className="font-semibold line-clamp-2 text-gray-900">
                         {product.name}
                       </h3>
-                      <p className="text-xs text-muted-foreground mb-3">
+                      <p className="text-xs text-gray-500 mb-3">
                         {product.category.name}
                       </p>
 
                       {/* Price */}
                       <div className="flex items-baseline gap-2 mb-2">
-                        <span className="text-lg font-bold text-brand-primary">
+                        <span className="text-lg font-bold text-red-600">
                           ${discountedPrice(product).toFixed(2)}
                         </span>
                         {product.retailDiscount > 0 && (
-                          <span className="text-xs line-through text-muted-foreground">
+                          <span className="text-xs line-through text-gray-400">
                             ${product.retailPrice.toFixed(2)}
                           </span>
                         )}
@@ -213,8 +187,10 @@ export default function ProductsPage({
                         )}
                       </p>
 
-                      <button className="w-full rounded-lg bg-brand-primary px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-primary-light disabled:opacity-50"
-                        disabled={product.stock === 0}>
+                      <button
+                        className="w-full rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                        disabled={product.stock === 0}
+                      >
                         <ShoppingCart className="mr-1 inline h-4 w-4" />
                         View Details
                       </button>

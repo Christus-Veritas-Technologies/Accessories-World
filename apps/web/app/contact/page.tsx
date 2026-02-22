@@ -1,53 +1,37 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { MapPin, Phone, Mail, MessageCircle, Loader } from "lucide-react";
+import { useState } from 'react';
+import { MapPin, Phone, Mail, MessageCircle, Loader } from 'lucide-react';
+import { useSubmitContact } from '@/hooks/queries';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
   });
-  const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const contactMutation = useSubmitContact();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/contact`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to submit form");
-
-      setSuccess(true);
-      setFormData({ name: "", email: "", phone: "", message: "" });
-      setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error submitting form");
-    } finally {
-      setLoading(false);
-    }
+    contactMutation.mutate(formData, {
+      onSuccess: () => {
+        setSuccess(true);
+        setFormData({ name: '', email: '', phone: '', message: '' });
+        setTimeout(() => setSuccess(false), 5000);
+      },
+    });
   };
 
   return (
     <>
       {/* Header */}
-      <section className="bg-gradient-to-br from-brand-primary to-brand-primary-dark py-12">
+      <section className="bg-gradient-to-br from-red-600 to-red-700 py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl font-bold text-white">Contact Us</h1>
-          <p className="mt-2 text-brand-secondary-light">
+          <p className="mt-2 text-red-100">
             We'd love to hear from you. Get in touch with us today.
           </p>
         </div>
@@ -59,7 +43,7 @@ export default function ContactPage() {
           <div className="space-y-6">
             <div>
               <h2 className="mb-4 text-xl font-bold">Get in Touch</h2>
-              <p className="text-muted-foreground mb-6">
+              <p className="text-gray-600 mb-6">
                 Have a question or want to learn more about our products? 
                 Contact us and we'll get back to you as soon as possible.
               </p>
@@ -67,10 +51,10 @@ export default function ContactPage() {
 
             {/* Location */}
             <div className="flex gap-4">
-              <MapPin className="h-6 w-6 text-brand-primary flex-shrink-0 mt-1" />
+              <MapPin className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold">Visit Us</h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-600">
                   49, 51 Second St
                   <br />
                   Mutare, Zimbabwe
@@ -80,12 +64,12 @@ export default function ContactPage() {
 
             {/* Phone */}
             <div className="flex gap-4">
-              <Phone className="h-6 w-6 text-brand-primary flex-shrink-0 mt-1" />
+              <Phone className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold">Call Us</h3>
                 <a
                   href="tel:+263784923973"
-                  className="text-sm text-brand-primary hover:underline"
+                  className="text-sm text-red-600 hover:underline"
                 >
                   +263 78 492 3973
                 </a>
@@ -94,12 +78,12 @@ export default function ContactPage() {
 
             {/* Email */}
             <div className="flex gap-4">
-              <Mail className="h-6 w-6 text-brand-primary flex-shrink-0 mt-1" />
+              <Mail className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold">Email</h3>
                 <a
                   href="mailto:info@accessoriesworld.co.zw"
-                  className="text-sm text-brand-primary hover:underline"
+                  className="text-sm text-red-600 hover:underline"
                 >
                   info@accessoriesworld.co.zw
                 </a>
@@ -108,14 +92,14 @@ export default function ContactPage() {
 
             {/* WhatsApp */}
             <div className="flex gap-4">
-              <MessageCircle className="h-6 w-6 text-brand-primary flex-shrink-0 mt-1" />
+              <MessageCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
               <div>
                 <h3 className="font-semibold">WhatsApp</h3>
                 <a
                   href="https://wa.me/263784923973"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm text-brand-primary hover:underline"
+                  className="text-sm text-red-600 hover:underline"
                 >
                   Message on WhatsApp
                 </a>
@@ -125,25 +109,25 @@ export default function ContactPage() {
 
           {/* Contact Form */}
           <div className="lg:col-span-2">
-            <div className="rounded-lg border border-border bg-card p-8">
+            <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
               <h2 className="mb-6 text-2xl font-bold">Send us a Message</h2>
 
               {success && (
-                <div className="mb-6 rounded-lg bg-green-50 p-4 text-green-700">
+                <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700">
                   ✓ Thank you! We've received your message and will get back to you soon.
                 </div>
               )}
 
-              {error && (
-                <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700">
-                  {error}
+              {contactMutation.error && (
+                <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
+                  Error sending message. Please try again.
                 </div>
               )}
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                     Full Name *
                   </label>
                   <input
@@ -153,14 +137,15 @@ export default function ContactPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full rounded-lg border border-border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
                     placeholder="Your name"
+                    disabled={contactMutation.isPending}
                   />
                 </div>
 
                 {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                     Email Address *
                   </label>
                   <input
@@ -170,14 +155,15 @@ export default function ContactPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="w-full rounded-lg border border-border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
                     placeholder="your@email.com"
+                    disabled={contactMutation.isPending}
                   />
                 </div>
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                     Phone Number
                   </label>
                   <input
@@ -186,14 +172,15 @@ export default function ContactPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="w-full rounded-lg border border-border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
                     placeholder="+263 78 ..."
+                    disabled={contactMutation.isPending}
                   />
                 </div>
 
                 {/* Message */}
                 <div>
-                  <label className="block text-sm font-medium mb-2">
+                  <label className="block text-sm font-medium mb-2 text-gray-700">
                     Message *
                   </label>
                   <textarea
@@ -203,24 +190,25 @@ export default function ContactPage() {
                       setFormData({ ...formData, message: e.target.value })
                     }
                     rows={6}
-                    className="w-full rounded-lg border border-border bg-background px-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-primary"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
                     placeholder="Tell us how we can help..."
+                    disabled={contactMutation.isPending}
                   />
                 </div>
 
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="w-full rounded-lg bg-brand-primary px-6 py-3 font-semibold text-white hover:bg-brand-primary-light disabled:opacity-50 flex items-center justify-center gap-2"
+                  disabled={contactMutation.isPending}
+                  className="w-full rounded-lg bg-red-600 px-6 py-3 font-semibold text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {loading && (
+                  {contactMutation.isPending && (
                     <Loader className="h-4 w-4 animate-spin" />
                   )}
-                  {loading ? "Sending..." : "Send Message"}
+                  {contactMutation.isPending ? 'Sending...' : 'Send Message'}
                 </button>
 
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-500">
                   * Required fields. We'll also send a WhatsApp notification with your
                   inquiry.
                 </p>
