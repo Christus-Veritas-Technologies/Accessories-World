@@ -1,21 +1,31 @@
 @import "tailwindcss";
 
+/*
+ * Accessories World — Admin Dashboard Theme
+ */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #FFFFFF;
+  --foreground: #0F172A;
+  --brand-primary: #1E40AF;
+  --brand-primary-light: #3B82F6;
+  --brand-secondary: #F97316;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-primary-light: var(--brand-primary-light);
+  --color-brand-secondary: var(--brand-secondary);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #0B1120;
+    --foreground: #F1F5F9;
   }
 }
 
