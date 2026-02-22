@@ -6,10 +6,10 @@
 
 :root {
   --background: #FFFFFF;
-  --foreground: #0F172A;
-  --brand-primary: #1E40AF;
-  --brand-primary-light: #3B82F6;
-  --brand-secondary: #F97316;
+  --foreground: #111111;
+  --brand-primary: #DC2626;
+  --brand-primary-light: #EF4444;
+  --brand-secondary: #111111;
 }
 
 @theme inline {

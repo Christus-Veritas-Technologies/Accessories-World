@@ -73,7 +73,7 @@ export default function RootLayout({
       <head>
         <meta name="apple-mobile-web-app-title" content="Accessories World" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <meta name="theme-color" content="#1E40AF" />
+        <meta name="theme-color" content="#DC2626" />
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Navbar />
