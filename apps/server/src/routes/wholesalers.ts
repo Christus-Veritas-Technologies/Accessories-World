@@ -36,6 +36,7 @@ wholesalers.get("/products", async (c) => {
         description: true,
         sku: true,
         wholesalePrice: true,   // wholesale price only
+        wholesaleDiscount: true, // wholesale discount percentage
         retailPrice: true,       // included for margin reference
         stock: true,
         featured: true,

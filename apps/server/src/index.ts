@@ -8,6 +8,7 @@ import products from "./routes/products.js";
 import categories from "./routes/categories.js";
 import adminRoutes from "./routes/admin.js";
 import wholesalerRoutes from "./routes/wholesalers.js";
+import contactRoutes from "./routes/contact.js";
 
 const app = new Hono();
 
@@ -20,6 +21,7 @@ app.use(
       process.env.WEB_URL ?? "http://localhost:3000",
       process.env.ADMIN_URL ?? "http://localhost:3001",
       process.env.WHOLESALER_URL ?? "http://localhost:3002",
+      process.env.AGENT_URL ?? "http://localhost:3004",
     ],
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
@@ -50,6 +52,7 @@ app.route("/api/products", products);
 app.route("/api/categories", categories);
 app.route("/api/admin", adminRoutes);
 app.route("/api/wholesalers", wholesalerRoutes);
+app.route("/api/contact", contactRoutes);
 
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 

@@ -5,7 +5,7 @@ const products = new Hono();
 
 /**
  * GET /api/products
- * Public — returns active products with retail price.
+ * Public — returns active products with retail price and discount.
  * Query params: category (slug), featured, search, page, limit
  */
 products.get("/", async (c) => {
@@ -38,6 +38,7 @@ products.get("/", async (c) => {
         description: true,
         sku: true,
         retailPrice: true,
+        retailDiscount: true,
         stock: true,
         featured: true,
         category: { select: { id: true, name: true, slug: true } },
@@ -78,6 +79,7 @@ products.get("/:slug", async (c) => {
       description: true,
       sku: true,
       retailPrice: true,
+      retailDiscount: true,
       stock: true,
       featured: true,
       category: { select: { id: true, name: true, slug: true } },
@@ -88,6 +90,13 @@ products.get("/:slug", async (c) => {
   if (!product) {
     return c.json({ error: "Product not found" }, 404);
   }
+
+  // Track product view (non-blocking)
+  const ip = c.req.header("x-forwarded-for") ?? c.req.header("x-real-ip") ?? "unknown";
+  const userAgent = c.req.header("user-agent") ?? "";
+  prisma.productView
+    .create({ data: { productId: product.id, ip, userAgent } })
+    .catch(() => {});
 
   return c.json(product);
 });
