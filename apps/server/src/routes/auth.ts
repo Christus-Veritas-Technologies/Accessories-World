@@ -36,7 +36,7 @@ auth.post("/admin/login", async (c) => {
       id: admin.id,
       email: admin.email,
       name: admin.name,
-      role: admin.role,
+      isAdmin: admin.isAdmin,
     },
   });
 });
@@ -119,7 +119,7 @@ auth.get("/me", async (c) => {
         id: session.admin.id,
         email: session.admin.email,
         name: session.admin.name,
-        role: session.admin.role,
+        isAdmin: session.admin.isAdmin,
       },
     });
   }
