@@ -77,6 +77,16 @@ export function useCart() {
   const cartTotal = cart.reduce((total, item) => total + item.price * item.quantity, 0);
   const itemCount = cart.reduce((count, item) => count + item.quantity, 0);
 
+  const getWhatsAppMessage = () => {
+    if (cart.length === 0) return '';
+    
+    const itemsList = cart
+      .map((item) => `- ${item.name} x${item.quantity} (ZWL ${(item.price * item.quantity).toLocaleString()})`)
+      .join('%0A');
+    
+    return `Hi! I'd like to complete an order:%0A%0A${itemsList}%0A%0ATotal: ZWL ${cartTotal.toLocaleString()}`;
+  };
+
   return {
     cart,
     addToCart,
@@ -85,5 +95,6 @@ export function useCart() {
     clearCart,
     cartTotal,
     itemCount,
+    getWhatsAppMessage,
   };
 }

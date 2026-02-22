@@ -97,7 +97,7 @@ export default function Home() {
               variant="secondary"
               className="mb-6 px-4 py-1.5 text-sm font-medium"
             >
-              🇿🇼 Proudly Zimbabwean
+              Proudly Zimbabwean
             </Badge>
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
               Every Accessory at an{" "}

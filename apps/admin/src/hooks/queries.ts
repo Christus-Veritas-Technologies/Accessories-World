@@ -49,7 +49,7 @@ export function useWholesalers() {
   });
 }
 
-export function useOrders() {
+export function useAdminOrders() {
   return useQuery({
     queryKey: ['admin', 'orders'],
     queryFn: async () => {
