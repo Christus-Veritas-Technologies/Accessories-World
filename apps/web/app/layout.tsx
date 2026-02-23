@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -15,7 +13,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "Accessories World Zimbabwe — Every Accessory at an Affordable Price",
+    default:
+      "Accessories World Zimbabwe — Every Accessory at an Affordable Price",
     template: "%s | Accessories World Zimbabwe",
   },
   description:
@@ -43,7 +42,8 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_ZW",
     siteName: "Accessories World Zimbabwe",
-    title: "Accessories World Zimbabwe — Every Accessory at an Affordable Price",
+    title:
+      "Accessories World Zimbabwe — Every Accessory at an Affordable Price",
     description:
       "Your one-stop shop for mobile accessories and gadgets in Mutare, Zimbabwe.",
   },
@@ -80,14 +80,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>
-          <SidebarProvider>
-            <AppSidebar />
-            <div className="flex-1 flex flex-col">
-              <Navbar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-          </SidebarProvider>
+          <Navbar />
+          <main className="flex-1">{children}</main>
+          <Footer />
         </Providers>
       </body>
     </html>
