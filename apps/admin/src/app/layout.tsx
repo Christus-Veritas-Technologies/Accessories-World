@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "./providers";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
 import "./globals.css";
 
 const inter = Inter({
@@ -36,12 +34,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen antialiased bg-background text-foreground">
         <Providers>
-          <SidebarProvider>
-            <AppSidebar />
-            <main className="flex-1 w-full">
-              {children}
-            </main>
-          </SidebarProvider>
+          {children}
         </Providers>
       </body>
     </html>

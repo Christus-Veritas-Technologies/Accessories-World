@@ -54,17 +54,18 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-center py-2">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="relative w-10 h-10">
+            <div className="relative w-12 h-12">
               <Image
-                src="/logo.jpg"
+                src="/logo-aw.jpg"
                 alt="Accessories World"
                 fill
                 className="object-contain"
               />
             </div>
-            <span className="text-sm font-bold text-black hidden sm:inline">
-              Accessories World
-            </span>
+            <div className="hidden sm:block">
+              <p className="text-xs font-bold text-black">ACCESSORIES</p>
+              <p className="text-xs font-bold text-black">WORLD</p>
+            </div>
           </Link>
         </div>
       </SidebarHeader>

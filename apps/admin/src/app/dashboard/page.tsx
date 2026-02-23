@@ -88,9 +88,16 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600 mt-1">Welcome back to Accessories World Admin</p>
+        <div className="flex items-center gap-4">
+          <img
+            src="/logo-aw.jpg"
+            alt="Accessories World"
+            className="h-12 w-12 object-contain"
+          />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-gray-600 mt-1">Welcome back to Accessories World Admin</p>
+          </div>
         </div>
         <Button
           variant="outline"

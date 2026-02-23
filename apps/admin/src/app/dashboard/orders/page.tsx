@@ -97,7 +97,14 @@ export default function OrdersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Orders Management</h1>
+        <div className="flex items-center gap-4 mb-2">
+          <img
+            src="/logo-aw.jpg"
+            alt="Accessories World"
+            className="h-10 w-10 object-contain"
+          />
+          <h1 className="text-3xl font-bold">Orders Management</h1>
+        </div>
         <p className="text-muted-foreground">Manage and track all customer orders</p>
       </div>
 

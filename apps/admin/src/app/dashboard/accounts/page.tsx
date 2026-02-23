@@ -45,7 +45,14 @@ export default function AccountsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Admin Accounts</h1>
+        <div className="flex items-center gap-4">
+          <img
+            src="/logo-aw.jpg"
+            alt="Accessories World"
+            className="h-10 w-10 object-contain"
+          />
+          <h1 className="text-3xl font-bold">Admin Accounts</h1>
+        </div>
         <Button
           onClick={() => setShowForm(!showForm)}
           className="bg-red-600 hover:bg-red-700"

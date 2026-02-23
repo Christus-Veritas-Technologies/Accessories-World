@@ -1,53 +1,20 @@
-"use client";
-
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import {
-  BarChart3,
-  Package,
-  Users,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  Smartphone,
-} from "lucide-react";
-import { useState } from "react";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
-  { href: "/dashboard/products", label: "Products", icon: Package },
-  { href: "/dashboard/accounts", label: "Accounts", icon: Users },
-  {
-    href: "/dashboard/wholesale-users",
-    label: "Wholesale Users",
-    icon: Users,
-  },
-];
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 
 export default function DashboardLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
-  const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
+}>) {
   return (
-    <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <aside
-        className={`${
-          open ? "translate-x-0" : "-translate-x-full"
-        } fixed left-0 top-0 z-40 h-full w-64 bg-brand-primary text-white transition-transform duration-300 lg:relative lg:translate-x-0`}
-      >
-        <div className="flex h-16 items-center justify-between border-b border-brand-primary-light px-6">
-          <Link href="/" className="flex items-center gap-2 font-bold">
-            <Smartphone className="h-6 w-6" />
-            <span>Accessories World</span>
-          </Link>
-          <button
-            onClick={() => setOpen(false)}
+    <SidebarProvider>
+      <AppSidebar />
+      <main className="flex-1 w-full p-6 lg:p-8">
+        {children}
+      </main>
+    </SidebarProvider>
+  );
+}
             className="lg:hidden"
           >
             <X className="h-5 w-5" />
