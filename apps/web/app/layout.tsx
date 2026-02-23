@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -78,9 +80,14 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen flex flex-col antialiased">
         <Providers>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <SidebarProvider>
+            <AppSidebar />
+            <div className="flex-1 flex flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+          </SidebarProvider>
         </Providers>
       </body>
     </html>
