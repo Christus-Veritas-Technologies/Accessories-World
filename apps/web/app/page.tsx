@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Phone, MapPin, Mail, Zap, Headphones, Smartphone, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TestimonialsSection } from "@/components/home/testimonials-section";
+import { TrendingProductsSection } from "@/components/home/trending-products-section";
 import { siteConfig, homeHighlights } from "@/lib/site";
 
 export default function HomePage() {
@@ -229,6 +231,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Trending Products Section */}
+      <TrendingProductsSection />
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
     </main>
   );
 }

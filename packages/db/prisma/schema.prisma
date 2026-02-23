@@ -114,6 +114,20 @@ model ContactSubmission {
   createdAt DateTime @default(now())
 }
 
+// ─── Testimonials ────────────────────────────────────────────
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  location  String?
+  message   String
+  rating    Int      @default(5)
+  featured  Boolean  @default(false)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ─── Orders (Wholesale) ─────────────────────────────────────
 
 model Order {

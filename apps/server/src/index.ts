@@ -9,6 +9,7 @@ import categories from "./routes/categories.js";
 import adminRoutes from "./routes/admin.js";
 import wholesalerRoutes from "./routes/wholesalers.js";
 import contactRoutes from "./routes/contact.js";
+import testimonialRoutes from "./routes/testimonials.js";
 
 const app = new Hono();
 
@@ -50,6 +51,7 @@ app.get("/health", (c) => c.json({ status: "ok" }));
 app.route("/api/auth", auth);
 app.route("/api/products", products);
 app.route("/api/categories", categories);
+app.route("/api/testimonials", testimonialRoutes);
 app.route("/api/admin", adminRoutes);
 app.route("/api/wholesalers", wholesalerRoutes);
 app.route("/api/contact", contactRoutes);

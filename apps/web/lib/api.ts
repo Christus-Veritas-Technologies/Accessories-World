@@ -61,6 +61,22 @@ export interface ContactResponse {
   id: string;
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  location: string | null;
+  message: string;
+  rating: number;
+  featured: boolean;
+  published: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TestimonialsResponse {
+  items: Testimonial[];
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers);
   if (init?.body && !headers.has("Content-Type")) {
@@ -131,4 +147,14 @@ export async function submitContact(
     method: "POST",
     body: JSON.stringify(payload),
   });
+}
+
+export async function getTestimonials(limit = 10): Promise<TestimonialsResponse> {
+  return fetchJson<TestimonialsResponse>(`/testimonials?limit=${limit}`);
+}
+
+export async function getTrendingProducts(
+  limit = 6,
+): Promise<ProductsResponse> {
+  return fetchJson<ProductsResponse>(`/products/trending/popular?limit=${limit}`);
 }

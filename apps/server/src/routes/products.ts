@@ -101,4 +101,52 @@ products.get("/:slug", async (c) => {
   return c.json(product);
 });
 
+/**
+ * GET /api/products/trending/popular
+ * Public — returns most viewed/popular products
+ * Query params: limit
+ */
+products.get("/trending/popular", async (c) => {
+  const { limit = "6" } = c.req.query();
+
+  const items = await prisma.product.findMany({
+    where: { active: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      sku: true,
+      retailPrice: true,
+      retailDiscount: true,
+      stock: true,
+      featured: true,
+      category: { select: { id: true, name: true, slug: true } },
+      images: {
+        orderBy: { order: "asc" },
+        take: 1,
+        select: { url: true, alt: true },
+      },
+      _count: {
+        select: { views: true },
+      },
+    },
+    orderBy: {
+      views: {
+        _count: "desc",
+      },
+    },
+    take: Number(limit),
+  });
+
+  // Transform to match expected format
+  const transformed = items.map((product: any) => ({
+    ...product,
+    viewCount: product._count.views,
+    _count: undefined,
+  }));
+
+  return c.json({ items: transformed });
+});
+
 export default products;
