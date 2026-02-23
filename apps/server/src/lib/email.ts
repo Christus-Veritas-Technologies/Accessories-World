@@ -69,7 +69,45 @@ export async function sendNewAccountEmail(
   });
 }
 
-/** Send contact form confirmation to the business */
+/** Send contact form confirmation to the user */
+export async function sendContactConfirmation(data: {
+  name: string;
+  email: string;
+  message: string;
+}) {
+  return sendEmail({
+    to: data.email,
+    subject: "We received your message - Accessories World",
+    html: `
+      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background: #DC2626; padding: 24px; text-align: center;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Accessories World</h1>
+        </div>
+        <div style="padding: 32px; background: #f9fafb;">
+          <h2 style="margin-top: 0; color: #111827;">Hi ${data.name},</h2>
+          <p style="color: #374151; line-height: 1.6;">
+            Thank you for reaching out! We've received your message and will get back to you as soon as possible.
+          </p>
+          <div style="background: white; border: 1px solid #e5e7eb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+            <p style="font-weight: bold; margin-top: 0; margin-bottom: 8px;">Your Message:</p>
+            <p style="color: #374151; white-space: pre-wrap; margin: 0;">${data.message}</p>
+          </div>
+          <p style="color: #374151; line-height: 1.6;">
+            Best regards,<br><strong>Accessories World Team</strong>
+          </p>
+        </div>
+        <div style="padding: 16px; text-align: center; color: #6b7280; font-size: 12px; background: #f9fafb;">
+          <p style="margin: 4px 0;">📍 49-51 Second Street, Mutare, Zimbabwe</p>
+          <p style="margin: 4px 0;">📞 +263 78 492 3973</p>
+          <p style="margin: 4px 0;">📧 info@accessoriesworld.co.zw</p>
+          <p style="margin: 8px 0 0 0;">&copy; ${new Date().getFullYear()} Accessories World Zimbabwe</p>
+        </div>
+      </div>
+    `,
+  });
+}
+
+/** Send contact form notification to the business */
 export async function sendContactNotification(data: {
   name: string;
   email: string;
