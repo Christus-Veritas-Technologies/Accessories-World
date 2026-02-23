@@ -3,6 +3,7 @@ import { Users, Award, MapPin, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
+import { StoreMap } from "@/components/store-map";
 
 export const metadata = {
   title: "About Us | Accessories World",
@@ -164,15 +165,14 @@ export default function AboutPage() {
           </h2>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            {/* Map Placeholder */}
+            {/* Map */}
             <div className="flex items-center justify-center">
-              <div className="w-full aspect-square max-w-sm rounded-lg bg-gradient-to-br from-gray-200 to-gray-100 border border-gray-200 flex items-center justify-center">
-                <div className="text-center">
-                  <MapPin className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                  <p className="text-gray-600 text-sm font-medium">Map View</p>
-                  <p className="text-gray-500 text-xs mt-1">Coming soon</p>
-                </div>
-              </div>
+              <StoreMap
+                latitude={-18.865}
+                longitude={32.661}
+                storeName="Accessories World"
+                address="49-51 Second Street, Mutare, Zimbabwe"
+              />
             </div>
 
             {/* Location Info */}
