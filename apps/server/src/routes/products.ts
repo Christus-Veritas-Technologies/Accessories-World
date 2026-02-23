@@ -6,14 +6,15 @@ const products = new Hono();
 /**
  * GET /api/products
  * Public — returns active products with retail price and discount.
- * Query params: category (slug), featured, search, page, limit
+ * Query params: category (slug), featured, search, page, limit, price (0-50, 50-100, 100-500, 500+), stock (in-stock, out-of-stock)
  */
 products.get("/", async (c) => {
-  const { category, featured, search, page = "1", limit = "20" } = c.req.query();
+  const { category, featured, search, page = "1", limit = "20", price, stock } = c.req.query();
 
   const skip = (Number(page) - 1) * Number(limit);
 
   const where: Record<string, any> = { active: true };
+  
   if (category) {
     where.category = { slug: category };
   }
@@ -26,6 +27,33 @@ products.get("/", async (c) => {
       { description: { contains: search, mode: "insensitive" } },
       { sku: { contains: search, mode: "insensitive" } },
     ];
+  }
+
+  // Price range filtering
+  if (price) {
+    switch (price) {
+      case "0-50":
+        where.retailPrice = { gte: 0, lte: 50 };
+        break;
+      case "50-100":
+        where.retailPrice = { gte: 50, lte: 100 };
+        break;
+      case "100-500":
+        where.retailPrice = { gte: 100, lte: 500 };
+        break;
+      case "500+":
+        where.retailPrice = { gte: 500 };
+        break;
+    }
+  }
+
+  // Stock filtering
+  if (stock) {
+    if (stock === "in-stock") {
+      where.stock = { gt: 0 };
+    } else if (stock === "out-of-stock") {
+      where.stock = { equals: 0 };
+    }
   }
 
   const [items, total] = await Promise.all([
