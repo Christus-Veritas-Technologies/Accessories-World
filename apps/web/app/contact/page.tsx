@@ -1,11 +1,62 @@
 "use client";
 
 import { CheckCircle2, Mail, Phone } from "lucide-react";
+import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { ContactForm } from "@/components/contact-form";
 import { siteConfig } from "@/lib/site";
 
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const contactMutation = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/contact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || "Failed to send message");
+      }
+
+      return res.json();
+    },
+    onSuccess: () => {
+      toast.success("Thank you! Your inquiry has been sent successfully.");
+      setFormData({ name: "", email: "", phone: "", message: "" });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to send your inquiry. Please try again.");
+    },
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    contactMutation.mutate(formData);
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const benefits = [
     "Improve usability of your product",
     "Engage users at a higher level and outperform your competition",
@@ -25,7 +76,7 @@ export default function ContactPage() {
             Get in touch with us
           </h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Fill out the form below or schedule a meeting with us at your convenience.
+            Fill out the form below or reach out to us directly at your convenience.
           </p>
         </div>
       </section>
@@ -36,63 +87,83 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
             {/* Left: Contact Form */}
             <div className="space-y-6">
-              {/* Form Fields */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="Your name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900"
-                />
-              </div>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Name */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                    Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your name"
+                    disabled={contactMutation.isPending}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
-                  Email
-                </label>
-                <input
-                  type="email"
-                  placeholder="Enter Your Email"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900"
-                />
-              </div>
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                    Email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="Enter your email"
+                    disabled={contactMutation.isPending}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
-                  Message
-                </label>
-                <textarea
-                  placeholder="Enter Your Message"
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900 resize-none"
-                />
-              </div>
+                {/* Phone (Optional) */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                    Phone <span className="text-gray-500 text-xs">(Optional)</span>
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    placeholder="Your phone number"
+                    disabled={contactMutation.isPending}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900 disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                </div>
 
-              {/* Terms Checkbox */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="terms"
-                  defaultChecked
-                  className="w-4 h-4 border border-gray-300 rounded cursor-pointer accent-red-500"
-                />
-                <label htmlFor="terms" className="text-sm text-gray-600">
-                  I agree with{" "}
-                  <a href="#" className="text-gray-900 font-medium hover:text-red-500">
-                    Terms and Conditions
-                  </a>
-                </label>
-              </div>
+                {/* Message */}
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                    Message <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    placeholder="Enter your message"
+                    rows={6}
+                    disabled={contactMutation.isPending}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900 resize-none disabled:bg-gray-100 disabled:text-gray-500"
+                  />
+                </div>
 
-              {/* Submit Button */}
-              <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 h-auto">
-                Send Your Request
-              </Button>
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  disabled={contactMutation.isPending}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white font-semibold py-3 h-auto disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  {contactMutation.isPending ? "Sending..." : "Send Your Request"}
+                </Button>
+              </form>
             </div>
 
-            {/* Right: Benefits and Locations */}
+            {/* Right: Benefits and Location */}
             <div className="space-y-12">
               {/* With our services you can */}
               <div>
@@ -107,32 +178,15 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              {/* Location Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                {/* USA */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="font-bold text-black">USA</h3>
-                    <span className="text-2xl">🇺🇸</span>
-                  </div>
-                  <div className="space-y-2 text-sm text-gray-700">
-                    <p>280 W. 7TH Street</p>
-                    <p>4th floor Flat no: 402</p>
-                    <p>New York NY, 10018</p>
-                  </div>
+              {/* Location Card */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <h3 className="font-bold text-black">Zimbabwe</h3>
+                  <span className="text-2xl">🇿🇼</span>
                 </div>
-
-                {/* India */}
-                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <h3 className="font-bold text-black">India</h3>
-                    <span className="text-2xl">🇮🇳</span>
-                  </div>
-                  <div className="space-y-2 text-sm text-gray-700">
-                    <p>Plot No. 2-45/BpTms</p>
-                    <p>Banjaras Hills,Road No 10</p>
-                    <p>Hyderabad, 500034</p>
-                  </div>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p>49.32 Second Street</p>
+                  <p>Mutare, Zimbabwe</p>
                 </div>
               </div>
             </div>
