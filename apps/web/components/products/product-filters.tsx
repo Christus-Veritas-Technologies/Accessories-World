@@ -120,14 +120,14 @@ export function ProductFilters({
           <Tabs
             value={currentPriceRange}
             onValueChange={(value) => handleFilterChange("price", value)}
-            className="w-full"
+            className="w-fit"
           >
-            <TabsList className="flex flex-col h-auto bg-gray-50 p-0 border border-gray-200 rounded-lg overflow-hidden w-full justify-start">
+            <TabsList className="flex flex-col h-auto bg-gray-50 p-0 border border-gray-200 rounded-lg overflow-hidden max-w-xs justify-start">
               {priceRanges.map((range) => (
                 <TabsTrigger
                   key={range.value}
                   value={range.value}
-                  className="w-full justify-start rounded-none border-b border-gray-200 last:border-b-0 data-[state=active]:bg-red-50 data-[state=active]:text-red-500"
+                  className="justify-start rounded-none border-b border-gray-200 last:border-b-0 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 px-4 py-2"
                 >
                   {range.label}
                 </TabsTrigger>
@@ -142,14 +142,14 @@ export function ProductFilters({
           <Tabs
             value={currentStockFilter}
             onValueChange={(value) => handleFilterChange("stock", value)}
-            className="w-full"
+            className="w-fit"
           >
-            <TabsList className="flex flex-col h-auto bg-gray-50 p-0 border border-gray-200 rounded-lg overflow-hidden w-full justify-start">
+            <TabsList className="flex flex-col h-auto bg-gray-50 p-0 border border-gray-200 rounded-lg overflow-hidden max-w-xs justify-start">
               {stockFilters.map((filter) => (
                 <TabsTrigger
                   key={filter.value}
                   value={filter.value}
-                  className="w-full justify-start rounded-none border-b border-gray-200 last:border-b-0 data-[state=active]:bg-red-50 data-[state=active]:text-red-500"
+                  className="justify-start rounded-none border-b border-gray-200 last:border-b-0 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 px-4 py-2"
                 >
                   {filter.label}
                 </TabsTrigger>

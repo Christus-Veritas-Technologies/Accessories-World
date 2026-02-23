@@ -215,6 +215,39 @@ function ProductsContent() {
         </div>
       </section>
 
+      {/* Category Tabs */}
+      {categories && categories.length > 0 && (
+        <section className="px-4 py-6 sm:px-6 lg:px-8 bg-gray-50 border-b border-gray-200">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-center gap-2 overflow-x-auto pb-2">
+              <Link
+                href="/products"
+                className={`px-4 py-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors ${
+                  !category
+                    ? "bg-red-500 text-white"
+                    : "bg-white text-gray-700 border border-gray-200 hover:border-red-300 hover:text-red-600"
+                }`}
+              >
+                All Categories
+              </Link>
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/products?category=${cat.slug}`}
+                  className={`px-4 py-2 whitespace-nowrap rounded-lg text-sm font-medium transition-colors ${
+                    category === cat.slug
+                      ? "bg-red-500 text-white"
+                      : "bg-white text-gray-700 border border-gray-200 hover:border-red-300 hover:text-red-600"
+                  }`}
+                >
+                  {cat.name}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Filters and Products Section */}
       <section className="px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
