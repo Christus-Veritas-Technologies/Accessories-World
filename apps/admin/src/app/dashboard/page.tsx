@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import {
   Package,
@@ -7,10 +7,13 @@ import {
   TrendingUp,
   Eye,
   AlertCircle,
-} from 'lucide-react';
-import { useKpis } from '@/hooks/queries';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+  LogOut,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useKpis } from "@/hooks/queries";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 interface KPIData {
   revenue: { total: number; monthly: number };
@@ -29,16 +32,40 @@ interface KPIData {
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const { data: kpis, isLoading, error } = useKpis() as any;
+
+  const handleLogout = async () => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${document.cookie
+            .split("; ")
+            .find((row) => row.startsWith("adminToken="))
+            ?.split("=")[1]}`,
+        },
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    }
+
+    // Clear auth
+    document.cookie = "adminToken=; path=/; max-age=0";
+    localStorage.removeItem("adminSession");
+    router.push("/login");
+  };
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
-          ))}
+      <div className="p-6 lg:p-8">
+        <div className="space-y-6">
+          <div className="h-10 bg-gray-200 rounded animate-pulse w-48" />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -46,8 +73,11 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <div className="text-red-600 py-12 text-center">
-        Error loading KPIs: {error.message}
+      <div className="p-6 lg:p-8">
+        <div className="text-center py-12">
+          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-600">Error loading dashboard: {error.message}</p>
+        </div>
       </div>
     );
   }
@@ -55,8 +85,23 @@ export default function Dashboard() {
   if (!kpis) return null;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Dashboard</h1>
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back to Accessories World Admin</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleLogout}
+          className="flex items-center gap-2"
+        >
+          <LogOut className="h-4 w-4" />
+          Logout
+        </Button>
+      </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -64,7 +109,7 @@ export default function Dashboard() {
           title="Total Revenue"
           value={`$${kpis.revenue.total.toFixed(2)}`}
           icon={TrendingUp}
-          color="bg-blue-100 text-blue-600"
+          color="bg-red-100 text-red-600"
         />
         <KPICard
           title="Monthly Revenue"
@@ -76,13 +121,13 @@ export default function Dashboard() {
           title="Weekly Views"
           value={kpis.views.weekly.toLocaleString()}
           icon={Eye}
-          color="bg-purple-100 text-purple-600"
+          color="bg-blue-100 text-blue-600"
         />
         <KPICard
           title="Monthly Views"
           value={kpis.views.monthly.toLocaleString()}
-          icon={Eye}
-          color="bg-orange-100 text-orange-600"
+          icon={Package}
+          color="bg-purple-100 text-purple-600"
         />
       </div>
 
@@ -90,7 +135,10 @@ export default function Dashboard() {
         {/* Most Viewed Products */}
         <Card>
           <CardHeader>
-            <CardTitle>Most Viewed Products</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-red-500" />
+              Most Viewed Products
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -114,7 +162,10 @@ export default function Dashboard() {
         {/* Top Selling Products */}
         <Card>
           <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-red-500" />
+              Top Selling Products
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
@@ -138,9 +189,9 @@ export default function Dashboard() {
 
       {/* Low Stock Alert */}
       {kpis.lowStockProducts?.length > 0 && (
-        <Card className="border-yellow-200 bg-yellow-50">
+        <Card className="border-red-200 bg-red-50">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-yellow-900">
+            <CardTitle className="flex items-center gap-2 text-red-900">
               <AlertCircle className="h-5 w-5" />
               Low Stock Alert
             </CardTitle>
@@ -148,7 +199,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-2">
               {kpis.lowStockProducts.map((product: any) => (
-                <p key={product.id} className="text-sm text-yellow-800">
+                <p key={product.id} className="text-sm text-red-800">
                   <strong>{product.name}</strong> ({product.sku}): {product.stock}{' '}
                   remaining
                 </p>
@@ -161,29 +212,32 @@ export default function Dashboard() {
       {/* Recent Orders */}
       <Card>
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5 text-red-500" />
+            Recent Orders
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b">
-                  <th className="px-4 py-2 text-left font-semibold">Order #</th>
-                  <th className="px-4 py-2 text-left font-semibold">Wholesaler</th>
-                  <th className="px-4 py-2 text-right font-semibold">Amount</th>
-                  <th className="px-4 py-2 text-center font-semibold">Status</th>
+                <tr className="border-b border-gray-200">
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Order #</th>
+                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Wholesaler</th>
+                  <th className="px-4 py-3 text-right font-semibold text-gray-700">Amount</th>
+                  <th className="px-4 py-3 text-center font-semibold text-gray-700">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {kpis.recentOrders?.length > 0 ? (
                   kpis.recentOrders.map((order: any) => (
-                    <tr key={order.id} className="border-b hover:bg-gray-50">
-                      <td className="px-4 py-2 font-mono text-xs">{order.orderNumber}</td>
-                      <td className="px-4 py-2">{order.wholesaler}</td>
-                      <td className="px-4 py-2 text-right font-semibold">
+                    <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{order.orderNumber}</td>
+                      <td className="px-4 py-3 text-gray-900">{order.wholesaler}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-gray-900">
                         ${order.totalAmount.toFixed(2)}
                       </td>
-                      <td className="px-4 py-2 text-center">
+                      <td className="px-4 py-3 text-center">
                         <Badge
                           variant={
                             order.status === 'DELIVERED'
@@ -226,12 +280,12 @@ function KPICard({
   color: string;
 }) {
   return (
-    <Card>
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="pt-6">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-sm text-gray-600">{title}</p>
-            <p className="mt-2 text-2xl font-bold">{value}</p>
+            <p className="text-sm text-gray-600 font-medium">{title}</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">{value}</p>
           </div>
           <div className={`rounded-lg p-3 ${color}`}>
             <Icon className="h-6 w-6" />

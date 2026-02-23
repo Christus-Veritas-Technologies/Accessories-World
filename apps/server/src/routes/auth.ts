@@ -6,19 +6,19 @@ const auth = new Hono();
 
 /**
  * POST /api/auth/admin/login
- * Body: { email, password }
+ * Body: { name, password }
  */
 auth.post("/admin/login", async (c) => {
-  const { email, password } = await c.req.json<{
-    email: string;
+  const { name, password } = await c.req.json<{
+    name: string;
     password: string;
   }>();
 
-  if (!email || !password) {
-    return c.json({ error: "Email and password are required" }, 400);
+  if (!name || !password) {
+    return c.json({ error: "Name and password are required" }, 400);
   }
 
-  const admin = await prisma.admin.findUnique({ where: { email } });
+  const admin = await prisma.admin.findFirst({ where: { name } });
   if (!admin) {
     return c.json({ error: "Invalid credentials" }, 401);
   }
@@ -32,11 +32,12 @@ auth.post("/admin/login", async (c) => {
 
   return c.json({
     token,
-    user: {
+    admin: {
       id: admin.id,
-      email: admin.email,
       name: admin.name,
+      email: admin.email,
       isAdmin: admin.isAdmin,
+      whatsapp: admin.whatsapp,
     },
   });
 });
