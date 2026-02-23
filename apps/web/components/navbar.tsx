@@ -46,8 +46,22 @@ export function Navbar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 md:flex">
-          {mainNavLinks.map((link) => {
-            const active = isActiveRoute(pathname, link.href);
+          {mainNavLinks.map((link: any) => {
+            const active = !link.external && isActiveRoute(pathname, link.href);
+
+            if (link.external) {
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md px-3 py-2 text-sm font-medium transition-all text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  {link.label}
+                </a>
+              );
+            }
 
             return (
               <Link
@@ -99,6 +113,24 @@ export function Navbar() {
               <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
                 {mainNavLinks.map((link) => {
                   const active = isActiveRoute(pathname, link.href);
+
+                  if (link.external) {
+                    return (
+                      <SheetClose asChild key={link.href}>
+                        <a
+                          href={link.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={cn(
+                            "rounded-md px-4 py-3 text-sm font-medium transition-all",
+                            "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                          )}
+                        >
+                          {link.label}
+                        </a>
+                      </SheetClose>
+                    );
+                  }
 
                   return (
                     <SheetClose asChild key={link.href}>
