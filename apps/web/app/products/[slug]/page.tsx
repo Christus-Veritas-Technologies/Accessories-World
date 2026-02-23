@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ShoppingCart, Heart } from "lucide-react";
+import {
+  ArrowLeft,
+  ShoppingCart,
+  Package,
+  ChevronRight,
+  Minus,
+  Plus,
+  MessageCircle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ProductDetail {
   id: string;
@@ -18,41 +27,67 @@ interface ProductDetail {
   images: Array<{ url: string; alt: string; order: number }>;
 }
 
-export default function ProductPage({ params }: { params: { slug: string } }) {
+export default function ProductPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const [product, setProduct] = useState<ProductDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
-    fetchProduct();
+    (async () => {
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.slug}`
+        );
+        if (!res.ok) throw new Error("Product not found");
+        setProduct(await res.json());
+      } catch {
+        /* handled by null check */
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [params.slug]);
 
-  const fetchProduct = async () => {
-    try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/products/${params.slug}`
-      );
-      if (!res.ok) throw new Error("Product not found");
-      setProduct(await res.json());
-    } catch (err) {
-      console.error("Error fetching product:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   if (loading) {
-    return <div className="py-12 text-center">Loading...</div>;
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="animate-pulse grid gap-12 lg:grid-cols-2">
+          <div className="aspect-square rounded-2xl bg-muted" />
+          <div className="space-y-6">
+            <div className="h-4 w-1/3 rounded bg-muted" />
+            <div className="h-8 w-3/4 rounded bg-muted" />
+            <div className="h-24 rounded-2xl bg-muted" />
+            <div className="h-20 rounded bg-muted" />
+            <div className="h-12 rounded-xl bg-muted" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!product) {
     return (
-      <div className="py-12 text-center">
-        <h1 className="text-2xl font-bold">Product not found</h1>
-        <Link href="/products" className="mt-4 inline-block text-brand-primary hover:underline">
-          Back to Products
-        </Link>
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="text-center">
+          <Package className="mx-auto h-16 w-16 text-muted-foreground/40" />
+          <h1 className="mt-4 text-2xl font-bold text-foreground">
+            Product not found
+          </h1>
+          <p className="mt-2 text-muted-foreground">
+            The product you are looking for does not exist or has been removed.
+          </p>
+          <Button className="mt-6 gap-2" asChild>
+            <Link href="/products">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Products
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -62,67 +97,65 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
   const savings = product.retailPrice - discountedPrice;
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       {/* Breadcrumb */}
-      <div className="border-b border-border bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 text-sm">
-            <Link href="/products" className="text-brand-primary hover:underline">
+      <div className="border-b border-border/60 bg-muted/20">
+        <div className="mx-auto max-w-7xl px-4 py-3.5 sm:px-6 lg:px-8">
+          <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <Link
+              href="/products"
+              className="transition-colors duration-200 hover:text-foreground"
+            >
               Products
             </Link>
-            <span className="text-muted-foreground">/</span>
+            <ChevronRight className="h-3.5 w-3.5" />
             <Link
               href={`/products?category=${product.category.slug}`}
-              className="text-brand-primary hover:underline"
+              className="transition-colors duration-200 hover:text-foreground"
             >
               {product.category.name}
             </Link>
-            <span className="text-muted-foreground">/</span>
-            <span className="text-foreground">{product.name}</span>
-          </div>
+            <ChevronRight className="h-3.5 w-3.5" />
+            <span className="text-foreground font-medium truncate max-w-[200px]">
+              {product.name}
+            </span>
+          </nav>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <Link
-          href="/products"
-          className="mb-6 inline-flex items-center gap-2 text-brand-primary hover:underline"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Products
-        </Link>
-
-        <div className="grid gap-12 lg:grid-cols-2">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+        <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Images */}
           <div className="space-y-4">
-            <div className="overflow-hidden rounded-lg border border-border bg-muted aspect-square">
+            <div className="overflow-hidden rounded-2xl border border-border/60 bg-muted aspect-square">
               {product.images.length > 0 ? (
                 <img
                   src={product.images[selectedImage]?.url}
-                  alt={product.images[selectedImage]?.alt}
-                  className="h-full w-full object-cover"
+                  alt={product.images[selectedImage]?.alt || product.name}
+                  className="h-full w-full object-cover transition-opacity duration-300"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
-                  No image available
+                <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
+                  <Package className="h-24 w-24" />
                 </div>
               )}
             </div>
+
             {product.images.length > 1 && (
-              <div className="flex gap-2">
+              <div className="flex gap-2.5 overflow-x-auto pb-1">
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
                     onClick={() => setSelectedImage(idx)}
-                    className={`h-20 w-20 overflow-hidden rounded-lg border-2 transition-colors ${
+                    className={`relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200 ${
                       selectedImage === idx
-                        ? "border-brand-primary"
-                        : "border-border hover:border-brand-primary/50"
+                        ? "border-brand-primary ring-2 ring-brand-primary/20"
+                        : "border-border/60 hover:border-brand-primary/50"
                     }`}
                   >
                     <img
                       src={img.url}
-                      alt={img.alt}
+                      alt={img.alt || product.name}
                       className="h-full w-full object-cover"
                     />
                   </button>
@@ -134,110 +167,122 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
           {/* Details */}
           <div className="space-y-6">
             <div>
-              <p className="text-sm text-muted-foreground mb-2">
+              <Link
+                href={`/products?category=${product.category.slug}`}
+                className="text-sm font-medium text-brand-primary transition-colors duration-200 hover:text-brand-primary-dark"
+              >
                 {product.category.name}
-              </p>
-              <h1 className="text-4xl font-bold">{product.name}</h1>
+              </Link>
+              <h1 className="mt-1 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                {product.name}
+              </h1>
               {product.sku && (
-                <p className="mt-2 font-mono text-sm text-muted-foreground">
+                <p className="mt-2 font-mono text-xs text-muted-foreground">
                   SKU: {product.sku}
                 </p>
               )}
             </div>
 
             {/* Pricing */}
-            <div className="rounded-lg border border-border bg-muted/50 p-6">
-              <div className="flex items-baseline gap-3 mb-2">
-                <span className="text-4xl font-bold text-brand-primary">
+            <div className="rounded-2xl border border-border/60 bg-muted/30 p-6">
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-bold text-foreground sm:text-4xl">
                   ${discountedPrice.toFixed(2)}
                 </span>
                 {savings > 0 && (
-                  <span className="text-xl line-through text-muted-foreground">
+                  <span className="text-lg line-through text-muted-foreground">
                     ${product.retailPrice.toFixed(2)}
                   </span>
                 )}
               </div>
               {savings > 0 && (
-                <p className="text-sm text-green-600 font-semibold">
-                  Save ${savings.toFixed(2)} ({product.retailDiscount}% off)
+                <p className="mt-1.5 text-sm font-semibold text-green-600">
+                  You save ${savings.toFixed(2)} ({product.retailDiscount}% off)
                 </p>
               )}
+            </div>
+
+            {/* Stock */}
+            <div className="flex items-center gap-2">
+              <div
+                className={`h-2.5 w-2.5 rounded-full ${product.stock > 0 ? "bg-green-500" : "bg-destructive"}`}
+              />
+              <span
+                className={`text-sm font-medium ${product.stock > 0 ? "text-green-600" : "text-destructive"}`}
+              >
+                {product.stock > 0
+                  ? `${product.stock} in stock`
+                  : "Out of stock"}
+              </span>
             </div>
 
             {/* Description */}
             {product.description && (
               <div>
-                <h2 className="font-semibold mb-2">Description</h2>
-                <p className="text-muted-foreground whitespace-pre-wrap">
+                <h2 className="text-sm font-semibold text-foreground mb-2">
+                  Description
+                </h2>
+                <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
                   {product.description}
                 </p>
               </div>
             )}
 
-            {/* Stock Status */}
-            <div className="rounded-lg border border-border p-4">
-              {product.stock > 0 ? (
-                <p className="text-sm font-semibold text-green-600">
-                  ✓ {product.stock} in stock
-                </p>
-              ) : (
-                <p className="text-sm font-semibold text-red-600">
-                  Out of stock
-                </p>
-              )}
-            </div>
-
-            {/* Add to Cart */}
+            {/* Quantity & Add to Cart */}
             {product.stock > 0 && (
-              <div className="space-y-3">
+              <div className="space-y-4 pt-2">
                 <div className="flex items-center gap-4">
-                  <label className="text-sm font-medium">Quantity</label>
-                  <div className="flex items-center gap-2 border border-border rounded-lg">
+                  <span className="text-sm font-medium text-foreground">
+                    Quantity
+                  </span>
+                  <div className="flex items-center rounded-xl border border-border/60 bg-card">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="h-10 w-10 hover:bg-muted"
+                      className="flex h-10 w-10 items-center justify-center rounded-l-xl transition-colors duration-200 hover:bg-muted"
                     >
-                      −
+                      <Minus className="h-4 w-4" />
                     </button>
-                    <span className="w-12 text-center font-semibold">
+                    <span className="w-12 text-center text-sm font-semibold">
                       {quantity}
                     </span>
                     <button
                       onClick={() =>
                         setQuantity(Math.min(product.stock, quantity + 1))
                       }
-                      className="h-10 w-10 hover:bg-muted"
+                      className="flex h-10 w-10 items-center justify-center rounded-r-xl transition-colors duration-200 hover:bg-muted"
                     >
-                      +
+                      <Plus className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
-                <button className="w-full rounded-lg bg-brand-primary px-6 py-3 text-lg font-semibold text-white hover:bg-brand-primary-light flex items-center justify-center gap-2">
+
+                <Button size="lg" className="w-full gap-2 text-base">
                   <ShoppingCart className="h-5 w-5" />
                   Add to Cart
-                </button>
-                <button className="w-full rounded-lg border border-border px-6 py-3 font-semibold hover:bg-muted flex items-center justify-center gap-2">
-                  <Heart className="h-5 w-5" />
-                  Add to Wishlist
-                </button>
+                </Button>
               </div>
             )}
 
             {/* Contact */}
-            <div className="rounded-lg bg-muted/50 p-4">
-              <p className="text-sm text-muted-foreground mb-2">
-                Have questions? Contact us
+            <div className="rounded-2xl border border-border/60 bg-muted/20 p-5">
+              <p className="text-sm text-muted-foreground">
+                Have questions about this product?
               </p>
-              <Link
-                href="/contact"
-                className="inline-block text-brand-primary hover:underline font-semibold"
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-3 gap-2"
+                asChild
               >
-                Get in touch →
-              </Link>
+                <Link href="/contact">
+                  <MessageCircle className="h-4 w-4" />
+                  Get in Touch
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
