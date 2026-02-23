@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { AlertCircle } from 'lucide-react';
+import Link from "next/link";
+import { AlertCircle, RotateCw, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Error({
   error,
@@ -11,36 +12,39 @@ export default function Error({
   reset: () => void;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-gray-100 px-4">
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-6">
-          <AlertCircle className="w-8 h-8 text-red-600" />
-        </div>
-        
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">Oops!</h1>
-        <p className="text-lg text-gray-600 mb-6">
-          Something went wrong. We're sorry for the inconvenience.
-        </p>
-        
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 text-left">
-          <p className="text-sm text-red-800 font-mono break-all">
-            {error.message || 'An unexpected error occurred'}
-          </p>
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10">
+          <AlertCircle className="h-8 w-8 text-destructive" />
         </div>
 
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={reset}
-            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition"
-          >
+        <h1 className="text-2xl font-bold text-foreground">
+          Something went wrong
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          We are sorry for the trouble. Please try again or go back to the home
+          page.
+        </p>
+
+        {error.message && (
+          <div className="mt-4 rounded-xl bg-muted/50 border border-border/60 p-4 text-left">
+            <p className="text-xs font-mono text-muted-foreground break-all">
+              {error.message}
+            </p>
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button onClick={reset} className="gap-2">
+            <RotateCw className="h-4 w-4" />
             Try Again
-          </button>
-          <Link
-            href="/"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-6 rounded-lg transition"
-          >
-            Go Home
-          </Link>
+          </Button>
+          <Button variant="outline" className="gap-2" asChild>
+            <Link href="/">
+              <ArrowLeft className="h-4 w-4" />
+              Go Home
+            </Link>
+          </Button>
         </div>
       </div>
     </div>

@@ -1,37 +1,45 @@
-import Link from 'next/link';
-import { AlertTriangle } from 'lucide-react';
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: 'Page Not Found — Accessories World',
+  title: "Page Not Found",
 };
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-gray-100 px-4">
+    <div className="flex min-h-[70vh] items-center justify-center px-4">
       <div className="max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-red-100 rounded-full mb-6">
-          <AlertTriangle className="w-10 h-10 text-red-600" />
+        <div className="relative mx-auto mb-6 h-12 w-12 overflow-hidden rounded-xl">
+          <Image
+            src="/logo.jpg"
+            alt="Accessories World"
+            fill
+            className="object-cover"
+          />
         </div>
-        
-        <h1 className="text-6xl font-bold text-red-600 mb-4">404</h1>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Page Not Found</h2>
-        <p className="text-gray-600 mb-8">
-          Sorry, the page you're looking for doesn't exist or has been moved.
+
+        <p className="text-6xl font-extrabold tracking-tight text-brand-primary">
+          404
+        </p>
+        <h1 className="mt-3 text-2xl font-bold text-foreground">
+          Page not found
+        </h1>
+        <p className="mt-2 text-muted-foreground">
+          Sorry, the page you are looking for does not exist or has been moved.
         </p>
 
-        <div className="flex gap-3 justify-center">
-          <Link
-            href="/"
-            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition"
-          >
-            Back to Home
-          </Link>
-          <Link
-            href="/products"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-900 font-medium py-2 px-6 rounded-lg transition"
-          >
-            Browse Products
-          </Link>
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <Button className="gap-2" asChild>
+            <Link href="/">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Home
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/products">Browse Products</Link>
+          </Button>
         </div>
       </div>
     </div>
