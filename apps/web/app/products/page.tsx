@@ -12,11 +12,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 
-export const metadata = {
-  title: "Products | Accessories World",
-  description: "Browse our full selection of quality accessories for phones and gadgets.",
-};
-
 interface ProductCardProps {
   product: any;
   onFavorite?: () => void;
