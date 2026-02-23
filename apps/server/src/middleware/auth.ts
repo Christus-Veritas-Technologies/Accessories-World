@@ -1,4 +1,5 @@
 import type { Context, Next } from "hono";
+import { getCookie } from "hono/cookie";
 import { validateSession, extractToken } from "../lib/session.js";
 
 /** Extract token from Authorization header or cookies */
@@ -10,7 +11,7 @@ function getToken(c: Context): string | null {
   }
 
   // Try adminToken cookie
-  const adminToken = c.req.cookie("adminToken");
+  const adminToken = getCookie(c, "adminToken");
   if (adminToken) {
     return adminToken;
   }
