@@ -44,6 +44,26 @@ client.initialize().catch((err) => {
   console.error("Failed to initialize WhatsApp client:", err);
 });
 
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+/** Send a WhatsApp message */
+async function sendWhatsAppMessage(phone: string, message: string) {
+  if (!whatsappReady) {
+    throw new Error("WhatsApp client is not connected");
+  }
+
+  if (!phone || !message) {
+    throw new Error("Phone and message are required");
+  }
+
+  // Normalize phone: remove +, spaces, dashes
+  const cleanPhone = phone.replace(/[\s\-\+]/g, "");
+  const chatId = `${cleanPhone}@c.us`;
+
+  await client.sendMessage(chatId, message);
+  return { success: true, chatId };
+}
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /** Health check */
@@ -77,32 +97,20 @@ app.get("/api/whatsapp/qr", (c) => {
 /**
  * POST /api/whatsapp/send
  * Body: { phone: string, message: string }
- * Phone format: country code + number, e.g. "263784923973"
+ * Phone format: country code + number, e.g. "+263784923973" or "0784923973"
  */
 app.post("/api/whatsapp/send", async (c) => {
-  if (!whatsappReady) {
-    return c.json({ error: "WhatsApp client is not connected" }, 503);
-  }
-
-  const { phone, message } = await c.req.json<{
-    phone: string;
-    message: string;
-  }>();
-
-  if (!phone || !message) {
-    return c.json({ error: "Phone and message are required" }, 400);
-  }
-
   try {
-    // Normalize phone: remove +, spaces, dashes
-    const cleanPhone = phone.replace(/[\s\-\+]/g, "");
-    const chatId = `${cleanPhone}@c.us`;
+    const { phone, message } = await c.req.json<{
+      phone: string;
+      message: string;
+    }>();
 
-    await client.sendMessage(chatId, message);
-    return c.json({ success: true, chatId });
+    const result = await sendWhatsAppMessage(phone, message);
+    return c.json(result);
   } catch (err: any) {
-    console.error("WhatsApp send error:", err);
-    return c.json({ error: "Failed to send message", details: err.message }, 500);
+    const status = err.message.includes("not connected") ? 503 : 400;
+    return c.json({ error: err.message || "Failed to send message" }, status);
   }
 });
 
@@ -112,30 +120,18 @@ app.post("/api/whatsapp/send", async (c) => {
  * Body: { phone: string, message: string, replyTo?: string }
  */
 app.post("/send-message", async (c) => {
-  if (!whatsappReady) {
-    return c.json({ error: "WhatsApp client is not connected" }, 503);
-  }
-
-  const { phone, message } = await c.req.json<{
-    phone: string;
-    message: string;
-    replyTo?: string;
-  }>();
-
-  if (!phone || !message) {
-    return c.json({ error: "Phone and message are required" }, 400);
-  }
-
   try {
-    // Normalize phone: remove +, spaces, dashes
-    const cleanPhone = phone.replace(/[\s\-\+]/g, "");
-    const chatId = `${cleanPhone}@c.us`;
+    const { phone, message } = await c.req.json<{
+      phone: string;
+      message: string;
+      replyTo?: string;
+    }>();
 
-    await client.sendMessage(chatId, message);
-    return c.json({ success: true, chatId });
+    const result = await sendWhatsAppMessage(phone, message);
+    return c.json(result);
   } catch (err: any) {
-    console.error("WhatsApp send error:", err);
-    return c.json({ error: "Failed to send message", details: err.message }, 500);
+    const status = err.message.includes("not connected") ? 503 : 400;
+    return c.json({ error: err.message || "Failed to send message" }, status);
   }
 });
 
