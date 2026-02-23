@@ -1,16 +1,13 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
-/*
- ---break---
- */
+
 @custom-variant dark (&:is(.dark *));
 
 /*
  * Accessories World — Brand Theme
- * Primary: Electric Blue (#1E40AF) — Technology & Trust
- * Secondary: Vibrant Orange (#F97316) — Energy & Affordability
- * Accent: Sky Blue (#0EA5E9) — Freshness & Modernity
+ * Primary: Red (#DC2626) — Energy & Boldness
+ * Secondary: Dark (#111111) — Elegance & Contrast
  */
 
 @theme inline {
@@ -42,6 +39,13 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
 
   /* Typography */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -54,19 +58,11 @@
   --radius-xl: 0.75rem;
   --radius-2xl: 1rem;
   --radius-full: 9999px;
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
 :root {
-  /* Light theme variables */
   --muted: oklch(0.967 0.001 286.375);
   --muted-foreground: oklch(0.552 0.016 285.938);
   --card: oklch(1 0 0);
@@ -125,6 +121,7 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -132,10 +129,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-/*
- ---break---
- */
 
 .dark {
   --background: oklch(0.141 0.005 285.823);
@@ -163,10 +156,6 @@ body {
   --chart-5: oklch(0.645 0.246 16.439);
 }
 
-/*
- ---break---
- */
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -174,4 +163,21 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Focus ring for keyboard navigation */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Smooth image loading */
+img {
+  content-visibility: auto;
+}
+
+/* Selection color */
+::selection {
+  background-color: var(--color-brand-primary);
+  color: white;
 }
