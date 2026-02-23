@@ -9,7 +9,9 @@ export function useKpis() {
   return useQuery({
     queryKey: ['kpis'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/kpis`);
+      const res = await fetch(`${API_URL}/admin/kpis`, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch KPIs');
       return res.json();
     },
@@ -20,7 +22,9 @@ export function useProducts() {
   return useQuery({
     queryKey: ['admin', 'products'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/products`);
+      const res = await fetch(`${API_URL}/admin/products`, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch products');
       return res.json();
     },
@@ -31,7 +35,9 @@ export function useAccounts() {
   return useQuery({
     queryKey: ['admin', 'accounts'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/accounts`);
+      const res = await fetch(`${API_URL}/admin/accounts`, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch accounts');
       return res.json();
     },
@@ -42,7 +48,9 @@ export function useWholesalers() {
   return useQuery({
     queryKey: ['admin', 'wholesalers'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/wholesalers`);
+      const res = await fetch(`${API_URL}/admin/wholesalers`, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch wholesalers');
       return res.json();
     },
@@ -53,7 +61,9 @@ export function useAdminOrders() {
   return useQuery({
     queryKey: ['admin', 'orders'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/orders`);
+      const res = await fetch(`${API_URL}/admin/orders`, {
+        credentials: 'include',
+      });
       if (!res.ok) throw new Error('Failed to fetch orders');
       return res.json();
     },
@@ -70,6 +80,7 @@ export function useCreateProduct() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create product');
       return res.json();
@@ -89,6 +100,7 @@ export function useUpdateProduct() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update product');
       return res.json();
@@ -106,6 +118,7 @@ export function useDeleteProduct() {
     mutationFn: async (id: string) => {
       const res = await fetch(`${API_URL}/admin/products/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete product');
       return res.json();
@@ -125,6 +138,7 @@ export function useCreateAccount() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create account');
       return res.json();
@@ -142,6 +156,7 @@ export function useDeleteAccount() {
     mutationFn: async (id: string) => {
       const res = await fetch(`${API_URL}/admin/accounts/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete account');
       return res.json();
@@ -161,6 +176,7 @@ export function useApproveWholesaler() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approved: true }),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to approve wholesaler');
       return res.json();
@@ -180,6 +196,7 @@ export function useRevokeWholesaler() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approved: false }),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to revoke wholesaler');
       return res.json();
@@ -199,6 +216,7 @@ export function useUpdateOrderStatus() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
+        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update order status');
       return res.json();

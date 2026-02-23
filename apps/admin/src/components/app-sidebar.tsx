@@ -30,11 +30,6 @@ const menuItems = [
     icon: Package,
   },
   {
-    title: "Orders",
-    href: "/dashboard/orders",
-    icon: ShoppingCart,
-  },
-  {
     title: "Accounts",
     href: "/dashboard/accounts",
     icon: Users,
@@ -84,6 +79,7 @@ export function AppSidebar() {
                     <SidebarMenuButton
                       asChild
                       isActive={isActive}
+                      className={isActive ? "bg-red-500 text-white hover:bg-red-600" : ""}
                     >
                       <Link href={item.href} className="flex items-center gap-2">
                         <Icon className="h-4 w-4" />
