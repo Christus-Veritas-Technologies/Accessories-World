@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       normalizedPhone = "+263" + normalizedPhone;
     }
 
-    // Check if agent service is configured
+    // Get agent URL from environment
     const agentUrl = process.env.NEXT_PUBLIC_AGENT_URL || "http://localhost:3004";
 
     // Call agent endpoint to send WhatsApp message
@@ -49,9 +49,8 @@ export async function POST(request: NextRequest) {
       }),
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
+      const result = await response.json();
       console.error("Agent error:", result);
       throw new Error(result.error || "Failed to send WhatsApp message");
     }
@@ -63,7 +62,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("WhatsApp sending error:", error);
     return NextResponse.json(
-      { error: "Failed to send WhatsApp message. Please try email instead or try again later." },
+      { error: error instanceof Error ? error.message : "Failed to send WhatsApp message. Please try again later." },
       { status: 500 }
     );
   }
