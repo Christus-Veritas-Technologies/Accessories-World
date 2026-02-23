@@ -18,7 +18,7 @@ auth.post("/admin/login", async (c) => {
     return c.json({ error: "Name and password are required" }, 400);
   }
 
-  const admin = await prisma.admin.findFirst({ where: { name } });
+  const admin = await prisma.admin.findFirst({ where: { name: name.toLowerCase() } });
   if (!admin) {
     return c.json({ error: "Invalid credentials" }, 401);
   }

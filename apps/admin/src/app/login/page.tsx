@@ -24,7 +24,7 @@ export default function AdminLogin() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, password }),
+          body: JSON.stringify({ name: name.toLowerCase(), password }),
           credentials: "include",
         }
       );

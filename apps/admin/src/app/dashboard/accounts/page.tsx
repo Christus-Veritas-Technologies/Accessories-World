@@ -25,12 +25,15 @@ export default function AccountsPage() {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(form, {
-      onSuccess: () => {
-        setForm({ name: '', email: '', isAdmin: false });
-        setShowForm(false);
-      },
-    });
+    createMutation.mutate(
+      { ...form, name: form.name.toLowerCase() },
+      {
+        onSuccess: () => {
+          setForm({ name: '', email: '', isAdmin: false });
+          setShowForm(false);
+        },
+      }
+    );
   };
 
   const handleDelete = (id: string) => {

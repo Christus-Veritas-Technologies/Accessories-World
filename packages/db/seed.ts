@@ -26,7 +26,7 @@ async function main() {
     const admin = await prisma.admin.create({
       data: {
         email: "admin@accessoriesworld.co.zw",
-        name: "Admin",
+        name: "admin",
         passwordHash,
         whatsapp: "+263784923973",
         isAdmin: true,

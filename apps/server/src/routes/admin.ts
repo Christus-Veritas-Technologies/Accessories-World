@@ -200,7 +200,7 @@ admin.post("/accounts", async (c) => {
 
   const account = await prisma.admin.create({
     data: {
-      name,
+      name: name.toLowerCase(),
       email,
       passwordHash,
       isAdmin: makeAdmin ?? false,
