@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Phone, MapPin, Mail } from "lucide-react";
+import { ArrowRight, Phone, MapPin, Mail, Zap, Headphones, Smartphone, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { siteConfig, homeHighlights } from "@/lib/site";
 
@@ -115,7 +115,6 @@ export default function HomePage() {
             <Button
               size="lg"
               asChild
-              className="bg-red-500 hover:bg-red-600 text-white"
             >
               <Link href="/products" className="flex items-center gap-2">
                 View All Products <ArrowRight className="h-4 w-4" />
@@ -126,18 +125,18 @@ export default function HomePage() {
           {/* Product categories placeholder */}
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { name: "Chargers & Cables", emoji: "🔌" },
-              { name: "Earphones & Speakers", emoji: "🎧" },
-              { name: "Phone Cases", emoji: "📱" },
-              { name: "Gadgets & More", emoji: "⚡" },
+              { name: "Chargers & Cables", icon: Zap },
+              { name: "Earphones & Speakers", icon: Headphones },
+              { name: "Phone Cases", icon: Smartphone },
+              { name: "Gadgets & More", icon: Package },
             ].map((category, idx) => (
               <div
                 key={idx}
                 className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 text-center shadow-sm hover:shadow-md hover:border-red-200 transition-all cursor-pointer group"
               >
-                <p className="mb-4 text-4xl group-hover:scale-110 transition-transform">
-                  {category.emoji}
-                </p>
+                <div className="mb-4 flex justify-center">
+                  <category.icon className="h-8 w-8 text-red-500 group-hover:scale-110 transition-transform" />
+                </div>
                 <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
                   {category.name}
                 </h3>
@@ -215,7 +214,6 @@ export default function HomePage() {
             <Button
               size="lg"
               asChild
-              className="bg-white text-red-500 hover:bg-gray-100"
             >
               <Link href="/products" className="flex items-center gap-2">
                 Shop Now <ArrowRight className="h-4 w-4" />
@@ -223,9 +221,8 @@ export default function HomePage() {
             </Button>
             <Button
               size="lg"
-              variant="outline"
+              variant="secondary"
               asChild
-              className="border-white text-white hover:bg-red-700"
             >
               <Link href="/contact">Get in Touch</Link>
             </Button>
