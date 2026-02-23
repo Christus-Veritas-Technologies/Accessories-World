@@ -14,21 +14,25 @@ export const mainNavLinks = [
   { href: "/about", label: "About" },
   { href: "/products", label: "Products" },
   { href: "/contact", label: "Contact" },
+  { href: process.env.NEXT_PUBLIC_BLOG_URL ?? "http://localhost:4321", label: "Blog", external: true },
 ] as const;
 
 export const homeHighlights = [
   {
     title: "Trusted quality",
+    icon: "Shield",
     description:
       "We stock accessories we can stand behind, from chargers and cables to speakers and smart gadgets.",
   },
   {
     title: "Good local support",
+    icon: "Headset",
     description:
       "Our team helps you pick the right item for your phone, your budget, and your daily use.",
   },
   {
     title: "Fast response",
+    icon: "Zap",
     description:
       "Call, WhatsApp, or visit us in Mutare and get practical help without long waiting times.",
   },
