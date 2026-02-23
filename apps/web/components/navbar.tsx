@@ -1,139 +1,139 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
-import { Menu, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Menu } from "lucide-react";
+import { mainNavLinks, siteConfig } from "@/lib/site";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 
-const navLinks = [
-  { href: "/products", label: "Products" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
+function isActiveRoute(pathname: string, href: string): boolean {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname.startsWith(href);
+}
 
 export function Navbar() {
-  const [open, setOpen] = useState(false);
-  const blogUrl = process.env.NEXT_PUBLIC_BLOG_URL ?? "/blog";
+  const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
-          <div className="relative h-9 w-9 overflow-hidden rounded-lg transition-transform duration-200 group-hover:scale-105">
-            <Image
-              src="/logo.jpg"
-              alt="Accessories World"
-              fill
-              className="object-cover"
-              priority
-            />
+    <header className="sticky top-0 z-50 border-b border-gray-200 bg-white">
+      <div className="mx-auto flex h-20 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        {/* Logo Section */}
+        <Link href="/" className="flex items-center gap-3 flex-shrink-0">
+          <Image
+            src="/logo.jpg"
+            alt="Accessories World logo"
+            width={40}
+            height={40}
+            className="rounded-lg border border-gray-200 object-cover"
+            priority
+          />
+          <div className="leading-tight">
+            <p className="text-base font-bold text-black">Accessories World</p>
+            <p className="text-xs text-gray-500">Mutare</p>
           </div>
-          <span className="text-lg font-bold tracking-tight text-foreground">
-            Accessories World
-          </span>
         </Link>
 
         {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1 md:flex">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="relative rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground hover:bg-muted/60"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <a
-            href={blogUrl}
-            className="relative rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground transition-colors duration-200 hover:text-foreground hover:bg-muted/60"
-          >
-            Blog
-          </a>
+          {mainNavLinks.map((link) => {
+            const active = isActiveRoute(pathname, link.href);
+
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "rounded-md px-3 py-2 text-sm font-medium transition-all",
+                  active
+                    ? "bg-red-50 text-red-500"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50",
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Desktop CTA */}
-        <div className="hidden md:flex items-center">
-          <Button size="sm" className="gap-1.5" asChild>
-            <Link href="/products">
-              Browse Products
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+        {/* Desktop CTA Buttons */}
+        <div className="hidden items-center gap-2 md:flex">
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="border-gray-300 text-gray-600 hover:bg-gray-50"
+          >
+            <a href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}>Call Us</a>
+          </Button>
+          <Button size="sm" asChild className="bg-red-500 hover:bg-red-600 text-white">
+            <Link href="/products">Shop Now</Link>
           </Button>
         </div>
 
-        {/* Mobile Menu */}
-        <Sheet open={open} onOpenChange={setOpen}>
+        {/* Mobile Menu Trigger */}
+        <Sheet>
           <SheetTrigger asChild className="md:hidden">
-            <Button variant="ghost" size="icon" className="h-9 w-9">
+            <Button variant="outline" size="icon" aria-label="Open menu">
               <Menu className="h-5 w-5" />
-              <span className="sr-only">Open menu</span>
             </Button>
           </SheetTrigger>
-
-          <SheetContent side="right" className="w-[280px] p-0">
-            <div className="flex flex-col h-full">
-              {/* Mobile Logo */}
-              <div className="flex items-center gap-2.5 px-6 py-5 border-b border-border/60">
-                <div className="relative h-8 w-8 overflow-hidden rounded-lg">
-                  <Image
-                    src="/logo.jpg"
-                    alt="Accessories World"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <span className="text-base font-bold text-foreground">
-                  Accessories World
-                </span>
+          <SheetContent side="right" className="w-[300px] p-0">
+            <div className="flex h-full flex-col">
+              {/* Mobile Menu Header */}
+              <div className="border-b border-gray-200 px-6 py-4">
+                <p className="text-base font-semibold text-black">Menu</p>
               </div>
 
-              {/* Mobile Nav Links */}
-              <nav className="flex flex-col gap-0.5 px-3 py-4 flex-1">
-                <SheetClose asChild>
-                  <Link
-                    href="/"
-                    className="rounded-lg px-4 py-3 text-[15px] font-medium text-foreground transition-colors duration-200 hover:bg-muted/60"
-                  >
-                    Home
-                  </Link>
-                </SheetClose>
-                {navLinks.map((link) => (
-                  <SheetClose asChild key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="rounded-lg px-4 py-3 text-[15px] font-medium text-foreground transition-colors duration-200 hover:bg-muted/60"
-                    >
-                      {link.label}
-                    </Link>
-                  </SheetClose>
-                ))}
-                <SheetClose asChild>
-                  <a
-                    href={blogUrl}
-                    className="rounded-lg px-4 py-3 text-[15px] font-medium text-foreground transition-colors duration-200 hover:bg-muted/60"
-                  >
-                    Blog
-                  </a>
-                </SheetClose>
+              {/* Mobile Navigation Links */}
+              <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4">
+                {mainNavLinks.map((link) => {
+                  const active = isActiveRoute(pathname, link.href);
+
+                  return (
+                    <SheetClose asChild key={link.href}>
+                      <Link
+                        href={link.href}
+                        className={cn(
+                          "rounded-md px-4 py-3 text-sm font-medium transition-all",
+                          active
+                            ? "bg-red-50 text-red-500"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
+                        )}
+                      >
+                        {link.label}
+                      </Link>
+                    </SheetClose>
+                  );
+                })}
               </nav>
 
-              {/* Mobile CTA */}
-              <div className="px-4 pb-6">
+              {/* Mobile CTA Buttons */}
+              <div className="space-y-2 border-t border-gray-200 p-4">
                 <SheetClose asChild>
-                  <Button className="w-full gap-1.5" asChild>
-                    <Link href="/products">
-                      Browse Products
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
+                  <Button
+                    variant="outline"
+                    className="w-full border-gray-300 text-gray-600 hover:bg-gray-50"
+                    asChild
+                  >
+                    <a href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}>
+                      Call Us
+                    </a>
+                  </Button>
+                </SheetClose>
+                <SheetClose asChild>
+                  <Button className="w-full bg-red-500 hover:bg-red-600 text-white" asChild>
+                    <Link href="/products">Shop Now</Link>
                   </Button>
                 </SheetClose>
               </div>

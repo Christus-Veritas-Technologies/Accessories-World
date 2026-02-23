@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { Navbar } from "@/components/navbar";
+import { siteConfig } from "@/lib/site";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -12,58 +13,35 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: {
-    default:
-      "Accessories World Zimbabwe — Every Accessory at an Affordable Price",
-    template: "%s | Accessories World Zimbabwe",
-  },
-  description:
-    "Your one-stop shop for mobile accessories and gadgets in Mutare, Zimbabwe. Shop earphones, earpods, Bluetooth speakers, radios, chargers, phone cases and more at affordable prices.",
-  keywords: [
-    "mobile accessories",
-    "gadgets",
-    "earphones",
-    "earpods",
-    "Bluetooth speakers",
-    "radios",
-    "chargers",
-    "phone cases",
-    "Zimbabwe",
-    "Mutare",
-    "affordable accessories",
-    "Accessories World",
-  ],
-  authors: [{ name: "Accessories World Zimbabwe" }],
-  creator: "Accessories World Zimbabwe",
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
+  title: {
+    default: `${siteConfig.name} | ${siteConfig.tagline}`,
+    template: `%s | ${siteConfig.name}`,
+  },
+  description: siteConfig.description,
+  keywords: [
+    "Accessories World",
+    "Zimbabwe accessories",
+    "phone accessories",
+    "Mutare gadgets",
+    "chargers and earphones",
+    "affordable accessories",
+  ],
   openGraph: {
     type: "website",
     locale: "en_ZW",
-    siteName: "Accessories World Zimbabwe",
-    title:
-      "Accessories World Zimbabwe — Every Accessory at an Affordable Price",
-    description:
-      "Your one-stop shop for mobile accessories and gadgets in Mutare, Zimbabwe.",
+    siteName: siteConfig.name,
+    title: `${siteConfig.name} | ${siteConfig.tagline}`,
+    description: siteConfig.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Accessories World Zimbabwe",
-    description:
-      "Every accessory at an affordable price. Shop mobile gadgets in Mutare, Zimbabwe.",
+    title: `${siteConfig.name} | ${siteConfig.tagline}`,
+    description: siteConfig.description,
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
+  themeColor: "#ef4444",
 };
 
 export default function RootLayout({
@@ -73,16 +51,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={inter.variable}>
-      <head>
-        <meta name="apple-mobile-web-app-title" content="Accessories World" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <meta name="theme-color" content="#DC2626" />
-      </head>
-      <body className="min-h-screen flex flex-col antialiased">
+      <body className="font-sans text-black antialiased">
         <Providers>
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
+          <div className="flex min-h-screen flex-col bg-white">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
         </Providers>
       </body>
     </html>

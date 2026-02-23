@@ -1,169 +1,105 @@
-import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Phone, Mail } from "lucide-react";
+import Link from "next/link";
+import { MapPin, Mail, Phone } from "lucide-react";
+import { mainNavLinks, siteConfig } from "@/lib/site";
 
-const quickLinks = [
-  { href: "/", label: "Home" },
-  { href: "/products", label: "Products" },
-  { href: "/about", label: "About Us" },
-  { href: "/contact", label: "Contact" },
-];
-
-async function getCategories() {
-  try {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003/api";
-    const res = await fetch(`${apiUrl}/categories`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-export async function Footer() {
-  const blogUrl = process.env.NEXT_PUBLIC_BLOG_URL ?? "/blog";
-  const categories = await getCategories();
+export function Footer() {
+  const year = new Date().getFullYear();
 
   return (
-    <footer className="border-t border-border/60 bg-muted/30">
-      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
-          {/* Brand Column */}
-          <div className="space-y-5 sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <div className="relative h-9 w-9 overflow-hidden rounded-lg">
-                <Image
-                  src="/logo.jpg"
-                  alt="Accessories World"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              <span className="text-lg font-bold text-foreground">
+    <footer className="border-t border-gray-200 bg-white">
+      {/* Main footer content */}
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          {/* Brand section */}
+          <div>
+            <Link href="/" className="inline-flex items-center gap-3">
+              <Image
+                src="/logo.jpg"
+                alt="Accessories World logo"
+                width={40}
+                height={40}
+                className="rounded-lg border border-gray-200 object-cover"
+              />
+              <span className="text-base font-bold text-black">
                 Accessories World
               </span>
             </Link>
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              Your one-stop shop for quality mobile accessories and gadgets at
-              prices that work for you.
+
+            <p className="mt-4 text-sm leading-relaxed text-gray-600">
+              Quality accessories at affordable prices. Supporting Zimbabwean families with reliable products and excellent service.
             </p>
-            <div className="space-y-2.5 text-sm text-muted-foreground">
-              <div className="flex items-start gap-2.5">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-primary" />
-                <span>49, 51 Second St, Mutare, Zimbabwe</span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Phone className="h-4 w-4 shrink-0 text-brand-primary" />
-                <a
-                  href="tel:+263784923973"
-                  className="transition-colors duration-200 hover:text-foreground"
-                >
-                  +263 78 492 3973
-                </a>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <Mail className="h-4 w-4 shrink-0 text-brand-primary" />
-                <a
-                  href="mailto:info@accessoriesworld.co.zw"
-                  className="transition-colors duration-200 hover:text-foreground"
-                >
-                  info@accessoriesworld.co.zw
-                </a>
-              </div>
-            </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Pages section */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">
-              Quick Links
+            <h3 className="text-sm font-semibold text-black uppercase tracking-wider">
+              Pages
             </h3>
-            <ul className="space-y-2.5">
-              {quickLinks.map((link) => (
-                <li key={link.href}>
+            <ul className="mt-4 space-y-2">
+              {mainNavLinks.map((item) => (
+                <li key={item.href}>
                   <Link
-                    href={link.href}
-                    className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                    href={item.href}
+                    className="text-sm text-gray-600 hover:text-red-500 transition-colors"
                   >
-                    {link.label}
+                    {item.label}
                   </Link>
                 </li>
               ))}
-              <li>
+            </ul>
+          </div>
+
+          {/* Contact section */}
+          <div>
+            <h3 className="text-sm font-semibold text-black uppercase tracking-wider">
+              Contact
+            </h3>
+            <ul className="mt-4 space-y-3">
+              <li className="flex items-start gap-2">
+                <MapPin className="mt-0.5 h-4 w-4 text-red-500 flex-shrink-0" />
+                <span className="text-sm text-gray-600">{siteConfig.location}</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-red-500 flex-shrink-0" />
                 <a
-                  href={blogUrl}
-                  className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                  href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}
+                  className="text-sm text-gray-600 hover:text-red-500 transition-colors"
                 >
-                  Blog
+                  {siteConfig.phone}
+                </a>
+              </li>
+              <li className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-red-500 flex-shrink-0" />
+                <a
+                  href={`mailto:${siteConfig.email}`}
+                  className="text-sm text-gray-600 hover:text-red-500 transition-colors"
+                >
+                  {siteConfig.email}
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Categories (dynamic) */}
+          {/* Hours section */}
           <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">
-              Categories
+            <h3 className="text-sm font-semibold text-black uppercase tracking-wider">
+              Working Hours
             </h3>
-            <ul className="space-y-2.5">
-              {categories.length > 0 ? (
-                categories.slice(0, 6).map((cat: { slug: string; name: string }) => (
-                  <li key={cat.slug}>
-                    <Link
-                      href={`/products?category=${cat.slug}`}
-                      className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
-                    >
-                      {cat.name}
-                    </Link>
-                  </li>
-                ))
-              ) : (
-                <li>
-                  <Link
-                    href="/products"
-                    className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
-                  >
-                    View All Products
-                  </Link>
-                </li>
-              )}
-            </ul>
-          </div>
-
-          {/* Legal */}
-          <div>
-            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-foreground">
-              Legal
-            </h3>
-            <ul className="space-y-2.5">
-              <li>
-                <Link
-                  href="/privacy"
-                  className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/terms"
-                  className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
+            <div className="mt-4 space-y-2">
+              <p className="text-sm text-gray-600">Mon - Fri: 8:00 AM - 5:30 PM</p>
+              <p className="text-sm text-gray-600">Saturday: 8:00 AM - 3:00 PM</p>
+              <p className="text-sm text-gray-600">Sunday: Closed</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 border-t border-border/60 pt-8">
-          <p className="text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} Accessories World Zimbabwe. All
-            rights reserved.
+      {/* Copyright section */}
+      <div className="border-t border-gray-200 bg-gray-50 px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <p className="text-center text-xs text-gray-600">
+            © {year} Accessories World. All rights reserved.
           </p>
         </div>
       </div>

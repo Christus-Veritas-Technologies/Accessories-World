@@ -1,341 +1,237 @@
-import Link from "next/link";
+"use client";
+
 import Image from "next/image";
-import {
-  ArrowRight,
-  MapPin,
-  Phone,
-  ShieldCheck,
-  Truck,
-  Tag,
-  Headset,
-  Star,
-  Package,
-} from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Phone, MapPin, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { siteConfig, homeHighlights } from "@/lib/site";
 
-interface Category {
-  id: string;
-  name: string;
-  slug: string;
-  description?: string;
-  image?: string;
-  _count?: { products: number };
-}
-
-async function getCategories(): Promise<Category[]> {
-  try {
-    const apiUrl =
-      process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003/api";
-    const res = await fetch(`${apiUrl}/categories`, {
-      next: { revalidate: 600 },
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-const features = [
-  {
-    icon: Tag,
-    title: "Fair, Honest Prices",
-    description:
-      "We keep our prices low so that everyone can get the accessories they need without breaking the bank.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Products You Can Trust",
-    description:
-      "Every item we sell is tested for quality. If it does not meet our standards, we do not stock it.",
-  },
-  {
-    icon: Truck,
-    title: "Fast Delivery Across Zimbabwe",
-    description:
-      "Order today and get your products delivered to your doorstep quickly and safely, wherever you are.",
-  },
-  {
-    icon: Package,
-    title: "Bulk Orders Welcome",
-    description:
-      "Whether you are a reseller or a business, we offer special wholesale pricing on large orders.",
-  },
-  {
-    icon: Headset,
-    title: "Friendly Customer Support",
-    description:
-      "Got a question? Our team is always ready to help you find the right product or solve any issue.",
-  },
-  {
-    icon: Star,
-    title: "Trusted by Thousands",
-    description:
-      "Customers across Mutare and Zimbabwe keep coming back because they know we deliver on our promises.",
-  },
-];
-
-const stats = [
-  { value: "2,000+", label: "Happy Customers" },
-  { value: "500+", label: "Products Available" },
-  { value: "50+", label: "Categories" },
-];
-
-export default async function Home() {
-  const categories = await getCategories();
-
+export default function HomePage() {
   return (
-    <>
+    <main className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-muted/50 to-background py-20 sm:py-28 lg:py-36">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-border/80 bg-background px-4 py-1.5 text-sm font-medium text-muted-foreground shadow-sm">
-              <MapPin className="h-3.5 w-3.5 text-brand-primary" />
-              Proudly based in Mutare, Zimbabwe
-            </div>
-
-            <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              Every Accessory at an{" "}
-              <span className="text-brand-primary">Affordable Price</span>
-            </h1>
-
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-              From earphones to chargers, phone cases to Bluetooth speakers
-              — we have everything you need for your phone and gadgets, all in
-              one place.
-            </p>
-
-            <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-              <Button
-                size="lg"
-                className="w-full sm:w-auto text-base font-semibold gap-2"
-                asChild
-              >
-                <Link href="/products">
-                  Browse Products
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto text-base"
-                asChild
-              >
-                <Link href="/contact">Get in Touch</Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Categories Section */}
-      <section className="py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-wider text-brand-primary">
-              Browse by Category
-            </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Find what you are looking for
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-              We organize our products into clear categories so you can quickly
-              find the exact accessory you need.
-            </p>
-          </div>
-
-          {categories.length > 0 ? (
-            <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {categories.map((category) => (
-                <Link
-                  key={category.id}
-                  href={`/products?category=${category.slug}`}
-                  className="group relative flex items-center gap-4 rounded-2xl border border-border/60 bg-card p-5 transition-all duration-300 hover:shadow-lg hover:border-brand-primary/30 hover:-translate-y-0.5"
-                >
-                  {category.image ? (
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-muted">
-                      <Image
-                        src={category.image}
-                        alt={category.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors duration-300 group-hover:bg-brand-primary group-hover:text-white">
-                      <Package className="h-6 w-6" />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <h3 className="font-semibold text-foreground group-hover:text-brand-primary transition-colors duration-200">
-                      {category.name}
-                    </h3>
-                    {category.description && (
-                      <p className="mt-0.5 text-sm text-muted-foreground truncate">
-                        {category.description}
-                      </p>
-                    )}
-                  </div>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 group-hover:translate-x-1 group-hover:text-brand-primary" />
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="mt-14 text-center">
-              <p className="text-muted-foreground">
-                Categories are being set up. Check back soon!
+      <section className="relative border-b border-gray-200 bg-gradient-to-br from-white via-white to-gray-50 py-16 sm:py-24 lg:py-32">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-8 lg:items-center">
+            {/* Left side - Content */}
+            <div className="flex flex-col justify-center">
+              <h1 className="mb-6 text-4xl font-bold text-black sm:text-5xl lg:text-6xl leading-tight">
+                Your One-Stop for Quality{" "}
+                <span className="text-red-500">Accessories</span>
+              </h1>
+              <p className="mb-2 text-lg text-gray-600 sm:text-xl">
+                {siteConfig.tagline}
               </p>
-              <Button className="mt-4" asChild>
-                <Link href="/products">View All Products</Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="bg-muted/40 py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <p className="text-sm font-semibold uppercase tracking-wider text-brand-primary">
-              Why Choose Us
-            </p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              Why Choose Accessories World?
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
-              We are not just another accessories shop. Here is what makes us
-              different from the rest.
-            </p>
-          </div>
-
-          <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {features.map((feature) => (
-              <div
-                key={feature.title}
-                className="rounded-2xl border border-border/60 bg-card p-7 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
-              >
-                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
-                  <feature.icon className="h-6 w-6" />
-                </div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-20 sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
-            {stats.map((stat) => (
-              <div key={stat.label} className="text-center">
-                <p className="text-4xl font-extrabold tracking-tight text-brand-primary sm:text-5xl">
-                  {stat.value}
-                </p>
-                <p className="mt-2 text-sm font-medium text-muted-foreground">
-                  {stat.label}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonial / Trust */}
-      <section className="bg-foreground py-20 sm:py-24">
-        <div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-          <p className="text-3xl font-bold leading-snug text-background sm:text-4xl">
-            &ldquo;Accessories World has been our go-to supplier for over a
-            year. The prices are fair, the products last, and they always
-            deliver on time.&rdquo;
-          </p>
-          <div className="mt-8">
-            <p className="font-semibold text-background/90">Happy Customer</p>
-            <p className="text-sm text-background/60">Mutare, Zimbabwe</p>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 sm:py-28">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-brand-primary p-10 sm:p-14 lg:p-20">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-                Ready to find what you need?
-              </h2>
-              <p className="mt-4 text-lg text-white/80">
-                Browse our full range of accessories or reach out to us for
-                wholesale pricing. We are happy to help.
+              <p className="mb-8 text-base text-gray-500 leading-relaxed max-w-md">
+                Find everything you need for your phone and gadgets at prices that work for your pocket. From chargers to speakers, we have it all in one place.
               </p>
-              <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+
+              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                 <Button
                   size="lg"
-                  variant="secondary"
-                  className="w-full sm:w-auto text-base font-semibold gap-2"
                   asChild
+                  className="bg-red-500 hover:bg-red-600 text-white"
                 >
-                  <Link href="/products">
-                    Browse Products
-                    <ArrowRight className="h-4 w-4" />
+                  <Link href="/products" className="flex items-center gap-2">
+                    Shop Now <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
                 <Button
                   size="lg"
                   variant="outline"
-                  className="w-full sm:w-auto text-base border-white/30 text-white hover:bg-white/10 hover:text-white"
                   asChild
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
-                  <Link href="/contact">Contact Us</Link>
+                  <a href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`} className="flex items-center gap-2">
+                    <Phone className="h-4 w-4" /> Call Us
+                  </a>
                 </Button>
+              </div>
+            </div>
+
+            {/* Right side - Hero Image */}
+            <div className="relative h-80 sm:h-96 lg:h-full min-h-80 rounded-lg overflow-hidden border border-gray-200 shadow-md bg-gray-100 flex items-center justify-center">
+              <div className="relative w-full h-full">
+                <Image
+                  src="/logo.jpg"
+                  alt="Accessories World showcase"
+                  fill
+                  className="object-cover"
+                  priority
+                />
+              </div>
+              {/* Decorative badge */}
+              <div className="absolute top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
+                Best Prices
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Location Section */}
-      <section className="border-t border-border/60 bg-muted/30 py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col items-center gap-8 text-center sm:text-left sm:flex-row sm:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground sm:text-3xl">
-                Visit Our Store
-              </h2>
-              <div className="mt-4 space-y-2 text-muted-foreground">
-                <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <MapPin className="h-5 w-5 text-brand-primary" />
-                  <span>49, 51 Second St, Mutare, Zimbabwe</span>
+      {/* Why Choose Us Section */}
+      <section className="border-b border-gray-200 py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h2 className="mb-4 text-3xl font-bold text-black sm:text-4xl">
+              Why Choose Accessories World?
+            </h2>
+            <p className="text-base text-gray-600 sm:text-lg">
+              We are more than just a shop — we are your trusted accessory partner
+            </p>
+          </div>
+
+          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {homeHighlights.map((highlight, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div className="mb-4 h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+                  <div className="h-6 w-6 rounded-full bg-red-500" />
                 </div>
-                <div className="flex items-center justify-center gap-2 sm:justify-start">
-                  <Phone className="h-5 w-5 text-brand-primary" />
-                  <a
-                    href="tel:+263784923973"
-                    className="transition-colors duration-200 hover:text-foreground"
-                  >
-                    +263 78 492 3973
-                  </a>
+                <h3 className="mb-3 text-lg font-semibold text-black">
+                  {highlight.title}
+                </h3>
+                <p className="text-sm text-gray-600 leading-relaxed">
+                  {highlight.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Products Preview Section */}
+      <section className="border-b border-gray-200 py-16 sm:py-24 bg-gray-50">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-12">
+            <h2 className="mb-4 text-3xl font-bold text-black sm:text-4xl">
+              Browse Our Range
+            </h2>
+            <p className="mb-8 text-base text-gray-600 sm:text-lg max-w-2xl">
+              We stock a wide selection of phone accessories, chargers, cables, earphones, speakers, and smart gadgets. Everything you need, all in one place.
+            </p>
+            <Button
+              size="lg"
+              asChild
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              <Link href="/products" className="flex items-center gap-2">
+                View All Products <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+
+          {/* Product categories placeholder */}
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[
+              { name: "Chargers & Cables", emoji: "🔌" },
+              { name: "Earphones & Speakers", emoji: "🎧" },
+              { name: "Phone Cases", emoji: "📱" },
+              { name: "Gadgets & More", emoji: "⚡" },
+            ].map((category, idx) => (
+              <div
+                key={idx}
+                className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 text-center shadow-sm hover:shadow-md hover:border-red-200 transition-all cursor-pointer group"
+              >
+                <p className="mb-4 text-4xl group-hover:scale-110 transition-transform">
+                  {category.emoji}
+                </p>
+                <h3 className="font-semibold text-gray-900 text-sm sm:text-base">
+                  {category.name}
+                </h3>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Quick Contact Section */}
+      <section className="border-b border-gray-200 py-16 sm:py-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-8 sm:grid-cols-3">
+            {/* Phone */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 text-center shadow-sm">
+              <div className="mb-4 flex justify-center">
+                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+                  <Phone className="h-6 w-6 text-red-500" />
                 </div>
               </div>
+              <h3 className="mb-2 text-lg font-semibold text-black">Call Us</h3>
+              <p className="mb-4 text-sm text-gray-600">Speak to our team directly</p>
+              <a
+                href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}
+                className="text-red-500 font-semibold hover:text-red-600 transition-colors"
+              >
+                {siteConfig.phone}
+              </a>
             </div>
-            <Button size="lg" className="gap-2" asChild>
-              <Link href="/contact">
-                Get Directions
-                <ArrowRight className="h-4 w-4" />
+
+            {/* Location */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 text-center shadow-sm">
+              <div className="mb-4 flex justify-center">
+                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+                  <MapPin className="h-6 w-6 text-red-500" />
+                </div>
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-black">Visit Us</h3>
+              <p className="mb-4 text-sm text-gray-600">Come see us in person</p>
+              <p className="text-red-500 font-semibold text-sm">
+                {siteConfig.location}
+              </p>
+            </div>
+
+            {/* Email */}
+            <div className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 text-center shadow-sm">
+              <div className="mb-4 flex justify-center">
+                <div className="h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+                  <Mail className="h-6 w-6 text-red-500" />
+                </div>
+              </div>
+              <h3 className="mb-2 text-lg font-semibold text-black">Email Us</h3>
+              <p className="mb-4 text-sm text-gray-600">Send us a message anytime</p>
+              <a
+                href={`mailto:${siteConfig.email}`}
+                className="text-red-500 font-semibold hover:text-red-600 transition-colors"
+              >
+                {siteConfig.email}
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="border-b border-gray-200 bg-gradient-to-r from-red-500 to-red-600 py-16 sm:py-20">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="mb-4 text-3xl font-bold text-white sm:text-4xl">
+            Ready to find your perfect accessory?
+          </h2>
+          <p className="mb-8 text-base text-red-100 sm:text-lg max-w-2xl mx-auto">
+            Browse our full selection of quality accessories at prices you can afford. Shop online or visit us in Mutare today.
+          </p>
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:justify-center">
+            <Button
+              size="lg"
+              asChild
+              className="bg-white text-red-500 hover:bg-gray-100"
+            >
+              <Link href="/products" className="flex items-center gap-2">
+                Shop Now <ArrowRight className="h-4 w-4" />
               </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="border-white text-white hover:bg-red-700"
+            >
+              <Link href="/contact">Get in Touch</Link>
             </Button>
           </div>
         </div>
       </section>
-    </>
+    </main>
   );
 }
