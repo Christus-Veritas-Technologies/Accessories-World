@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Phone, MapPin, Mail, Zap, Headphones, Smartphone, Package } from "lucide-react";
+import { ArrowRight, Phone, MapPin, Mail, Zap, Headphones, Smartphone, Package, Shield, Headset } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TestimonialsSection } from "@/components/home/testimonials-section";
 import { TrendingProductsSection } from "@/components/home/trending-products-section";
@@ -84,22 +84,30 @@ export default function HomePage() {
           </div>
 
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {homeHighlights.map((highlight, idx) => (
-              <div
-                key={idx}
-                className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow"
-              >
-                <div className="mb-4 h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
-                  <div className="h-6 w-6 rounded-full bg-red-500" />
+            {homeHighlights.map((highlight, idx) => {
+              const IconMap = {
+                Shield: Shield,
+                Headset: Headset,
+                Zap: Zap,
+              };
+              const Icon = IconMap[highlight.icon as keyof typeof IconMap];
+              return (
+                <div
+                  key={idx}
+                  className="rounded-lg border border-gray-200 bg-white p-6 sm:p-8 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="mb-4 h-12 w-12 rounded-lg bg-red-100 flex items-center justify-center">
+                    {Icon && <Icon className="h-6 w-6 text-red-500" />}
+                  </div>
+                  <h3 className="mb-3 text-lg font-semibold text-black">
+                    {highlight.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 leading-relaxed">
+                    {highlight.description}
+                  </p>
                 </div>
-                <h3 className="mb-3 text-lg font-semibold text-black">
-                  {highlight.title}
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed">
-                  {highlight.description}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
