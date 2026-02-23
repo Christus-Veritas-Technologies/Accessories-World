@@ -1,139 +1,228 @@
 import Link from "next/link";
-import { CheckCircle, Users, Truck, Award } from "lucide-react";
+import Image from "next/image";
+import {
+  CheckCircle,
+  Users,
+  Truck,
+  Award,
+  ArrowRight,
+  Target,
+  Eye,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export const metadata = {
+  title: "About Us",
+  description:
+    "Learn about Accessories World Zimbabwe — your trusted source for quality mobile accessories in Mutare.",
+};
+
+const values = [
+  {
+    icon: CheckCircle,
+    title: "Quality",
+    description:
+      "We pick our products carefully. If it does not meet our standards, we do not sell it.",
+  },
+  {
+    icon: Users,
+    title: "Customer First",
+    description:
+      "You are the reason we exist. We listen, we help, and we make sure you are happy.",
+  },
+  {
+    icon: Truck,
+    title: "Reliability",
+    description:
+      "When we say we will deliver, we deliver. You can count on us every single time.",
+  },
+  {
+    icon: Award,
+    title: "Integrity",
+    description:
+      "Fair prices, honest advice, and no hidden surprises. What you see is what you get.",
+  },
+];
+
+const reasons = [
+  "A wide range of quality mobile accessories at fair prices",
+  "Special wholesale pricing for businesses and resellers",
+  "Reliable delivery across Zimbabwe",
+  "A friendly team that helps you find the right product",
+  "Products that are tested and built to last",
+  "Easy ways to get in touch — phone, WhatsApp, or visit our store",
+];
 
 export default function AboutPage() {
   return (
     <>
       {/* Header */}
-      <section className="bg-gradient-to-br from-brand-primary to-brand-primary-dark py-12">
+      <section className="bg-gradient-to-b from-muted/60 to-background py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl font-bold text-white">About Us</h1>
-          <p className="mt-2 text-brand-secondary-light">
-            Your trusted partner for quality mobile accessories since day one
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-primary">
+            About Us
+          </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Who We Are
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
+            We are Accessories World — a mobile accessories shop in Mutare,
+            Zimbabwe, serving customers who want quality products at prices that
+            make sense.
           </p>
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 space-y-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Mission & Vision */}
-        <section className="grid gap-8 md:grid-cols-2">
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">Our Mission</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              To provide affordable, quality mobile accessories and gadgets to everyone 
-              across Zimbabwe. We believe that everyone deserves access to reliable 
-              products at fair prices, whether buying retail or wholesale.
+        <section className="grid gap-6 py-16 sm:py-20 md:grid-cols-2">
+          <div className="rounded-2xl border border-border/60 bg-card p-8 transition-all duration-300 hover:shadow-md">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
+              <Target className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Our Mission</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              To give everyone in Zimbabwe access to quality mobile accessories
+              at prices they can afford. Whether you are buying one item for
+              yourself or stocking your shop, we are here to help.
             </p>
           </div>
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">Our Vision</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              To become Zimbabwe's most trusted source for mobile accessories, known 
-              for our commitment to quality, customer service, and fair pricing. We aim 
-              to support local businesses and wholesalers with competitive bulk rates.
+          <div className="rounded-2xl border border-border/60 bg-card p-8 transition-all duration-300 hover:shadow-md">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
+              <Eye className="h-6 w-6" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Our Vision</h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              To become the most trusted name in mobile accessories in Zimbabwe.
+              We want to be the first place people think of when they need a
+              charger, earphones, or a phone case.
             </p>
           </div>
         </section>
 
         {/* Values */}
-        <section>
-          <h2 className="mb-8 text-3xl font-bold text-center">Our Values</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-lg border border-border bg-card p-6 text-center">
-              <CheckCircle className="mx-auto mb-4 h-8 w-8 text-brand-primary" />
-              <h3 className="font-semibold mb-2">Quality</h3>
-              <p className="text-sm text-muted-foreground">
-                We source only the best products that meet our strict quality standards.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-6 text-center">
-              <Users className="mx-auto mb-4 h-8 w-8 text-brand-primary" />
-              <h3 className="font-semibold mb-2">Customer First</h3>
-              <p className="text-sm text-muted-foreground">
-                Your satisfaction is our priority. We're here to help and support you.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-6 text-center">
-              <Truck className="mx-auto mb-4 h-8 w-8 text-brand-primary" />
-              <h3 className="font-semibold mb-2">Reliability</h3>
-              <p className="text-sm text-muted-foreground">
-                Consistent quality, dependable service, and fast delivery every time.
-              </p>
-            </div>
-            <div className="rounded-lg border border-border bg-card p-6 text-center">
-              <Award className="mx-auto mb-4 h-8 w-8 text-brand-primary" />
-              <h3 className="font-semibold mb-2">Integrity</h3>
-              <p className="text-sm text-muted-foreground">
-                Fair pricing, transparent dealings, and honest communication always.
-              </p>
-            </div>
+        <section className="py-16 sm:py-20">
+          <div className="text-center">
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-primary">
+              What We Stand For
+            </p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Our Values
+            </h2>
           </div>
-        </section>
 
-        {/* Who We Are */}
-        <section className="rounded-lg border border-border bg-muted/30 p-8">
-          <h2 className="mb-6 text-2xl font-bold">Who We Are</h2>
-          <div className="space-y-4 text-muted-foreground leading-relaxed">
-            <p>
-              Accessories World is a leading mobile accessories retailer based in 
-              Mutare, Zimbabwe. We've built our reputation on offering quality products 
-              at affordable prices to both individual customers and wholesale buyers.
-            </p>
-            <p>
-              Our product range includes earphones, Bluetooth speakers, radios, chargers, 
-              cables, phone cases, screen protectors, and many other mobile accessories. 
-              Whether you're looking for a single item or bulk orders, we have you covered.
-            </p>
-            <p>
-              We're proudly Zimbabwean and committed to supporting local businesses and 
-              entrepreneurs. Our dedicated wholesaler program offers special pricing and 
-              services for bulk purchases.
-            </p>
-          </div>
-        </section>
-
-        {/* Why Choose Us */}
-        <section>
-          <h2 className="mb-8 text-2xl font-bold text-center">Why Choose Accessories World?</h2>
-          <div className="space-y-4">
-            {[
-              "Wide selection of quality mobile accessories at competitive prices",
-              "Special wholesale pricing for bulk orders and resellers",
-              "Fast and reliable delivery across Zimbabwe",
-              "Expert customer service and product recommendations",
-              "Authentic products with warranty support",
-              "Convenient online shopping with secure payment options",
-            ].map((reason, idx) => (
-              <div key={idx} className="flex gap-4 items-start">
-                <CheckCircle className="h-6 w-6 text-brand-primary flex-shrink-0 mt-0.5" />
-                <span className="text-muted-foreground">{reason}</span>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {values.map((value) => (
+              <div
+                key={value.title}
+                className="rounded-2xl border border-border/60 bg-card p-7 text-center transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"
+              >
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary">
+                  <value.icon className="h-6 w-6" />
+                </div>
+                <h3 className="font-semibold text-foreground">{value.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                  {value.description}
+                </p>
               </div>
             ))}
           </div>
         </section>
 
-        {/* CTA */}
-        <section className="rounded-lg bg-gradient-to-r from-brand-primary to-brand-primary-dark p-12 text-center text-white">
-          <h2 className="mb-4 text-2xl font-bold">Ready to Shop?</h2>
-          <p className="mb-6 text-brand-secondary-light">
-            Explore our collection or contact us for wholesale inquiries
-          </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link
-              href="/products"
-              className="rounded-lg bg-white px-6 py-3 font-semibold text-brand-primary hover:bg-brand-secondary-light transition-colors"
-            >
-              Browse Products
-            </Link>
-            <Link
-              href="/contact"
-              className="rounded-lg border border-white px-6 py-3 font-semibold hover:bg-white/10 transition-colors"
-            >
-              Contact for Wholesale
-            </Link>
+        {/* Our Story */}
+        <section className="py-16 sm:py-20">
+          <div className="rounded-2xl border border-border/60 bg-muted/20 p-8 sm:p-12">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="relative h-10 w-10 overflow-hidden rounded-lg">
+                <Image
+                  src="/logo.jpg"
+                  alt="Accessories World"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground">Our Story</h2>
+            </div>
+            <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+              <p>
+                Accessories World started with a simple idea: everyone deserves
+                good quality accessories without paying too much. Based in
+                Mutare, we opened our doors to serve local customers and have
+                grown to reach people all across Zimbabwe.
+              </p>
+              <p>
+                We stock everything from earphones and Bluetooth speakers to
+                chargers, cables, phone cases, and screen protectors. Whether
+                you walk into our store or shop online, you will find a wide
+                selection at honest prices.
+              </p>
+              <p>
+                For businesses and resellers, we offer a dedicated wholesale
+                program with bulk pricing. We believe in supporting local
+                entrepreneurs and helping them succeed.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Why Choose Us */}
+        <section className="py-16 sm:py-20">
+          <div className="text-center">
+            <p className="text-sm font-semibold uppercase tracking-wider text-brand-primary">
+              The Difference
+            </p>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+              Why Choose Accessories World?
+            </h2>
+          </div>
+
+          <div className="mt-12 grid gap-4 sm:grid-cols-2">
+            {reasons.map((reason, idx) => (
+              <div
+                key={idx}
+                className="flex items-start gap-3.5 rounded-xl border border-border/60 bg-card p-5 transition-all duration-200 hover:border-brand-primary/30"
+              >
+                <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-brand-primary" />
+                <span className="text-sm text-muted-foreground">{reason}</span>
+              </div>
+            ))}
           </div>
         </section>
       </div>
+
+      {/* CTA */}
+      <section className="bg-brand-primary py-16 sm:py-20">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-white sm:text-4xl">
+            Ready to shop?
+          </h2>
+          <p className="mt-4 text-lg text-white/80">
+            Browse our collection or contact us for wholesale orders. We are
+            always happy to help.
+          </p>
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="w-full sm:w-auto text-base font-semibold gap-2"
+              asChild
+            >
+              <Link href="/products">
+                Browse Products
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto text-base border-white/30 text-white hover:bg-white/10 hover:text-white"
+              asChild
+            >
+              <Link href="/contact">Contact Us</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
     </>
   );
 }
