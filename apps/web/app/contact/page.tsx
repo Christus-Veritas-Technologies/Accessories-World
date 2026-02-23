@@ -1,194 +1,185 @@
-import Image from "next/image";
-import { Phone, Mail, MapPin, Clock } from "lucide-react";
+"use client";
+
+import { CheckCircle2, Mail, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { ContactForm } from "@/components/contact-form";
 import { siteConfig } from "@/lib/site";
-import Link from "next/link";
-
-export const metadata = {
-  title: "Contact Us | Accessories World",
-  description: "Get in touch with Accessories World. Call, email, or visit us in Mutare, Zimbabwe.",
-};
 
 export default function ContactPage() {
+  const benefits = [
+    "Improve usability of your product",
+    "Engage users at a higher level and outperform your competition",
+    "Reduce the onboarding time and improve sales",
+    "Balance user needs with your business goal",
+  ];
+
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="border-b border-gray-200 bg-gradient-to-b from-red-50 to-white px-4 py-16 sm:px-6 lg:px-8 sm:py-24">
-        <div className="mx-auto max-w-4xl">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-black mb-4">
-            Get in Touch
+      {/* Hero Header */}
+      <section className="border-b border-gray-200 bg-gradient-to-b from-red-50 to-white px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl text-center">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+            Contact Us
+          </p>
+          <h1 className="text-4xl sm:text-5xl font-bold text-black mb-4">
+            Get in touch with us
           </h1>
-          <p className="text-lg text-gray-600">
-            We'd love to hear from you. Reach out to us anytime!
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Fill out the form below or schedule a meeting with us at your convenience.
           </p>
         </div>
       </section>
 
       {/* Main Content */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8 sm:py-24">
+      <section className="px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            {/* Contact Information */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16">
+            {/* Left: Contact Form */}
             <div className="space-y-6">
-              {/* Logo & Brand */}
-              <div className="mb-8">
-                <Link href="/" className="inline-flex items-center gap-3">
-                  <Image
-                    src="/logo.jpg"
-                    alt="Accessories World logo"
-                    width={48}
-                    height={48}
-                    className="rounded-lg border border-gray-200 object-cover"
-                  />
-                  <div className="leading-tight">
-                    <p className="text-base font-bold text-black">Accessories World</p>
-                    <p className="text-xs text-gray-500">Mutare</p>
-                  </div>
-                </Link>
+              {/* Form Fields */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900"
+                />
               </div>
 
-              {/* Location */}
-              <Card className="border border-gray-200 p-6">
-                <div className="flex gap-4">
-                  <MapPin className="h-6 w-6 text-red-500 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-black mb-2">Address</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">
-                      {siteConfig.location}
-                    </p>
-                  </div>
-                </div>
-              </Card>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter Your Email"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900"
+                />
+              </div>
 
-              {/* Phone */}
-              <Card className="border border-gray-200 p-6">
-                <div className="flex gap-4">
-                  <Phone className="h-6 w-6 text-red-500 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-black mb-2">Phone</h3>
-                    <a
-                      href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}
-                      className="text-sm text-red-500 hover:text-red-600 transition-colors font-medium"
-                    >
-                      {siteConfig.phone}
-                    </a>
-                    <p className="text-xs text-gray-500 mt-2">Call us during business hours</p>
-                  </div>
-                </div>
-              </Card>
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 uppercase tracking-wider mb-3">
+                  Message
+                </label>
+                <textarea
+                  placeholder="Enter Your Message"
+                  rows={6}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white text-gray-900 resize-none"
+                />
+              </div>
 
-              {/* Email */}
-              <Card className="border border-gray-200 p-6">
-                <div className="flex gap-4">
-                  <Mail className="h-6 w-6 text-red-500 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-black mb-2">Email</h3>
-                    <a
-                      href={`mailto:${siteConfig.email}`}
-                      className="text-sm text-red-500 hover:text-red-600 transition-colors font-medium"
-                    >
-                      {siteConfig.email}
-                    </a>
-                    <p className="text-xs text-gray-500 mt-2">We'll reply within 24 hours</p>
-                  </div>
-                </div>
-              </Card>
+              {/* Terms Checkbox */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  defaultChecked
+                  className="w-4 h-4 border border-gray-300 rounded cursor-pointer accent-red-500"
+                />
+                <label htmlFor="terms" className="text-sm text-gray-600">
+                  I agree with{" "}
+                  <a href="#" className="text-gray-900 font-medium hover:text-red-500">
+                    Terms and Conditions
+                  </a>
+                </label>
+              </div>
 
-              {/* Hours */}
-              <Card className="border border-gray-200 p-6">
-                <div className="flex gap-4">
-                  <Clock className="h-6 w-6 text-red-500 flex-shrink-0 mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-black mb-2">Hours</h3>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <p>Mon - Fri: 8:00 AM - 5:30 PM</p>
-                      <p>Saturday: 8:00 AM - 3:00 PM</p>
-                      <p className="text-red-500 font-medium">Sunday: Closed</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              {/* Quick Action */}
-              <Button asChild className="w-full bg-red-500 hover:bg-red-600 text-white">
-                <a
-                  href={`https://wa.me/${siteConfig.whatsappNumber.replace(/\s+/g, "")}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Chat on WhatsApp
-                </a>
+              {/* Submit Button */}
+              <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 h-auto">
+                Send Your Request
               </Button>
             </div>
 
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <Card className="border border-gray-200 p-8">
-                <h2 className="text-2xl font-bold text-black mb-2">Send us a Message</h2>
-                <p className="text-gray-600 mb-8">
-                  Fill out the form below and we'll get back to you as soon as possible. You can choose to receive our response via email or WhatsApp.
-                </p>
-                <ContactForm />
-              </Card>
+            {/* Right: Benefits and Locations */}
+            <div className="space-y-12">
+              {/* With our services you can */}
+              <div>
+                <h2 className="text-lg font-bold text-black mb-6">With our services you can</h2>
+                <div className="space-y-4">
+                  {benefits.map((benefit, index) => (
+                    <div key={index} className="flex gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-gray-700 text-sm">{benefit}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-              {/* Additional Info */}
-              <div className="mt-8 p-6 rounded-lg bg-gray-50 border border-gray-200">
-                <h3 className="font-semibold text-black mb-3">Why contact us?</h3>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li className="flex gap-2">
-                    <span className="text-red-500">•</span>
-                    <span>Product inquiries and recommendations</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-red-500">•</span>
-                    <span>Bulk orders and wholesale requests</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-red-500">•</span>
-                    <span>Technical support and troubleshooting</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-red-500">•</span>
-                    <span>Delivery and return inquiries</span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-red-500">•</span>
-                    <span>Feedback and suggestions</span>
-                  </li>
-                </ul>
+              {/* Location Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* USA */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-bold text-black">USA</h3>
+                    <span className="text-2xl">🇺🇸</span>
+                  </div>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>280 W. 7TH Street</p>
+                    <p>4th floor Flat no: 402</p>
+                    <p>New York NY, 10018</p>
+                  </div>
+                </div>
+
+                {/* India */}
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-bold text-black">India</h3>
+                    <span className="text-2xl">🇮🇳</span>
+                  </div>
+                  <div className="space-y-2 text-sm text-gray-700">
+                    <p>Plot No. 2-45/BpTms</p>
+                    <p>Banjaras Hills,Road No 10</p>
+                    <p>Hyderabad, 500034</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="border-t border-gray-200 bg-gradient-to-r from-red-500 to-red-600 py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            Can't find what you're looking for?
-          </h2>
-          <p className="text-red-100 mb-8 max-w-2xl mx-auto">
-            Visit our store in Mutare or browse our full selection of quality accessories online.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              variant="secondary"
-              asChild
-              className="text-red-600 hover:text-red-700"
-            >
-              <Link href="/products">Browse Products</Link>
-            </Button>
-            <Button
-              size="lg"
-              asChild
-              className="bg-white hover:bg-gray-100 text-red-600"
-            >
-              <Link href="/about">Visit About Us</Link>
-            </Button>
+      {/* Contact Methods */}
+      <section className="border-t border-gray-200 bg-gray-50 px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <h2 className="text-lg font-bold text-black mb-8">You can also Contact Us via</h2>
+          <div className="flex flex-col sm:flex-row gap-8 sm:gap-16">
+            {/* Email */}
+            <div className="flex items-center gap-4">
+              <div className="bg-red-100 p-3 rounded-lg">
+                <Mail className="h-6 w-6 text-red-500" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Email
+                </p>
+                <a
+                  href={`mailto:${siteConfig.email}`}
+                  className="text-gray-900 font-medium hover:text-red-500 transition-colors"
+                >
+                  {siteConfig.email}
+                </a>
+              </div>
+            </div>
+
+            {/* Phone */}
+            <div className="flex items-center gap-4">
+              <div className="bg-red-100 p-3 rounded-lg">
+                <Phone className="h-6 w-6 text-red-500" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                  Phone
+                </p>
+                <a
+                  href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}
+                  className="text-gray-900 font-medium hover:text-red-500 transition-colors"
+                >
+                  {siteConfig.phone}
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>
