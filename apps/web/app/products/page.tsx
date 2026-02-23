@@ -1,122 +1,340 @@
-import { Suspense } from "react";
-import { ArrowRight } from "lucide-react";
+"use client";
+
+import { Suspense, useState, useEffect } from "react";
+import { ArrowRight, Heart, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { ProductFilters } from "@/components/products/product-filters";
-import { ProductsGrid } from "@/components/products/products-grid";
+import { useProducts, useTrendingProducts } from "@/hooks/use-products";
+import { useCategories } from "@/hooks/use-categories";
 import Link from "next/link";
+import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 
 export const metadata = {
   title: "Products | Accessories World",
   description: "Browse our full selection of quality accessories for phones and gadgets.",
 };
 
-async function getCategories() {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/categories`,
-      { cache: "revalidate", next: { revalidate: 60 } }
+interface ProductCardProps {
+  product: any;
+  onFavorite?: () => void;
+  isFavorite?: boolean;
+}
+
+function ProductCard({ product, onFavorite, isFavorite }: ProductCardProps) {
+  return (
+    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 transition-all hover:shadow-lg">
+      {/* Image Container */}
+      <div className="relative bg-gray-100 aspect-square overflow-hidden">
+        {product.images?.[0]?.url ? (
+          <Image
+            src={product.images[0].url}
+            alt={product.name}
+            fill
+            className="object-cover hover:scale-110 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+            <Search className="h-8 w-8 text-gray-400" />
+          </div>
+        )}
+        
+        {/* Favorite Button */}
+        <button
+          onClick={onFavorite}
+          className="absolute top-3 right-3 bg-white rounded-full p-2 hover:bg-red-50 transition-colors shadow-sm"
+        >
+          <Heart
+            className={`h-5 w-5 ${
+              isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
+            }`}
+          />
+        </button>
+
+        {/* Stock Badge */}
+        {product.stock === 0 && (
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <span className="text-white font-semibold">Out of Stock</span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
+          {product.name}
+        </h3>
+
+        {product.description && (
+          <p className="text-xs text-gray-500 line-clamp-1 mb-2">
+            {product.description}
+          </p>
+        )}
+
+        {/* Rating and Reviews */}
+        {product.views && (
+          <div className="flex items-center gap-1 mb-3">
+            <div className="flex">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className="text-yellow-400 text-xs">★</span>
+              ))}
+            </div>
+            <span className="text-xs text-gray-500">({product.views})</span>
+          </div>
+        )}
+
+        {/* Price */}
+        <div className="mb-3 flex items-baseline gap-2">
+          <span className="text-lg font-bold text-red-600">
+            ${typeof product.retailPrice === "string" ? product.retailPrice : product.retailPrice.toFixed(2)}
+          </span>
+          {product.originalPrice && (
+            <span className="text-xs text-gray-400 line-through">
+              ${product.originalPrice}
+            </span>
+          )}
+        </div>
+
+        {/* Stock Status */}
+        {product.stock > 0 ? (
+          <p className="text-xs text-green-600 font-medium mb-3">In Stock</p>
+        ) : (
+          <p className="text-xs text-orange-600 font-medium mb-3">Out of Stock</p>
+        )}
+
+        {/* Add to Cart Button */}
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={product.stock === 0}
+          className="w-full border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Add to Cart
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SimilarItemsSection() {
+  const { data: trendingProducts, isLoading, error } = useTrendingProducts(4);
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-80 w-full rounded-lg" />
+        ))}
+      </div>
     );
-    if (!response.ok) return [];
-    return response.json();
-  } catch (error) {
-    console.error("Failed to fetch categories:", error);
-    return [];
   }
+
+  if (error || !trendingProducts || trendingProducts.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="py-12">
+      <h2 className="text-2xl font-bold text-gray-900 mb-8">Similar Items You Might Like</h2>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {trendingProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </section>
+  );
 }
 
-interface ProductsPageProps {
-  searchParams: Promise<{
-    category?: string;
-    price?: string;
-    stock?: string;
-    page?: string;
-  }>;
+function RecentlyViewedSection() {
+  const { data: recentProducts, isLoading, error } = useTrendingProducts(4);
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-80 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error || !recentProducts || recentProducts.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="py-12">
+      <h2 className="text-2xl font-bold text-gray-900 mb-8">Recently Viewed</h2>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {recentProducts.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+    </section>
+  );
 }
 
-export default async function ProductsPage({ searchParams }: ProductsPageProps) {
-  const params = await searchParams;
-  const categories = await getCategories();
-  const currentPage = parseInt(params.page || "1", 10);
+function ProductsContent() {
+  const searchParams = useSearchParams();
+  const category = searchParams.get("category");
+  const price = searchParams.get("price");
+  const stock = searchParams.get("stock");
+  const page = parseInt(searchParams.get("page") || "1", 10);
+
+  const { data: categories, isLoading: isLoadingCategories } = useCategories();
+  const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts({
+    category: category || undefined,
+    priceRange: price,
+    stockFilter: stock,
+    page,
+    limit: 12,
+  });
+
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+
+  const handleFavorite = (productId: string) => {
+    setFavorites((prev) => {
+      const newFavs = new Set(prev);
+      if (newFavs.has(productId)) {
+        newFavs.delete(productId);
+      } else {
+        newFavs.add(productId);
+      }
+      return newFavs;
+    });
+  };
 
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="border-b border-gray-200 bg-gradient-to-b from-red-50 to-white px-4 py-16 sm:px-6 lg:px-8 sm:py-24">
+      <section className="border-b border-gray-200 bg-gradient-to-b from-red-50 to-white px-4 py-12 sm:px-6 lg:px-8 sm:py-16">
         <div className="mx-auto max-w-6xl">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-black mb-4">
-            Our Products
+          <h1 className="text-3xl sm:text-4xl font-bold text-black mb-4">
+            Shop Our Collection
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl">
-            Quality accessories for your phone and gadgets at prices you can afford. Browse our full selection of chargers, cables, earphones, speakers, and more.
+          <p className="text-gray-600 max-w-2xl">
+            Discover quality accessories for your devices. Browse our full selection of chargers, cables, earphones, and more.
           </p>
         </div>
       </section>
 
-      {/* Products Section */}
-      <section className="px-4 py-16 sm:px-6 lg:px-8 sm:py-24">
-        <div className="mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 lg:gap-12">
-            {/* Filters Sidebar */}
-            <div className="md:col-span-1">
-              <ProductFilters
-                categories={categories}
-                currentCategory={params.category}
-                currentPriceRange={params.price}
-                currentStockFilter={params.stock}
-              />
-            </div>
-
-            {/* Products Grid with Pagination */}
-            <div className="md:col-span-3">
-              <Suspense fallback={<ProductsGridSkeleton />}>
-                <ProductsGrid
-                  category={params.category}
-                  priceRange={params.price}
-                  stockFilter={params.stock}
-                  page={currentPage}
-                />
-              </Suspense>
-            </div>
+      {/* Filters and Products Section */}
+      <section className="px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          {/* Filters */}
+          <div className="mb-8">
+            <ProductFilters
+              categories={categories || []}
+              currentCategory={category}
+              currentPriceRange={price}
+              currentStockFilter={stock}
+            />
           </div>
+
+          {/* Products Grid */}
+          {isLoadingProducts ? (
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <Skeleton key={i} className="h-80 w-full rounded-lg" />
+              ))}
+            </div>
+          ) : productsError ? (
+            <div className="text-center py-12">
+              <p className="text-red-600 font-medium">Failed to load products. Please try again.</p>
+            </div>
+          ) : !productsData?.items || productsData.items.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-600 font-medium">No products found matching your filters.</p>
+              <p className="text-sm text-gray-500 mt-2">Try adjusting your search criteria.</p>
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {productsData.items.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    isFavorite={favorites.has(product.id)}
+                    onFavorite={() => handleFavorite(product.id)}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {productsData.total > 12 && (
+                <div className="flex justify-center gap-2 mt-12">
+                  <Button
+                    variant="outline"
+                    disabled={page === 1}
+                    asChild={page > 1}
+                  >
+                    {page > 1 ? (
+                      <Link href={`/products?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: String(page - 1) }).toString()}`}>
+                        Previous
+                      </Link>
+                    ) : (
+                      "Previous"
+                    )}
+                  </Button>
+
+                  {Array.from({ length: Math.min(5, Math.ceil(productsData.total / 12)) }).map((_, i) => {
+                    const pageNum = i + 1;
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === page ? "default" : "outline"}
+                        asChild
+                      >
+                        <Link href={`/products?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: String(pageNum) }).toString()}`}>
+                          {pageNum}
+                        </Link>
+                      </Button>
+                    );
+                  })}
+
+                  <Button
+                    variant="outline"
+                    disabled={page >= Math.ceil(productsData.total / 12)}
+                    asChild={page < Math.ceil(productsData.total / 12)}
+                  >
+                    {page < Math.ceil(productsData.total / 12) ? (
+                      <Link href={`/products?${new URLSearchParams({ ...Object.fromEntries(searchParams), page: String(page + 1) }).toString()}`}>
+                        Next
+                      </Link>
+                    ) : (
+                      "Next"
+                    )}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="border-t border-gray-200 bg-gradient-to-r from-red-500 to-red-600 py-16 sm:py-20 px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-            Can't find what you're looking for?
-          </h2>
-          <p className="text-red-100 mb-8 max-w-2xl mx-auto">
-            Contact us for custom orders or bulk purchases. Our team is here to help!
-          </p>
-          <Button
-            size="lg"
-            asChild
-            className="bg-white hover:bg-gray-100 text-red-600 flex items-center gap-2"
-          >
-            <Link href="/contact">
-              Contact Us <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+      {/* Similar Items Section */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="mx-auto max-w-6xl">
+          <SimilarItemsSection />
+        </div>
+      </section>
+
+      {/* Recently Viewed Section */}
+      <section className="px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl">
+          <RecentlyViewedSection />
         </div>
       </section>
     </div>
   );
 }
 
-function ProductsGridSkeleton() {
+export default function ProductsPage() {
   return (
-    <div className="space-y-8">
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <Skeleton key={i} className="h-80 w-full rounded-lg" />
-        ))}
-      </div>
-      <div className="flex justify-center">
-        <Skeleton className="h-10 w-48 rounded-lg" />
-      </div>
-    </div>
+    <Suspense fallback={<div>Loading...</div>}>
+      <ProductsContent />
+    </Suspense>
   );
 }
