@@ -1,15 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { MapPin, Phone, Mail, MessageCircle, Loader } from 'lucide-react';
-import { useSubmitContact } from '@/hooks/queries';
+import { useState } from "react";
+import {
+  MapPin,
+  Phone,
+  Mail,
+  MessageCircle,
+  Loader2,
+  Send,
+  Clock,
+} from "lucide-react";
+import { useSubmitContact } from "@/hooks/queries";
+import { Button } from "@/components/ui/button";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    message: '',
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
   });
   const [success, setSuccess] = useState(false);
   const contactMutation = useSubmitContact();
@@ -19,151 +28,179 @@ export default function ContactPage() {
     contactMutation.mutate(formData, {
       onSuccess: () => {
         setSuccess(true);
-        setFormData({ name: '', email: '', phone: '', message: '' });
+        setFormData({ name: "", email: "", phone: "", message: "" });
         setTimeout(() => setSuccess(false), 5000);
       },
     });
   };
 
+  const contactInfo = [
+    {
+      icon: MapPin,
+      title: "Visit Us",
+      detail: "49, 51 Second St, Mutare, Zimbabwe",
+      href: "https://maps.google.com/?q=49+51+Second+St+Mutare+Zimbabwe",
+    },
+    {
+      icon: Phone,
+      title: "Call Us",
+      detail: "+263 78 492 3973",
+      href: "tel:+263784923973",
+    },
+    {
+      icon: Mail,
+      title: "Email Us",
+      detail: "info@accessoriesworld.co.zw",
+      href: "mailto:info@accessoriesworld.co.zw",
+    },
+    {
+      icon: MessageCircle,
+      title: "WhatsApp",
+      detail: "Message us on WhatsApp",
+      href: "https://wa.me/263784923973",
+    },
+  ];
+
   return (
     <>
       {/* Header */}
-      <section className="bg-gradient-to-br from-red-600 to-red-700 py-12">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-bold text-white">Contact Us</h1>
-          <p className="mt-2 text-red-100">
-            We'd love to hear from you. Get in touch with us today.
+      <section className="bg-gradient-to-b from-muted/60 to-background py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-sm font-semibold uppercase tracking-wider text-brand-primary">
+            Contact
+          </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-5xl">
+            Get in Touch
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-base text-muted-foreground">
+            Have a question about our products? Want to place a wholesale order?
+            We would love to hear from you.
           </p>
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-12 lg:grid-cols-3">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div className="grid gap-12 lg:grid-cols-5">
           {/* Contact Info */}
-          <div className="space-y-6">
-            <div>
-              <h2 className="mb-4 text-xl font-bold">Get in Touch</h2>
-              <p className="text-gray-600 mb-6">
-                Have a question or want to learn more about our products? 
-                Contact us and we'll get back to you as soon as possible.
-              </p>
-            </div>
-
-            {/* Location */}
-            <div className="flex gap-4">
-              <MapPin className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold">Visit Us</h3>
-                <p className="text-sm text-gray-600">
-                  49, 51 Second St
-                  <br />
-                  Mutare, Zimbabwe
-                </p>
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="flex gap-4">
-              <Phone className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold">Call Us</h3>
+          <div className="space-y-6 lg:col-span-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+              {contactInfo.map((item) => (
                 <a
-                  href="tel:+263784923973"
-                  className="text-sm text-red-600 hover:underline"
+                  key={item.title}
+                  href={item.href}
+                  target={item.href.startsWith("http") ? "_blank" : undefined}
+                  rel={
+                    item.href.startsWith("http")
+                      ? "noopener noreferrer"
+                      : undefined
+                  }
+                  className="group flex items-start gap-4 rounded-2xl border border-border/60 bg-card p-5 transition-all duration-300 hover:shadow-md hover:border-brand-primary/30"
                 >
-                  +263 78 492 3973
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-primary/10 text-brand-primary transition-colors duration-300 group-hover:bg-brand-primary group-hover:text-white">
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground">
+                      {item.title}
+                    </h3>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                      {item.detail}
+                    </p>
+                  </div>
                 </a>
-              </div>
+              ))}
             </div>
 
-            {/* Email */}
-            <div className="flex gap-4">
-              <Mail className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold">Email</h3>
-                <a
-                  href="mailto:info@accessoriesworld.co.zw"
-                  className="text-sm text-red-600 hover:underline"
-                >
-                  info@accessoriesworld.co.zw
-                </a>
+            {/* Business Hours */}
+            <div className="rounded-2xl border border-border/60 bg-muted/20 p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Clock className="h-5 w-5 text-brand-primary" />
+                <h3 className="font-semibold text-foreground">
+                  Business Hours
+                </h3>
               </div>
-            </div>
-
-            {/* WhatsApp */}
-            <div className="flex gap-4">
-              <MessageCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold">WhatsApp</h3>
-                <a
-                  href="https://wa.me/263784923973"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-red-600 hover:underline"
-                >
-                  Message on WhatsApp
-                </a>
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>Monday — Friday</span>
+                  <span className="font-medium text-foreground">
+                    8:00 AM — 5:00 PM
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Saturday</span>
+                  <span className="font-medium text-foreground">
+                    8:00 AM — 1:00 PM
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Sunday</span>
+                  <span className="font-medium text-foreground">Closed</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Contact Form */}
-          <div className="lg:col-span-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
-              <h2 className="mb-6 text-2xl font-bold">Send us a Message</h2>
+          <div className="lg:col-span-3">
+            <div className="rounded-2xl border border-border/60 bg-card p-7 sm:p-9">
+              <h2 className="text-xl font-bold text-foreground">
+                Send us a message
+              </h2>
+              <p className="mt-1.5 text-sm text-muted-foreground">
+                Fill in the form and we will get back to you as soon as we can.
+              </p>
 
               {success && (
-                <div className="mb-6 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700">
-                  ✓ Thank you! We've received your message and will get back to you soon.
+                <div className="mt-6 rounded-xl bg-green-50 border border-green-200 p-4 text-sm text-green-700">
+                  Thank you! We have received your message and will get back to
+                  you soon.
                 </div>
               )}
 
               {contactMutation.error && (
-                <div className="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700">
-                  Error sending message. Please try again.
+                <div className="mt-6 rounded-xl bg-destructive/10 border border-destructive/20 p-4 text-sm text-destructive">
+                  Something went wrong. Please try again.
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
-                    Full Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
-                    placeholder="Your name"
-                    disabled={contactMutation.isPending}
-                  />
+              <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Full Name <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all duration-200"
+                      placeholder="Your name"
+                      disabled={contactMutation.isPending}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                      Email <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                      className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all duration-200"
+                      placeholder="your@email.com"
+                      disabled={contactMutation.isPending}
+                    />
+                  </div>
                 </div>
 
-                {/* Email */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
-                    placeholder="your@email.com"
-                    disabled={contactMutation.isPending}
-                  />
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
                     Phone Number
                   </label>
                   <input
@@ -172,16 +209,15 @@ export default function ContactPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all duration-200"
                     placeholder="+263 78 ..."
                     disabled={contactMutation.isPending}
                   />
                 </div>
 
-                {/* Message */}
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-700">
-                    Message *
+                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                    Message <span className="text-destructive">*</span>
                   </label>
                   <textarea
                     required
@@ -189,28 +225,29 @@ export default function ContactPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, message: e.target.value })
                     }
-                    rows={6}
-                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-600"
+                    rows={5}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary transition-all duration-200 resize-none"
                     placeholder="Tell us how we can help..."
                     disabled={contactMutation.isPending}
                   />
                 </div>
 
-                {/* Submit */}
-                <button
+                <Button
                   type="submit"
+                  size="lg"
+                  className="w-full gap-2 text-base"
                   disabled={contactMutation.isPending}
-                  className="w-full rounded-lg bg-red-600 px-6 py-3 font-semibold text-white hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {contactMutation.isPending && (
-                    <Loader className="h-4 w-4 animate-spin" />
+                  {contactMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
                   )}
-                  {contactMutation.isPending ? 'Sending...' : 'Send Message'}
-                </button>
+                  {contactMutation.isPending ? "Sending..." : "Send Message"}
+                </Button>
 
-                <p className="text-xs text-gray-500">
-                  * Required fields. We'll also send a WhatsApp notification with your
-                  inquiry.
+                <p className="text-xs text-muted-foreground text-center">
+                  We will also send a WhatsApp notification with your message.
                 </p>
               </form>
             </div>
