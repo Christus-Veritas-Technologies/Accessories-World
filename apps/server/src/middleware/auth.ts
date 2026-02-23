@@ -1,9 +1,26 @@
 import type { Context, Next } from "hono";
 import { validateSession, extractToken } from "../lib/session.js";
 
+/** Extract token from Authorization header or cookies */
+function getToken(c: Context): string | null {
+  // Try Authorization header first
+  const authHeader = c.req.header("Authorization");
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7);
+  }
+
+  // Try adminToken cookie
+  const adminToken = c.req.cookie("adminToken");
+  if (adminToken) {
+    return adminToken;
+  }
+
+  return null;
+}
+
 /** Attach the validated session to context variables */
 export async function requireAuth(c: Context, next: Next) {
-  const token = extractToken(c.req.header("Authorization"));
+  const token = getToken(c);
   if (!token) {
     return c.json({ error: "Unauthorized" }, 401);
   }
@@ -19,7 +36,7 @@ export async function requireAuth(c: Context, next: Next) {
 
 /** Require the session to belong to an Admin */
 export async function requireAdmin(c: Context, next: Next) {
-  const token = extractToken(c.req.header("Authorization"));
+  const token = getToken(c);
   if (!token) {
     return c.json({ error: "Unauthorized" }, 401);
   }
@@ -35,7 +52,7 @@ export async function requireAdmin(c: Context, next: Next) {
 
 /** Require the session to belong to an approved Wholesaler */
 export async function requireWholesaler(c: Context, next: Next) {
-  const token = extractToken(c.req.header("Authorization"));
+  const token = getToken(c);
   if (!token) {
     return c.json({ error: "Unauthorized" }, 401);
   }
