@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import React from 'react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -58,14 +59,84 @@ const PRODUCT_ICONS = [
   'FileText',
   'BookOpen',
   'Briefcase',
+  'Cpu',
+  'HardDrive',
+  'Monitor',
+  'Keyboard',
+  'Mouse',
+  'Tablet',
+  'Airpods',
+  'Bluetooth',
+  'Radio',
+  'Tv',
+  'Gamepad2',
+  'Joystick',
+  'BarChart3',
+  'TrendingUp',
+  'Zap',
+  'AlertCircle',
+  'CheckCircle',
+  'Clock',
+  'Droplet',
+  'Flame',
+  'Cloud',
+  'Sun',
+  'Moon',
+  'Wind',
+  'Droplets',
+  'Folder',
+  'Grid',
+  'List',
+  'Map',
+  'MapPin',
+  'Navigation',
+  'Compass',
+  'Anchor',
+  'Eye',
+  'EyeOff',
+  'Smile',
+  'ThumbsUp',
+  'Hand',
+  'Flag',
+  'Bookmark',
+  'Layers',
+  'Lock',
+  'Unlock',
+  'Key',
+  'Search',
+  'Filter',
+  'Download',
+  'Upload',
+  'Share2',
+  'Copy',
+  'Edit',
+  'Trash2',
+  'Plus',
+  'Minus',
+  'MoreVertical',
+  'MoreHorizontal',
 ] as const;
 
 type IconName = typeof PRODUCT_ICONS[number];
 
+// Create icon components map outside of component to avoid re-renders
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const iconComponentsMap: Record<string, any> = {};
+PRODUCT_ICONS.forEach((iconName) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const icon = (Icons as any)[iconName];
+  iconComponentsMap[iconName] = icon || Icons.Package;
+});
+
 const getIconComponent = (iconName: IconName) => {
-  const IconComponent = (Icons as Record<string, any>)[iconName];
-  return IconComponent || Icons.Package;
+  return iconComponentsMap[iconName] || Icons.Package;
 };
+
+// Small display component to show icon
+function IconDisplay({ iconName }: { iconName: IconName }) {
+  const IconComponent = getIconComponent(iconName);
+  return React.createElement(IconComponent, { className: 'h-4 w-4' });
+}
 
 export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
   const [formData, setFormData] = useState({
@@ -122,7 +193,8 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
     }
   };
 
-  const SelectedIcon = getIconComponent(formData.icon);
+  // Get the icon component for display
+  const selectedIconName = formData.icon as IconName;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -160,11 +232,11 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
                     className="w-full justify-start gap-2"
                     disabled={createCategoryMutation.isPending}
                   >
-                    <SelectedIcon className="h-4 w-4" />
+                    <IconDisplay iconName={selectedIconName} />
                     <span>{formData.icon}</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4" side="bottom">
+                <PopoverContent className="w-96 sm:w-[28rem] p-4" side="bottom" align="start">
                   <div className="space-y-3">
                     {/* Icon Search */}
                     <div className="relative">
@@ -177,10 +249,9 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
                       />
                     </div>
 
-                    {/* Icons Grid */}
-                    <div className="grid grid-cols-6 gap-2 max-h-64 overflow-y-auto">
+                    {/* Icons Grid - Responsive */}
+                    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-60 overflow-y-auto">
                       {filteredIcons.map((iconName) => {
-                        const IconComponent = getIconComponent(iconName);
                         return (
                           <button
                             key={iconName}
@@ -193,14 +264,16 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
                               setShowIconPicker(false);
                               setIconSearch('');
                             }}
-                            className={`flex items-center justify-center h-10 rounded-md border transition-colors ${
+                            className={`flex items-center justify-center h-10 rounded-md border transition-all hover:scale-110 cursor-pointer ${
                               formData.icon === iconName
                                 ? 'border-red-500 bg-red-50'
-                                : 'border-gray-200 hover:border-gray-300'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
                             }`}
                             title={iconName}
                           >
-                            <IconComponent className="h-5 w-5" />
+                            {React.createElement(getIconComponent(iconName as IconName), {
+                              className: 'h-5 w-5',
+                            })}
                           </button>
                         );
                       })}

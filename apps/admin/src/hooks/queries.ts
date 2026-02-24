@@ -240,6 +240,26 @@ export function useRevokeWholesaler() {
   });
 }
 
+export function useCreateWholesaler() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch(`${API_URL}/admin/wholesalers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to create wholesaler');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'wholesalers'] });
+    },
+  });
+}
+
 export function useUpdateOrderStatus() {
   const queryClient = useQueryClient();
   

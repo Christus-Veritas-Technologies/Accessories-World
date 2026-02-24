@@ -261,6 +261,102 @@ admin.get("/wholesalers", async (c) => {
   return c.json(wholesalers);
 });
 
+/** POST /api/admin/wholesalers — create a new wholesaler */
+admin.post("/wholesalers", async (c) => {
+  const {
+    businessName,
+    contactPerson,
+    email,
+    phone,
+    address,
+    generatePassword: shouldGeneratePassword,
+  } = await c.req.json<{
+    businessName: string;
+    contactPerson: string;
+    email: string;
+    phone: string;
+    address?: string;
+    generatePassword?: boolean;
+  }>();
+
+  if (!businessName || !contactPerson || !email || !phone) {
+    return c.json(
+      { error: "businessName, contactPerson, email and phone are required" },
+      400
+    );
+  }
+
+  try {
+    // Check if email already exists
+    const existing = await prisma.wholesaler.findUnique({
+      where: { email },
+    });
+
+    if (existing) {
+      return c.json(
+        { error: "A wholesaler with this email already exists" },
+        409
+      );
+    }
+
+    // Generate password if requested
+    const password = shouldGeneratePassword ? generatePassword(8) : null;
+    const passwordHash = password ? await Bun.password.hash(password) : "";
+
+    // Create wholesaler
+    const wholesaler = await prisma.wholesaler.create({
+      data: {
+        email,
+        businessName,
+        contactPerson,
+        phone,
+        address: address || null,
+        passwordHash,
+        approved: false, // Start as pending
+      },
+    });
+
+    // Send email notification (non-blocking)
+    if (password) {
+      sendNewAccountEmail(email, contactPerson, password, false).catch((err) =>
+        console.error("Failed to send wholesaler welcome email:", err)
+      );
+
+      // Send WhatsApp notification via agent (non-blocking)
+      const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+      const whatsappMessage = `👋 Welcome to Accessories World!\n\n${contactPerson}, your account has been created.\n\n📧 Email: ${email}\n🔐 Password: ${password}\n\nPlease change your password after first login.\n\nWelcome aboard! 🚀`;
+
+      fetch(`${agentUrl}/api/whatsapp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone,
+          message: whatsappMessage,
+        }),
+      }).catch((err) =>
+        console.error("Failed to send wholesaler WhatsApp notification:", err)
+      );
+    }
+
+    return c.json(
+      {
+        id: wholesaler.id,
+        email: wholesaler.email,
+        businessName: wholesaler.businessName,
+        contactPerson: wholesaler.contactPerson,
+        phone: wholesaler.phone,
+        address: wholesaler.address,
+        approved: wholesaler.approved,
+        createdAt: wholesaler.createdAt,
+      },
+      201
+    );
+  } catch (error) {
+    console.error("Error creating wholesaler:", error);
+    return c.json({ error: "Failed to create wholesaler" }, 500);
+  }
+});
+
 /** PATCH /api/admin/wholesalers/:id */
 admin.patch("/wholesalers/:id", async (c) => {
   const { id } = c.req.param();

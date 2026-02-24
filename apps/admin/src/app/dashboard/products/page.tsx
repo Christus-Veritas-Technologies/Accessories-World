@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Search } from 'lucide-react';
-import { useProducts, useDeleteProduct } from '@/hooks/queries';
+import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useProducts, useDeleteProduct, useCategories } from '@/hooks/queries';
 import { ProductDialog } from '@/components/product-dialog';
+import { CategoryDialog } from '@/components/category-dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+const ITEMS_PER_PAGE = 10;
 
 interface Product {
   id: string;
@@ -25,8 +28,12 @@ interface Product {
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
-  const [showDialog, setShowDialog] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showProductDialog, setShowProductDialog] = useState(false);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const { data: products = [], isLoading, error } = useProducts();
+  const { data: categories = [] } = useCategories();
   const deleteProductMutation = useDeleteProduct();
 
   const handleDelete = async (id: string) => {
@@ -36,8 +43,24 @@ export default function ProductsPage() {
 
   const filteredProducts = (products || []).filter(
     (p: Product) =>
-      p.name.toLowerCase().includes(search.toLowerCase())
+      p.name.toLowerCase().includes(search.toLowerCase()) &&
+      (selectedCategory === 'all' || p.category?.id === selectedCategory)
   );
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  // Reset to page 1 when search or category changes
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setCurrentPage(1);
+  };
+
+  const handleCategoryChange = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+    setCurrentPage(1);
+  };
 
   if (isLoading) {
     return <div className="py-12 text-center">Loading products...</div>;
@@ -54,16 +77,27 @@ export default function ProductsPage() {
           />
           <h1 className="text-3xl font-bold">Products</h1>
         </div>
-        <Button
-          onClick={() => setShowDialog(true)}
-          className="bg-red-600 hover:bg-red-700"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add Product
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button
+            onClick={() => setShowCategoryDialog(true)}
+            variant="outline"
+            className="border-red-600 text-red-600 hover:bg-red-50"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Create Category
+          </Button>
+          <Button
+            onClick={() => setShowProductDialog(true)}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add Product
+          </Button>
+        </div>
       </div>
 
-      <ProductDialog open={showDialog} onOpenChange={setShowDialog} />
+      <ProductDialog open={showProductDialog} onOpenChange={setShowProductDialog} />
+      <CategoryDialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog} />
 
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">
@@ -77,16 +111,55 @@ export default function ProductsPage() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Filters */}
+      <div className="space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Category Filters */}
+        {categories.length > 0 ? (
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <Button
+              onClick={() => handleCategoryChange('all')}
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              className={selectedCategory === 'all' ? 'bg-red-600 hover:bg-red-700' : ''}
+              size="sm"
+            >
+              All
+            </Button>
+            {categories.map((cat: any) => (
+              <Button
+                key={cat.id}
+                onClick={() => handleCategoryChange(cat.id)}
+                variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                className={selectedCategory === cat.id ? 'bg-red-600 hover:bg-red-700' : ''}
+                size="sm"
+              >
+                {cat.name}
+              </Button>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              className="bg-red-600 hover:bg-red-700"
+              size="sm"
+              disabled
+            >
+              All Products
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Products Table */}
@@ -103,8 +176,8 @@ export default function ProductsPage() {
               </tr>
             </thead>
             <tbody>
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product: Product) => (
+              {paginatedProducts.length > 0 ? (
+                paginatedProducts.map((product: Product) => (
                   <tr key={product.id} className="border-b hover:bg-gray-50">
                     <td className="px-6 py-3">
                       <div>
@@ -153,7 +226,7 @@ export default function ProductsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
                     No products found
                   </td>
                 </tr>
@@ -161,6 +234,36 @@ export default function ProductsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination */}
+        {filteredProducts.length > 0 && (
+          <div className="px-6 py-4 border-t flex items-center justify-between">
+            <div className="text-sm text-gray-500">
+              Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                variant="outline"
+                size="sm"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+              <div className="text-sm font-medium">
+                Page {currentPage} of {totalPages}
+              </div>
+              <Button
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                variant="outline"
+                size="sm"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

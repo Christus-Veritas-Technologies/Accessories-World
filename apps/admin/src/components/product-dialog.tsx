@@ -37,7 +37,6 @@ export function ProductDialog({ open, onOpenChange }: ProductDialogProps) {
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
-    sku: '',
     categoryId: '',
     retailPrice: '',
     wholesalePrice: '',
@@ -49,7 +48,7 @@ export function ProductDialog({ open, onOpenChange }: ProductDialogProps) {
   });
 
   const createProductMutation = useCreateProduct();
-  const { data: categories = [] } = useCategories();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target as HTMLInputElement;
@@ -74,10 +73,6 @@ export function ProductDialog({ open, onOpenChange }: ProductDialogProps) {
       toast.error('Product name is required');
       return;
     }
-    if (!formData.sku.trim()) {
-      toast.error('SKU is required');
-      return;
-    }
     if (!formData.retailPrice) {
       toast.error('Retail price is required');
       return;
@@ -95,7 +90,6 @@ export function ProductDialog({ open, onOpenChange }: ProductDialogProps) {
       await createProductMutation.mutateAsync({
         name: formData.name,
         slug: formData.slug || formData.name.toLowerCase().replace(/\s+/g, '-'),
-        sku: formData.sku,
         categoryId: formData.categoryId || undefined,
         retailPrice: parseFloat(formData.retailPrice),
         wholesalePrice: parseFloat(formData.wholesalePrice),
@@ -110,7 +104,6 @@ export function ProductDialog({ open, onOpenChange }: ProductDialogProps) {
       setFormData({
         name: '',
         slug: '',
-        sku: '',
         categoryId: '',
         retailPrice: '',
         wholesalePrice: '',
@@ -153,27 +146,16 @@ export function ProductDialog({ open, onOpenChange }: ProductDialogProps) {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">SKU *</label>
-                <Input
-                  type="text"
-                  name="sku"
-                  placeholder="e.g., CSC-001"
-                  value={formData.sku}
-                  onChange={handleChange}
-                  disabled={createProductMutation.isPending}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-2">
                 <label className="block text-sm font-semibold">Category</label>
                 <Select
                   value={formData.categoryId}
                   onValueChange={(value) => handleSelectChange('categoryId', value)}
-                  disabled={createProductMutation.isPending}
+                  disabled={createProductMutation.isPending || categoriesLoading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select a category"} />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat: Category) => (
