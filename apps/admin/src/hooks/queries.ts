@@ -70,6 +70,19 @@ export function useAdminOrders() {
   });
 }
 
+export function useCategories() {
+  return useQuery({
+    queryKey: ['admin', 'categories'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/categories`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch categories');
+      return res.json();
+    },
+  });
+}
+
 // Mutations
 export function useCreateProduct() {
   const queryClient = useQueryClient();

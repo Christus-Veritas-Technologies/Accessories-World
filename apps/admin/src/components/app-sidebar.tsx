@@ -72,7 +72,8 @@ export function AppSidebar() {
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon
-                const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
+                // Only mark as active if exact match or direct child (not parent routes)
+                const isActive = pathname === item.href
 
                 return (
                   <SidebarMenuItem key={item.href}>

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Plus, Edit2, Trash2, Search } from 'lucide-react';
 import { useProducts, useDeleteProduct } from '@/hooks/queries';
+import { ProductDialog } from '@/components/product-dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -24,7 +25,7 @@ interface Product {
 
 export default function ProductsPage() {
   const [search, setSearch] = useState('');
-  const [showForm, setShowForm] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
   const { data: products = [], isLoading, error } = useProducts();
   const deleteProductMutation = useDeleteProduct();
 
@@ -55,13 +56,15 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold">Products</h1>
         </div>
         <Button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => setShowDialog(true)}
           className="bg-red-600 hover:bg-red-700"
         >
           <Plus className="h-5 w-5 mr-2" />
           Add Product
         </Button>
       </div>
+
+      <ProductDialog open={showDialog} onOpenChange={setShowDialog} />
 
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">
@@ -113,18 +116,18 @@ export default function ProductsPage() {
                     </td>
                     <td className="px-6 py-3 font-mono text-xs">{product.sku}</td>
                     <td className="px-6 py-3 text-right">
-                      ${product.retailPrice.toFixed(2)}
-                      {product.retailDiscount > 0 && (
+                      ${Number(product.retailPrice).toFixed(2)}
+                      {Number(product.retailDiscount) > 0 && (
                         <span className="ml-1 text-xs text-red-600">
-                          -{product.retailDiscount}%
+                          -{Number(product.retailDiscount).toFixed(1)}%
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-3 text-right">
-                      ${product.wholesalePrice.toFixed(2)}
-                      {product.wholesaleDiscount > 0 && (
+                      ${Number(product.wholesalePrice).toFixed(2)}
+                      {Number(product.wholesaleDiscount) > 0 && (
                         <span className="ml-1 text-xs text-red-600">
-                          -{product.wholesaleDiscount}%
+                          -{Number(product.wholesaleDiscount).toFixed(1)}%
                         </span>
                       )}
                     </td>

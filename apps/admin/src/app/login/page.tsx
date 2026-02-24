@@ -56,6 +56,11 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         {/* Logo / Header */}
         <div className="text-center mb-8">
+          <img
+            src="/logo-aw.jpg"
+            alt="Accessories World"
+            className="h-16 w-16 object-contain mx-auto mb-4"
+          />
           <h1 className="text-3xl font-bold text-black mb-2">
             Accessories World
           </h1>
