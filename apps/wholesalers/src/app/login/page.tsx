@@ -36,8 +36,8 @@ export default function WholesalerLogin() {
       }
 
       const data = await res.json();
-      localStorage.setItem('authToken', data.token);
-      localStorage.setItem('wholesalerSession', JSON.stringify(data.wholesaler));
+      localStorage.setItem('wholesalerToken', data.token);
+      localStorage.setItem('wholesalerUser', JSON.stringify(data.user));
       
       router.push('/dashboard');
       router.refresh();
