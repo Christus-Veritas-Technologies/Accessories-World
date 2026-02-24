@@ -572,14 +572,11 @@ admin.post("/sales", async (c) => {
     revenue: number;
     profit: number;
     quantity: number;
+    customerId?: string;
     notes?: string;
   }>();
 
   // Generate unique sale number
-  const latestSale = await prisma.sale.findFirst({
-    orderBy: { createdAt: "desc" },
-  });
-  
   const saleCount = await prisma.sale.count();
   const saleNumber = `SAL-${String(saleCount + 1).padStart(6, "0")}`;
 
@@ -587,8 +584,12 @@ admin.post("/sales", async (c) => {
     data: {
       ...body,
       saleNumber,
+      customerId: body.customerId || null,
       revenue: parseFloat(body.revenue.toString()),
       profit: parseFloat(body.profit.toString()),
+    },
+    include: {
+      customer: true,
     },
   });
 
@@ -615,6 +616,108 @@ admin.patch("/sales/:id", async (c) => {
 admin.delete("/sales/:id", async (c) => {
   const { id } = c.req.param();
   await prisma.sale.delete({ where: { id } });
+  return c.json({ success: true });
+});
+
+// ─── Customer Management ─────────────────────────────────────────────────────
+
+/** GET /api/admin/customers — all customers with sales count */
+admin.get("/customers", async (c) => {
+  const customers = await prisma.customer.findMany({
+    include: {
+      _count: {
+        select: { sales: true },
+      },
+      sales: {
+        select: { revenue: true },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const customersWithStats = customers.map((customer) => ({
+    ...customer,
+    totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
+  }));
+
+  return c.json(customersWithStats);
+});
+
+/** GET /api/admin/customers/top-buyers — top customers by total spent */
+admin.get("/customers/top-buyers", async (c) => {
+  const limit = parseInt(c.req.query("limit") ?? "10");
+  
+  const topCustomers = await prisma.customer.findMany({
+    include: {
+      sales: {
+        select: { revenue: true },
+      },
+    },
+  });
+
+  const sorted = topCustomers
+    .map((customer) => ({
+      ...customer,
+      totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
+      salesCount: customer.sales.length,
+    }))
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+    .slice(0, limit);
+
+  return c.json(sorted);
+});
+
+/** POST /api/admin/customers — create new customer */
+admin.post("/customers", async (c) => {
+  const body = await c.req.json<{
+    fullName: string;
+    whatsapp: string;
+    email?: string;
+  }>();
+
+  if (!body.fullName || !body.whatsapp) {
+    return c.json(
+      { error: "fullName and whatsapp are required" },
+      400
+    );
+  }
+
+  const customer = await prisma.customer.create({
+    data: {
+      fullName: body.fullName,
+      whatsapp: body.whatsapp,
+      email: body.email || null,
+    },
+  });
+
+  return c.json(customer, 201);
+});
+
+/** PATCH /api/admin/customers/:id — update customer */
+admin.patch("/customers/:id", async (c) => {
+  const { id } = c.req.param();
+  const body = await c.req.json();
+
+  const customer = await prisma.customer.update({
+    where: { id },
+    data: {
+      fullName: body.fullName,
+      whatsapp: body.whatsapp,
+      email: body.email,
+    },
+  });
+
+  return c.json(customer);
+});
+
+/** DELETE /api/admin/customers/:id */
+admin.delete("/customers/:id", async (c) => {
+  const { id } = c.req.param();
+  await prisma.sale.updateMany({
+    where: { customerId: id },
+    data: { customerId: null },
+  });
+  await prisma.customer.delete({ where: { id } });
   return c.json({ success: true });
 });
 
