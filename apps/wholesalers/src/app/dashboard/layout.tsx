@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Zap, User, ShoppingCart, LogOut, Menu, X, Smartphone } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Package, User, LogOut, Menu, X, Smartphone } from "lucide-react";
 import { useState } from "react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003/api";
+
 const navItems = [
-  { href: "/dashboard", label: "Deals", icon: Zap },
+  { href: "/dashboard", label: "Products", icon: Package },
   { href: "/dashboard/account", label: "My Account", icon: User },
 ];
 
@@ -16,7 +18,39 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const getBusinessName = () => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem("wholesalerUser");
+      if (!raw) return null;
+      return JSON.parse(raw)?.businessName ?? null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleSignOut = async () => {
+    setSigningOut(true);
+    try {
+      const token = localStorage.getItem("wholesalerToken");
+      if (token) {
+        await fetch(`${API_URL}/auth/logout`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        }).catch(() => {});
+      }
+    } finally {
+      localStorage.removeItem("wholesalerToken");
+      localStorage.removeItem("wholesalerUser");
+      router.push("/login");
+    }
+  };
+
+  const businessName = getBusinessName();
 
   return (
     <div className="flex h-screen bg-background">
@@ -59,9 +93,13 @@ export default function DashboardLayout({
         </nav>
 
         <div className="absolute bottom-6 left-3 right-3">
-          <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-brand-primary-light/50">
+          <button
+            onClick={handleSignOut}
+            disabled={signingOut}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium hover:bg-brand-primary-light/50 disabled:opacity-50 transition-colors"
+          >
             <LogOut className="h-5 w-5" />
-            Sign Out
+            {signingOut ? "Signing out..." : "Sign Out"}
           </button>
         </div>
       </aside>
@@ -73,9 +111,12 @@ export default function DashboardLayout({
           <button onClick={() => setOpen(!open)} className="lg:hidden">
             <Menu className="h-5 w-5" />
           </button>
-          <h1 className="ml-auto text-sm font-semibold text-muted-foreground">
-            Wholesaler Portal
-          </h1>
+          <div className="ml-auto text-sm text-right">
+            {businessName && (
+              <p className="font-semibold text-gray-800">{businessName}</p>
+            )}
+            <p className="text-muted-foreground">Wholesaler Portal</p>
+          </div>
         </div>
 
         {/* Content */}
