@@ -50,6 +50,11 @@ admin.get("/kpis", async (c) => {
     recentOrders,
     lowStockProducts,
     topSellingProducts,
+    totalSalesRevenue,
+    monthlySalesRevenue,
+    totalSalesProfit,
+    monthlySalesProfit,
+    recentSales,
   ] = await Promise.all([
     // Total revenue
     prisma.order.aggregate({
@@ -101,6 +106,29 @@ admin.get("/kpis", async (c) => {
       orderBy: { _sum: { quantity: "desc" } },
       take: 10,
     }),
+    // Total sales revenue
+    prisma.sale.aggregate({
+      _sum: { revenue: true },
+    }),
+    // Monthly sales revenue
+    prisma.sale.aggregate({
+      _sum: { revenue: true },
+      where: { createdAt: { gte: thirtyDaysAgo } },
+    }),
+    // Total sales profit
+    prisma.sale.aggregate({
+      _sum: { profit: true },
+    }),
+    // Monthly sales profit
+    prisma.sale.aggregate({
+      _sum: { profit: true },
+      where: { createdAt: { gte: thirtyDaysAgo } },
+    }),
+    // Recent sales
+    prisma.sale.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+    }),
   ]);
 
   // Resolve product names for most viewed
@@ -124,6 +152,16 @@ admin.get("/kpis", async (c) => {
       total: totalRevenue._sum.totalAmount ?? 0,
       monthly: monthlyRevenue._sum.totalAmount ?? 0,
     },
+    sales: {
+      revenue: {
+        total: totalSalesRevenue._sum.revenue ?? 0,
+        monthly: monthlySalesRevenue._sum.revenue ?? 0,
+      },
+      profit: {
+        total: totalSalesProfit._sum.profit ?? 0,
+        monthly: monthlySalesProfit._sum.profit ?? 0,
+      },
+    },
     views: {
       weekly: weeklyViews,
       monthly: monthlyViews,
@@ -143,6 +181,14 @@ admin.get("/kpis", async (c) => {
       status: o.status,
       wholesaler: o.wholesaler.businessName,
       createdAt: o.createdAt,
+    })),
+    recentSales: recentSales.map((s) => ({
+      id: s.id,
+      saleNumber: s.saleNumber,
+      revenue: s.revenue,
+      profit: s.profit,
+      quantity: s.quantity,
+      createdAt: s.createdAt,
     })),
     lowStockProducts,
   });
@@ -507,6 +553,68 @@ admin.patch("/categories/:id", async (c) => {
 admin.delete("/categories/:id", async (c) => {
   const { id } = c.req.param();
   await prisma.category.delete({ where: { id } });
+  return c.json({ success: true });
+});
+
+// ─── Sales Management ────────────────────────────────────────────────────────
+
+/** GET /api/admin/sales */
+admin.get("/sales", async (c) => {
+  const sales = await prisma.sale.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+  return c.json(sales);
+});
+
+/** POST /api/admin/sales */
+admin.post("/sales", async (c) => {
+  const body = await c.req.json<{
+    revenue: number;
+    profit: number;
+    quantity: number;
+    notes?: string;
+  }>();
+
+  // Generate unique sale number
+  const latestSale = await prisma.sale.findFirst({
+    orderBy: { createdAt: "desc" },
+  });
+  
+  const saleCount = await prisma.sale.count();
+  const saleNumber = `SAL-${String(saleCount + 1).padStart(6, "0")}`;
+
+  const sale = await prisma.sale.create({
+    data: {
+      ...body,
+      saleNumber,
+      revenue: parseFloat(body.revenue.toString()),
+      profit: parseFloat(body.profit.toString()),
+    },
+  });
+
+  return c.json(sale, 201);
+});
+
+/** PATCH /api/admin/sales/:id */
+admin.patch("/sales/:id", async (c) => {
+  const { id } = c.req.param();
+  const body = await c.req.json();
+  const sale = await prisma.sale.update({
+    where: { id },
+    data: {
+      revenue: body.revenue ? parseFloat(body.revenue.toString()) : undefined,
+      profit: body.profit ? parseFloat(body.profit.toString()) : undefined,
+      quantity: body.quantity,
+      notes: body.notes,
+    },
+  });
+  return c.json(sale);
+});
+
+/** DELETE /api/admin/sales/:id */
+admin.delete("/sales/:id", async (c) => {
+  const { id } = c.req.param();
+  await prisma.sale.delete({ where: { id } });
   return c.json({ success: true });
 });
 

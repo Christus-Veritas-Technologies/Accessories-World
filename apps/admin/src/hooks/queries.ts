@@ -279,3 +279,76 @@ export function useUpdateOrderStatus() {
     },
   });
 }
+export function useSales() {
+  return useQuery({
+    queryKey: ['admin', 'sales'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/admin/sales`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch sales');
+      return res.json();
+    },
+  });
+}
+
+export function useCreateSale() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch(`${API_URL}/admin/sales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to create sale');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'sales'] });
+      queryClient.invalidateQueries({ queryKey: ['kpis'] });
+    },
+  });
+}
+
+export function useUpdateSale() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`${API_URL}/admin/sales/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to update sale');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'sales'] });
+      queryClient.invalidateQueries({ queryKey: ['kpis'] });
+    },
+  });
+}
+
+export function useDeleteSale() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`${API_URL}/admin/sales/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to delete sale');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'sales'] });
+      queryClient.invalidateQueries({ queryKey: ['kpis'] });
+    },
+  });
+}
