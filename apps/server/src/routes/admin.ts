@@ -561,6 +561,9 @@ admin.delete("/categories/:id", async (c) => {
 /** GET /api/admin/sales */
 admin.get("/sales", async (c) => {
   const sales = await prisma.sale.findMany({
+    include: {
+      customer: { select: { id: true, fullName: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
   return c.json(sales);
@@ -617,7 +620,11 @@ Thank you for supporting Accessories World — it means the world to us! 💜`.t
         phone: sale.customer.whatsapp,
         message: invoiceMessage,
       }),
-    }).catch((err) => console.error("Failed to send invoice message:", err));
+    })
+      .then(() =>
+        prisma.sale.update({ where: { id: sale.id }, data: { invoiceSent: true } })
+      )
+      .catch((err) => console.error("Failed to send invoice message:", err));
 
     // Schedule follow-up message (15 seconds later)
     const firstName = sale.customer.fullName.split(" ")[0];
