@@ -24,12 +24,16 @@ interface Customer {
   email?: string;
   totalSpent: number;
   salesCount: number;
+  productNames: string[];
   createdAt: string;
 }
 
 export default function CustomersPage() {
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [productFilter, setProductFilter] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -43,13 +47,24 @@ export default function CustomersPage() {
 
     return customers.filter((customer: Customer) => {
       const matchesSearch =
+        !searchTerm ||
         customer.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         customer.whatsapp.includes(searchTerm) ||
         (customer.email && customer.email.toLowerCase().includes(searchTerm.toLowerCase()));
 
-      return matchesSearch;
+      const matchesProduct =
+        !productFilter ||
+        customer.productNames.some((p) =>
+          p.toLowerCase().includes(productFilter.toLowerCase())
+        );
+
+      const createdAt = new Date(customer.createdAt);
+      const matchesDateFrom = !dateFrom || createdAt >= new Date(dateFrom);
+      const matchesDateTo = !dateTo || createdAt <= new Date(dateTo + 'T23:59:59');
+
+      return matchesSearch && matchesProduct && matchesDateFrom && matchesDateTo;
     });
-  }, [customers, searchTerm]);
+  }, [customers, searchTerm, productFilter, dateFrom, dateTo]);
 
   // Pagination
   const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
@@ -70,6 +85,16 @@ export default function CustomersPage() {
       );
     }
   };
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setProductFilter('');
+    setDateFrom('');
+    setDateTo('');
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = searchTerm || productFilter || dateFrom || dateTo;
 
   if (error) {
     return (
@@ -103,7 +128,7 @@ export default function CustomersPage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-green-500" />
-            Top Buyers
+            Highest Value Clients
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -143,21 +168,67 @@ export default function CustomersPage() {
         </CardContent>
       </Card>
 
-      {/* Search */}
+      {/* Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Search & Filter</CardTitle>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-gray-500 hover:text-gray-700">
+                Clear filters
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <Input
-            type="text"
-            placeholder="Search by name, WhatsApp, or email..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-          />
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Search</label>
+              <Input
+                type="text"
+                placeholder="Name, WhatsApp, or email..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Product Purchased</label>
+              <Input
+                type="text"
+                placeholder="e.g. Necklace, Ring..."
+                value={productFilter}
+                onChange={(e) => {
+                  setProductFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Joined From</label>
+              <Input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Joined To</label>
+              <Input
+                type="date"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value);
+                  setCurrentPage(1);
+                }}
+              />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
@@ -187,6 +258,7 @@ export default function CustomersPage() {
                       <TableHead>Name</TableHead>
                       <TableHead>WhatsApp</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Products Bought</TableHead>
                       <TableHead className="text-right">Total Spent</TableHead>
                       <TableHead className="text-center">Purchases</TableHead>
                       <TableHead className="text-left">Joined</TableHead>
@@ -204,6 +276,15 @@ export default function CustomersPage() {
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
                           {customer.email || '-'}
+                        </TableCell>
+                        <TableCell className="text-sm text-gray-600 max-w-[180px]">
+                          {customer.productNames?.length > 0 ? (
+                            <span className="truncate block" title={customer.productNames.join(', ')}>
+                              {customer.productNames.join(', ')}
+                            </span>
+                          ) : (
+                            '-'
+                          )}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
                           ${Number(customer.totalSpent).toFixed(2)}
