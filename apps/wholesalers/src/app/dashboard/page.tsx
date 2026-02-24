@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { MessageCircle, ShoppingCart, Search, Loader } from 'lucide-react';
+import { MessageCircle, ShoppingCart, Search, Loader2 } from 'lucide-react';
 import { useWholesalerProducts } from '@/hooks/queries';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { WhatsAppDialog } from '@/components/WhatsAppDialog';
 import { SuccessModal } from '@/components/SuccessModal';
 
@@ -23,10 +23,7 @@ interface Product {
   images: Array<{ url: string; alt: string }>;
 }
 
-export default function DealsPage() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function ProductsPage() {
   const [search, setSearch] = useState('');
   const [cart, setCart] = useState<Map<string, number>>(new Map());
   const [showWhatsAppDialog, setShowWhatsAppDialog] = useState(false);
@@ -34,92 +31,68 @@ export default function DealsPage() {
   const [successPhoneNumber, setSuccessPhoneNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const token = localStorage.getItem('wholesaler_token');
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/wholesalers/products`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (!res.ok) throw new Error('Failed to fetch products');
-      setProducts(await res.json());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error loading products');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading, error } = useWholesalerProducts();
+  // API returns paginated shape: { items, total, page, pages }
+  const products: Product[] = data?.items ?? [];
 
   const addToCart = (productId: string) => {
-    const newCart = new Map(cart);
-    newCart.set(productId, (newCart.get(productId) ?? 0) + 1);
-    setCart(newCart);
+    setCart((prev) => {
+      const next = new Map(prev);
+      next.set(productId, (next.get(productId) ?? 0) + 1);
+      return next;
+    });
   };
 
   const removeFromCart = (productId: string) => {
-    const newCart = new Map(cart);
-    const qty = newCart.get(productId) ?? 0;
-    if (qty > 1) {
-      newCart.set(productId, qty - 1);
-    } else {
-      newCart.delete(productId);
-    }
-    setCart(newCart);
+    setCart((prev) => {
+      const next = new Map(prev);
+      const qty = next.get(productId) ?? 0;
+      if (qty > 1) {
+        next.set(productId, qty - 1);
+      } else {
+        next.delete(productId);
+      }
+      return next;
+    });
   };
 
   const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase())
+      (p.sku && p.sku.toLowerCase().includes(search.toLowerCase()))
   );
+
+  const effectivePrice = (p: Product) =>
+    p.wholesalePrice * (1 - (p.wholesaleDiscount || 0) / 100);
 
   const cartTotal = Array.from(cart.entries()).reduce((sum, [productId, qty]) => {
     const product = products.find((p) => p.id === productId);
-    if (!product) return sum;
-    const price =
-      product.wholesalePrice *
-      (1 - (product.wholesaleDiscount || 0) / 100);
-    return sum + price * qty;
+    return product ? sum + effectivePrice(product) * qty : sum;
   }, 0);
 
   const cartCount = Array.from(cart.values()).reduce((a, b) => a + b, 0);
 
   const getWhatsAppMessage = () => {
-    const items = Array.from(cart.entries())
+    const lines = Array.from(cart.entries())
       .map(([productId, qty]) => {
         const product = products.find((p) => p.id === productId);
-        const price = product
-          ? product.wholesalePrice *
-            (1 - (product.wholesaleDiscount || 0) / 100)
-          : 0;
-        return `- ${product?.name} x${qty} (ZWL ${(price * qty).toLocaleString()})`;
+        const price = product ? effectivePrice(product) : 0;
+        return `- ${product?.name} x${qty} ($${(price * qty).toFixed(2)})`;
       })
       .join('%0A');
-
-    return `Hello! I'd like to place a wholesale order:%0A%0A${items}%0A%0ATotal: ZWL ${cartTotal.toLocaleString()}%0A%0APlease confirm.`;
+    return `Hello! I'd like to place a wholesale order:%0A%0A${lines}%0A%0ATotal: $${cartTotal.toFixed(2)}%0A%0APlease confirm.`;
   };
 
   const handleCompleteOrder = async (phoneNumber: string) => {
     setIsSubmitting(true);
     try {
       const message = getWhatsAppMessage();
-      const response = await fetch(`/api/whatsapp/send-order`, {
+      const response = await fetch('/api/whatsapp/send-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          phoneNumber: `263${phoneNumber}`,
-          message,
-        }),
+        body: JSON.stringify({ phoneNumber: `263${phoneNumber}`, message }),
       });
-
       if (!response.ok) throw new Error('Failed to send WhatsApp message');
-
       setSuccessPhoneNumber(phoneNumber);
       setShowSuccessModal(true);
       setCart(new Map());
@@ -129,28 +102,21 @@ export default function DealsPage() {
     }
   };
 
-  const handleSuccessClose = () => {
-    setShowSuccessModal(false);
-    setSuccessPhoneNumber('');
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-gray-100">
-        <div className="text-center">
-          <Loader className="w-12 h-12 text-brand-primary animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Loading wholesale deals...</p>
-        </div>
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Wholesale Deals</h1>
-          <p className="text-muted-foreground">Premium bulk pricing for your business</p>
+          <h1 className="text-3xl font-bold">Products</h1>
+          <p className="text-muted-foreground">Wholesale pricing for your business</p>
         </div>
         {cartCount > 0 && (
           <Button
@@ -160,15 +126,15 @@ export default function DealsPage() {
             disabled={isSubmitting}
           >
             <ShoppingCart className="h-5 w-5" />
-            Cart ({cartCount}) - ZWL {cartTotal.toLocaleString()}
+            Cart ({cartCount}) — ${cartTotal.toFixed(2)}
           </Button>
         )}
       </div>
 
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">
-          <p className="font-semibold mb-1">Error Loading Deals</p>
-          <p className="text-sm">{error}</p>
+          <p className="font-semibold mb-1">Error loading products</p>
+          <p className="text-sm">{(error as Error).message}</p>
         </div>
       )}
 
@@ -187,69 +153,65 @@ export default function DealsPage() {
       {/* Products Grid */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredProducts.map((product) => {
-          const discountedPrice =
-            product.wholesalePrice *
-            (1 - (product.wholesaleDiscount || 0) / 100);
-          const savings = product.wholesalePrice - discountedPrice;
+          const price = effectivePrice(product);
+          const savings = product.wholesalePrice - price;
           const cartQty = cart.get(product.id) ?? 0;
 
           return (
             <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Product Image */}
               <div className="relative aspect-square bg-gradient-to-br from-gray-100 to-gray-50 overflow-hidden">
                 {product.images.length > 0 ? (
                   <Image
                     src={product.images[0].url}
-                    alt={product.images[0].alt}
+                    alt={product.images[0].alt || product.name}
                     fill
                     className="object-cover hover:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                  <div className="flex h-full w-full items-center justify-center text-muted-foreground text-sm">
                     No image
                   </div>
                 )}
                 {savings > 0 && (
-                  <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold">
+                  <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-bold">
                     -{product.wholesaleDiscount}%
                   </div>
                 )}
               </div>
 
-              {/* Product Info */}
-              <CardContent className="pt-6">
-                <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{product.name}</h3>
-                <p className="text-xs text-muted-foreground mb-4">
-                  SKU: {product.sku} • {product.category.name}
-                </p>
+              <CardContent className="pt-5 space-y-3">
+                <div>
+                  <h3 className="font-semibold text-gray-900 line-clamp-2">{product.name}</h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {product.sku && `SKU: ${product.sku} · `}{product.category?.name}
+                  </p>
+                </div>
 
                 {/* Pricing */}
-                <div className="mb-4 space-y-1">
+                <div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold text-brand-primary">
-                      ZWL {discountedPrice.toLocaleString()}
+                      ${price.toFixed(2)}
                     </span>
                     {savings > 0 && (
                       <span className="text-xs text-gray-400 line-through">
-                        ZWL {product.wholesalePrice.toLocaleString()}
+                        ${product.wholesalePrice.toFixed(2)}
                       </span>
                     )}
                   </div>
                   {savings > 0 && (
-                    <p className="text-xs text-green-600 font-semibold">
-                      Save ZWL {savings.toLocaleString()}
+                    <p className="text-xs text-green-600 font-medium">
+                      Save ${savings.toFixed(2)} per unit
                     </p>
                   )}
                 </div>
 
-                {/* Stock Status */}
-                <p className="text-xs mb-4 font-medium">
+                {/* Stock */}
+                <p className="text-xs font-medium">
                   {product.stock > 0 ? (
-                    <span className="text-green-600">
-                      {product.stock} in stock
-                    </span>
+                    <span className="text-green-600">{product.stock} in stock</span>
                   ) : (
-                    <span className="text-red-600">Out of stock</span>
+                    <span className="text-red-500">Out of stock</span>
                   )}
                 </p>
 
@@ -259,16 +221,14 @@ export default function DealsPage() {
                     <>
                       <button
                         onClick={() => removeFromCart(product.id)}
-                        className="h-10 w-10 rounded-lg border border-border/50 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                        className="h-9 w-9 rounded-lg border border-border/50 flex items-center justify-center hover:bg-gray-50 transition-colors text-lg"
                       >
                         −
                       </button>
-                      <span className="flex-1 text-center text-sm font-semibold">
-                        {cartQty}
-                      </span>
+                      <span className="flex-1 text-center text-sm font-semibold">{cartQty}</span>
                       <button
                         onClick={() => addToCart(product.id)}
-                        className="h-10 w-10 rounded-lg border border-border/50 flex items-center justify-center hover:bg-gray-50 transition-colors"
+                        className="h-9 w-9 rounded-lg border border-border/50 flex items-center justify-center hover:bg-gray-50 transition-colors text-lg"
                       >
                         +
                       </button>
@@ -277,7 +237,7 @@ export default function DealsPage() {
                     <button
                       onClick={() => addToCart(product.id)}
                       disabled={product.stock === 0}
-                      className="w-full h-10 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full h-9 rounded-lg bg-brand-primary text-white text-sm font-medium hover:bg-brand-primary-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                       Add to Cart
                     </button>
@@ -289,10 +249,12 @@ export default function DealsPage() {
         })}
       </div>
 
-      {filteredProducts.length === 0 && (
-        <div className="rounded-lg border border-border/50 bg-gradient-to-br from-gray-50 to-white p-12 text-center text-muted-foreground">
-          <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-20" />
-          <p className="text-gray-600">No products found</p>
+      {!isLoading && filteredProducts.length === 0 && (
+        <div className="rounded-lg border border-border/50 bg-gradient-to-br from-gray-50 to-white p-12 text-center">
+          <MessageCircle className="w-10 h-10 mx-auto mb-3 text-muted-foreground/30" />
+          <p className="text-muted-foreground">
+            {search ? 'No products match your search' : 'No products available'}
+          </p>
         </div>
       )}
 
@@ -304,7 +266,7 @@ export default function DealsPage() {
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={handleSuccessClose}
+        onClose={() => { setShowSuccessModal(false); setSuccessPhoneNumber(''); }}
         phoneNumber={successPhoneNumber}
       />
     </div>
