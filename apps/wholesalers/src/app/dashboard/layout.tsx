@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Package, User, LogOut, Menu, X, Smartphone } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3003/api";
 
@@ -21,6 +21,12 @@ export default function DashboardLayout({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    if (!localStorage.getItem("wholesalerToken")) {
+      router.replace("/login");
+    }
+  }, [router]);
 
   const getBusinessName = () => {
     if (typeof window === "undefined") return null;
