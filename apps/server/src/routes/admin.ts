@@ -572,6 +572,7 @@ admin.post("/sales", async (c) => {
     revenue: number;
     profit: number;
     quantity: number;
+    productName?: string;
     customerId?: string;
     notes?: string;
   }>();
@@ -582,11 +583,13 @@ admin.post("/sales", async (c) => {
 
   const sale = await prisma.sale.create({
     data: {
-      ...body,
       saleNumber,
       customerId: body.customerId || null,
+      productName: body.productName || null,
       revenue: parseFloat(body.revenue.toString()),
       profit: parseFloat(body.profit.toString()),
+      quantity: body.quantity,
+      notes: body.notes || null,
     },
     include: {
       customer: true,
@@ -596,19 +599,16 @@ admin.post("/sales", async (c) => {
   // Send WhatsApp invoice if customer exists
   if (sale.customer) {
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-    
-    // Invoice message
-    const invoiceMessage = `
-🎉 Thank you for your purchase!
+    const productLine = sale.productName ? `\nProduct: ${sale.productName}` : "";
+
+    // Invoice message — starts with "Hope you enjoyed"
+    const invoiceMessage = `Hope you enjoyed your purchase! 🎉${productLine}
 
 Sale #: ${sale.saleNumber}
 Total: $${Number(sale.revenue).toFixed(2)}
-Items: ${sale.quantity}
+Qty: ${sale.quantity}
 
-We hope you enjoy your purchase from Accessories World! 
-
-Thank you for supporting us! 💜
-    `.trim();
+Thank you for supporting Accessories World — it means the world to us! 💜`.trim();
 
     fetch(`${agentUrl}/api/whatsapp/send`, {
       method: "POST",
@@ -619,30 +619,31 @@ Thank you for supporting us! 💜
       }),
     }).catch((err) => console.error("Failed to send invoice message:", err));
 
-    // Schedule follow-up message for 15 seconds later
-    setTimeout(async () => {
-      try {
-        const followUpMessage = `
-Hi ${sale.customer.fullName.split(' ')[0]}! 👋
+    // Schedule follow-up message (15 seconds later)
+    const firstName = sale.customer.fullName.split(" ")[0];
+    const productRef = sale.productName
+      ? sale.quantity > 1
+        ? "a few products"
+        : sale.productName
+      : "your recent purchase";
 
-We wanted to check in and see how you're enjoying your recent purchase from Accessories World!
+    setTimeout(() => {
+      const followUpMessage = `Hi ${firstName},
 
-Your products are performing as expected, we hope? Let us know if you have any questions or need assistance.
+We hope you're doing well. We wanted to follow up on your recent purchase of ${productRef} from Accessories World to check that everything is meeting your expectations.
 
-We truly appreciate your business! 🙏
-        `.trim();
+If you have any questions or need assistance, please don't hesitate to reach out — we're happy to help.
 
-        fetch(`${agentUrl}/api/whatsapp/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            phone: sale.customer.whatsapp,
-            message: followUpMessage,
-          }),
-        }).catch((err) => console.error("Failed to send follow-up message:", err));
-      } catch (err) {
-        console.error("Error scheduling follow-up:", err);
-      }
+Thank you for your support. 🙏`.trim();
+
+      fetch(`${agentUrl}/api/whatsapp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: sale.customer!.whatsapp,
+          message: followUpMessage,
+        }),
+      }).catch((err) => console.error("Failed to send follow-up message:", err));
     }, 15000); // 15 seconds
   }
 
@@ -674,23 +675,27 @@ admin.delete("/sales/:id", async (c) => {
 
 // ─── Customer Management ─────────────────────────────────────────────────────
 
-/** GET /api/admin/customers — all customers with sales count */
+/** GET /api/admin/customers — all customers with sales stats */
 admin.get("/customers", async (c) => {
   const customers = await prisma.customer.findMany({
     include: {
-      _count: {
-        select: { sales: true },
-      },
       sales: {
-        select: { revenue: true },
+        select: { revenue: true, productName: true },
       },
     },
     orderBy: { createdAt: "desc" },
   });
 
   const customersWithStats = customers.map((customer) => ({
-    ...customer,
+    id: customer.id,
+    fullName: customer.fullName,
+    whatsapp: customer.whatsapp,
+    email: customer.email,
+    createdAt: customer.createdAt,
+    updatedAt: customer.updatedAt,
     totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
+    salesCount: customer.sales.length,
+    productNames: [...new Set(customer.sales.map((s) => s.productName).filter(Boolean))] as string[],
   }));
 
   return c.json(customersWithStats);
