@@ -593,6 +593,59 @@ admin.post("/sales", async (c) => {
     },
   });
 
+  // Send WhatsApp invoice if customer exists
+  if (sale.customer) {
+    const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+    
+    // Invoice message
+    const invoiceMessage = `
+🎉 Thank you for your purchase!
+
+Sale #: ${sale.saleNumber}
+Total: $${Number(sale.revenue).toFixed(2)}
+Items: ${sale.quantity}
+
+We hope you enjoy your purchase from Accessories World! 
+
+Thank you for supporting us! 💜
+    `.trim();
+
+    fetch(`${agentUrl}/api/whatsapp/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone: sale.customer.whatsapp,
+        message: invoiceMessage,
+      }),
+    }).catch((err) => console.error("Failed to send invoice message:", err));
+
+    // Schedule follow-up message for 15 seconds later
+    setTimeout(async () => {
+      try {
+        const followUpMessage = `
+Hi ${sale.customer.fullName.split(' ')[0]}! 👋
+
+We wanted to check in and see how you're enjoying your recent purchase from Accessories World!
+
+Your products are performing as expected, we hope? Let us know if you have any questions or need assistance.
+
+We truly appreciate your business! 🙏
+        `.trim();
+
+        fetch(`${agentUrl}/api/whatsapp/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            phone: sale.customer.whatsapp,
+            message: followUpMessage,
+          }),
+        }).catch((err) => console.error("Failed to send follow-up message:", err));
+      } catch (err) {
+        console.error("Error scheduling follow-up:", err);
+      }
+    }, 15000); // 15 seconds
+  }
+
   return c.json(sale, 201);
 });
 
