@@ -162,6 +162,7 @@ model Sale {
   saleNumber  String   @unique
   customerId  String?
   customer    Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  productName String?
   revenue     Decimal  @db.Decimal(10, 2)
   profit      Decimal  @db.Decimal(10, 2)
   quantity    Int
