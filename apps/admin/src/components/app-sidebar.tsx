@@ -35,6 +35,11 @@ const menuItems = [
     icon: DollarSign,
   },
   {
+    title: "Customers",
+    href: "/dashboard/customers",
+    icon: Users,
+  },
+  {
     title: "Accounts",
     href: "/dashboard/accounts",
     icon: Users,
