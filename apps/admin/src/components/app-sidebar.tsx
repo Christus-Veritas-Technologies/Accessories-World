@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Package, Users, Settings, ShoppingCart, LogOut, LayoutDashboard } from "lucide-react"
+import { Home, Package, Users, Settings, ShoppingCart, LogOut, LayoutDashboard, DollarSign } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -28,6 +28,11 @@ const menuItems = [
     title: "Products",
     href: "/dashboard/products",
     icon: Package,
+  },
+  {
+    title: "Sales",
+    href: "/dashboard/sales",
+    icon: DollarSign,
   },
   {
     title: "Accounts",
