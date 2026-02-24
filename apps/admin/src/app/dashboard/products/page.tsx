@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 interface Product {
   id: string;
   name: string;
-  sku: string;
+  sku?: string;
   retailPrice: number;
   wholesalePrice: number;
   retailDiscount: number;
@@ -36,8 +36,7 @@ export default function ProductsPage() {
 
   const filteredProducts = (products || []).filter(
     (p: Product) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.sku.toLowerCase().includes(search.toLowerCase())
+      p.name.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) {
@@ -83,7 +82,7 @@ export default function ProductsPage() {
         <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
         <Input
           type="text"
-          placeholder="Search by name or SKU..."
+          placeholder="Search by name..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10"
@@ -97,7 +96,6 @@ export default function ProductsPage() {
             <thead className="border-b bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold">Name</th>
-                <th className="px-6 py-3 text-left font-semibold">SKU</th>
                 <th className="px-6 py-3 text-right font-semibold">Retail Price</th>
                 <th className="px-6 py-3 text-right font-semibold">Wholesale Price</th>
                 <th className="px-6 py-3 text-right font-semibold">Stock</th>
@@ -114,7 +112,6 @@ export default function ProductsPage() {
                         <p className="text-xs text-gray-500">{product.category.name}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-3 font-mono text-xs">{product.sku}</td>
                     <td className="px-6 py-3 text-right">
                       ${Number(product.retailPrice).toFixed(2)}
                       {Number(product.retailDiscount) > 0 && (
