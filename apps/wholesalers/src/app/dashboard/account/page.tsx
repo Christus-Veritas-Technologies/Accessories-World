@@ -1,60 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Mail, User, Building, Phone, MapPin, Loader } from "lucide-react";
-
-interface WholesalerProfile {
-  id: string;
-  email: string;
-  businessName: string;
-  contactPerson: string;
-  phone: string;
-  address: string;
-  approved: boolean;
-  createdAt: string;
-}
+import { Mail, User, Building, Phone, MapPin, Loader2 } from "lucide-react";
+import { useWholesalerProfile } from "@/hooks/queries";
 
 export default function AccountPage() {
-  const [profile, setProfile] = useState<WholesalerProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data: profile, isLoading, error } = useWholesalerProfile();
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const token = localStorage.getItem("wholesaler_token");
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/wholesalers/profile`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      if (!res.ok) throw new Error("Failed to fetch profile");
-      setProfile(await res.json());
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error loading profile");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader className="h-6 w-6 animate-spin text-brand-primary" />
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   if (error) {
-    return <div className="rounded-lg bg-red-50 p-4 text-red-600">{error}</div>;
+    return (
+      <div className="rounded-lg bg-red-50 border border-red-200 p-4 text-red-600">
+        {(error as Error).message}
+      </div>
+    );
   }
 
   if (!profile) {
-    return <div className="py-12 text-center text-muted-foreground">Profile not found</div>;
+    return (
+      <div className="py-12 text-center text-muted-foreground">Profile not found</div>
+    );
   }
 
   return (
@@ -74,9 +45,7 @@ export default function AccountPage() {
             profile.approved ? "text-green-900" : "text-yellow-900"
           }`}
         >
-          {profile.approved
-            ? "✓ Account Approved"
-            : "⏳ Account Pending Approval"}
+          {profile.approved ? "✓ Account Approved" : "⏳ Account Pending Approval"}
         </p>
         {!profile.approved && (
           <p className="text-sm text-yellow-800 mt-2">
@@ -91,7 +60,6 @@ export default function AccountPage() {
         <h2 className="text-xl font-semibold">Account Information</h2>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          {/* Business Name */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
               <Building className="h-4 w-4" />
@@ -100,7 +68,6 @@ export default function AccountPage() {
             <p className="text-lg font-semibold">{profile.businessName}</p>
           </div>
 
-          {/* Contact Person */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
               <User className="h-4 w-4" />
@@ -109,7 +76,6 @@ export default function AccountPage() {
             <p className="text-lg font-semibold">{profile.contactPerson}</p>
           </div>
 
-          {/* Email */}
           <div>
             <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
               <Mail className="h-4 w-4" />
@@ -118,20 +84,21 @@ export default function AccountPage() {
             <p className="text-lg font-semibold">{profile.email}</p>
           </div>
 
-          {/* Phone */}
           {profile.phone && (
             <div>
               <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
                 <Phone className="h-4 w-4" />
                 Phone
               </label>
-              <a href={`tel:${profile.phone}`} className="text-lg font-semibold text-brand-primary hover:underline">
+              <a
+                href={`tel:${profile.phone}`}
+                className="text-lg font-semibold text-brand-primary hover:underline"
+              >
                 {profile.phone}
               </a>
             </div>
           )}
 
-          {/* Address */}
           {profile.address && (
             <div className="md:col-span-2">
               <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
@@ -142,9 +109,8 @@ export default function AccountPage() {
             </div>
           )}
 
-          {/* Member Since */}
           <div>
-            <label className="text-sm font-medium text-muted-foreground mb-2">
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
               Member Since
             </label>
             <p className="text-lg font-semibold">
@@ -158,17 +124,18 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* Help Section */}
+      {/* Help */}
       <div className="rounded-lg border border-border bg-card p-6">
-        <h2 className="text-xl font-semibold mb-4">Need Help?</h2>
+        <h2 className="text-xl font-semibold mb-3">Need Help?</h2>
         <p className="text-muted-foreground mb-4">
-          If you need to update your account information or have questions, please contact us.
+          If you need to update your account information or have any questions, please
+          reach out to us.
         </p>
         <a
-          href="/contact"
-          className="inline-block rounded-lg bg-brand-primary px-4 py-2 text-white hover:bg-brand-primary-light"
+          href="mailto:support@accessoriesworld.co.zw"
+          className="inline-block rounded-lg bg-brand-primary px-4 py-2 text-white hover:bg-brand-primary-light transition-colors"
         >
-          Contact Us
+          Contact Support
         </a>
       </div>
     </div>
