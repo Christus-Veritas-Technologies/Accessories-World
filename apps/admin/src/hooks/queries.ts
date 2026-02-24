@@ -352,3 +352,90 @@ export function useDeleteSale() {
     },
   });
 }
+
+export function useCustomers() {
+  return useQuery({
+    queryKey: ['admin', 'customers'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/admin/customers`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch customers');
+      return res.json();
+    },
+  });
+}
+
+export function useTopBuyers() {
+  return useQuery({
+    queryKey: ['admin', 'customers', 'top-buyers'],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/admin/customers/top-buyers`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch top buyers');
+      return res.json();
+    },
+  });
+}
+
+export function useCreateCustomer() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: any) => {
+      const res = await fetch(`${API_URL}/admin/customers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to create customer');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers', 'top-buyers'] });
+    },
+  });
+}
+
+export function useUpdateCustomer() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`${API_URL}/admin/customers/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to update customer');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers', 'top-buyers'] });
+    },
+  });
+}
+
+export function useDeleteCustomer() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`${API_URL}/admin/customers/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to delete customer');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'customers', 'top-buyers'] });
+    },
+  });
+}
