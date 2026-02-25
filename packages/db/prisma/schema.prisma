@@ -26,11 +26,8 @@ model Wholesaler {
   id            String   @id @default(cuid())
   email         String   @unique
   passwordHash  String
-  businessName  String
-  contactPerson String
-  phone         String?
-  address       String?
-  approved      Boolean  @default(false)
+  name          String
+  phone         String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

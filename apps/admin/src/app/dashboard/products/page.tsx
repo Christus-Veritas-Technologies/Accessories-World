@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Edit2, Trash2, Search, ChevronLeft, ChevronRight, Eye, Download } from 'lucide-react';
 import { useProducts, useDeleteProduct, useCategories } from '@/hooks/queries';
 import { ProductDialog } from '@/components/product-dialog';
 import { CategoryDialog } from '@/components/category-dialog';
@@ -9,13 +10,17 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 const ITEMS_PER_PAGE = 10;
 
 interface Product {
   id: string;
   name: string;
+  slug?: string;
   sku?: string;
+  description?: string;
   retailPrice: number;
   wholesalePrice: number;
   retailDiscount: number;
@@ -27,11 +32,13 @@ interface Product {
 }
 
 export default function ProductsPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [showProductDialog, setShowProductDialog] = useState(false);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const { data: products = [], isLoading, error } = useProducts();
   const { data: categories = [] } = useCategories();
   const deleteProductMutation = useDeleteProduct();
@@ -51,7 +58,6 @@ export default function ProductsPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Reset to page 1 when search or category changes
   const handleSearchChange = (value: string) => {
     setSearch(value);
     setCurrentPage(1);
@@ -60,6 +66,35 @@ export default function ProductsPage() {
   const handleCategoryChange = (categoryId: string) => {
     setSelectedCategory(categoryId);
     setCurrentPage(1);
+  };
+
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(220, 38, 38);
+    doc.text('Accessories World', 14, 20);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text('Products Report', 14, 30);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} — ${filteredProducts.length} products`, 14, 38);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (doc as any).autoTable({
+      startY: 46,
+      head: [['Name', 'Category', 'Retail Price', 'Wholesale Price', 'Stock', 'Featured']],
+      body: filteredProducts.map((p: Product) => [
+        p.name,
+        p.category?.name ?? '—',
+        `$${Number(p.retailPrice).toFixed(2)}`,
+        `$${Number(p.wholesalePrice).toFixed(2)}`,
+        p.stock,
+        p.featured ? 'Yes' : 'No',
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [220, 38, 38] },
+    });
+    doc.save('products.pdf');
   };
 
   if (isLoading) {
@@ -78,6 +113,10 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold">Products</h1>
         </div>
         <div className="flex items-center gap-3">
+          <Button onClick={exportPDF} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
+          </Button>
           <Button
             onClick={() => setShowCategoryDialog(true)}
             variant="outline"
@@ -96,7 +135,14 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <ProductDialog open={showProductDialog} onOpenChange={setShowProductDialog} />
+      <ProductDialog
+        open={showProductDialog}
+        onOpenChange={(open) => {
+          setShowProductDialog(open);
+          if (!open) setEditingProduct(null);
+        }}
+        product={editingProduct ?? undefined}
+      />
       <CategoryDialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog} />
 
       {error && (
@@ -113,7 +159,6 @@ export default function ProductsPage() {
 
       {/* Search and Filters */}
       <div className="space-y-4">
-        {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <Input
@@ -125,7 +170,6 @@ export default function ProductsPage() {
           />
         </div>
 
-        {/* Category Filters */}
         {categories.length > 0 ? (
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             <Button
@@ -150,12 +194,7 @@ export default function ProductsPage() {
           </div>
         ) : (
           <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              className="bg-red-600 hover:bg-red-700"
-              size="sm"
-              disabled
-            >
+            <Button variant="default" className="bg-red-600 hover:bg-red-700" size="sm" disabled>
               All Products
             </Button>
           </div>
@@ -202,21 +241,34 @@ export default function ProductsPage() {
                       )}
                     </td>
                     <td className="px-6 py-3 text-right">
-                      <Badge
-                        variant={product.stock < 10 ? 'destructive' : 'secondary'}
-                      >
+                      <Badge variant={product.stock < 10 ? 'destructive' : 'secondary'}>
                         {product.stock}
                       </Badge>
                     </td>
                     <td className="px-6 py-3">
-                      <div className="flex items-center gap-2">
-                        <button className="rounded p-1 hover:bg-gray-100">
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => router.push(`/dashboard/products/${product.id}`)}
+                          className="rounded p-1 hover:bg-blue-50 text-blue-600"
+                          title="View details"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setEditingProduct(product);
+                            setShowProductDialog(true);
+                          }}
+                          className="rounded p-1 hover:bg-gray-100"
+                          title="Edit product"
+                        >
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => handleDelete(product.id)}
                           disabled={deleteProductMutation.isPending}
                           className="rounded p-1 hover:bg-red-50 text-red-600 disabled:opacity-50"
+                          title="Delete product"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -238,7 +290,7 @@ export default function ProductsPage() {
         {/* Pagination */}
         {filteredProducts.length > 0 && (
           <div className="px-6 py-4 border-t flex items-center justify-between">
-            <div className="text-sm text-gray-500">
+            <div className ="text-sm text-gray-500">
               Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
             </div>
             <div className="flex items-center gap-2">

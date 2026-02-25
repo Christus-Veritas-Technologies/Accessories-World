@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { useCustomers, useTopBuyers, useDeleteCustomer } from '@/hooks/queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,8 +15,10 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NewCustomerDialog } from '@/components/new-customer-dialog';
-import { Loader2, Plus, Trash2, TrendingUp, Users } from 'lucide-react';
+import { Download, Eye, Loader2, Plus, Trash2, TrendingUp, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Customer {
   id: string;
@@ -29,6 +32,7 @@ interface Customer {
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [newCustomerOpen, setNewCustomerOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [productFilter, setProductFilter] = useState('');
@@ -96,6 +100,35 @@ export default function CustomersPage() {
 
   const hasActiveFilters = searchTerm || productFilter || dateFrom || dateTo;
 
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(220, 38, 38);
+    doc.text('Accessories World', 14, 20);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text('Customers Report', 14, 30);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} — ${filteredCustomers.length} customers`, 14, 38);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (doc as any).autoTable({
+      startY: 46,
+      head: [['Name', 'WhatsApp', 'Email', 'Total Spent', 'Purchases', 'Joined']],
+      body: filteredCustomers.map((c: Customer) => [
+        c.fullName,
+        c.whatsapp,
+        c.email ?? '—',
+        `$${Number(c.totalSpent).toFixed(2)}`,
+        c.salesCount,
+        new Date(c.createdAt).toLocaleDateString(),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [220, 38, 38] },
+    });
+    doc.save('customers.pdf');
+  };
+
   if (error) {
     return (
       <div className="p-6 lg:p-8">
@@ -114,13 +147,19 @@ export default function CustomersPage() {
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600 mt-1">Manage your business customers</p>
         </div>
-        <Button
-          className="bg-red-600 hover:bg-red-700 gap-2"
-          onClick={() => setNewCustomerOpen(true)}
-        >
-          <Plus className="h-4 w-4" />
-          Add Customer
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={exportPDF} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button
+            className="bg-red-600 hover:bg-red-700 gap-2"
+            onClick={() => setNewCustomerOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            Add Customer
+          </Button>
+        </div>
       </div>
 
       {/* Top Buyers Card */}
@@ -262,7 +301,7 @@ export default function CustomersPage() {
                       <TableHead className="text-right">Total Spent</TableHead>
                       <TableHead className="text-center">Purchases</TableHead>
                       <TableHead className="text-left">Joined</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead className="text-center">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -297,16 +336,27 @@ export default function CustomersPage() {
                         <TableCell className="text-sm text-gray-600">
                           {new Date(customer.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(customer.id)}
-                            disabled={deleteCustomerMutation.isPending}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/dashboard/customers/${customer.id}`)}
+                              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              title="View details"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(customer.id)}
+                              disabled={deleteCustomerMutation.isPending}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { Client, LocalAuth } from "whatsapp-web.js";
+import qrcode from "qrcode-terminal";
 
 const app = new Hono();
 app.use("*", logger());
@@ -8,7 +9,6 @@ app.use("*", logger());
 // ─── WhatsApp Client ──────────────────────────────────────────────────────────
 
 let whatsappReady = false;
-let qrCode: string | null = null;
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
@@ -27,14 +27,13 @@ const client = new Client({
 });
 
 client.on("qr", (qr) => {
-  qrCode = qr;
-  console.log("📱 WhatsApp QR Code received. Scan via GET /api/whatsapp/qr");
-  console.log("QR:", qr);
+  console.log("\n📱 WhatsApp QR Code - Scan with your phone:\n");
+  qrcode.generate(qr, { small: true });
+  console.log("\n");
 });
 
 client.on("ready", () => {
   whatsappReady = true;
-  qrCode = null;
   console.log("✅ WhatsApp client is ready!");
 });
 

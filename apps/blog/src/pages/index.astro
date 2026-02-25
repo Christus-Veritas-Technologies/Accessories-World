@@ -13,37 +13,104 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	<body>
 		<Header />
 		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
+			<section class="hero">
+				<h1>Accessories World Blog</h1>
+				<p class="tagline">Your guide to style, quality, and accessories that matter</p>
+			</section>
+
+			<section class="content">
+				<h2>Welcome</h2>
+				<p>
+					Discover insights, tips, and inspiration for choosing accessories that enhance your personal style and 
+					stand the test of time. From understanding quality materials to navigating seasonal trends, our blog 
+					is your companion in the world of accessories.
+				</p>
+
+				<h3>What We Cover</h3>
+				<ul>
+					<li>How to choose quality bags, belts, and wallets</li>
+					<li>Seasonal accessory styling tips</li>
+					<li>The psychology of color and personal expression</li>
+					<li>Trends and timeless pieces in the accessory world</li>
+					<li>Care and maintenance for your accessories</li>
+				</ul>
+
+				<p>
+					Whether you're a minimalist, a maximalist, or somewhere in between, we believe that accessories are 
+					where personality meets practicality. Let's explore together.
+				</p>
+			</section>
 		</main>
 		<Footer />
 	</body>
 </html>
+
+<style>
+	main {
+		padding: 2rem 1rem;
+	}
+
+	.hero {
+		text-align: center;
+		margin-bottom: 3rem;
+		padding: 2rem 0;
+		border-bottom: 2px solid rgb(243, 244, 246);
+	}
+
+	.hero h1 {
+		font-size: 3rem;
+		margin-bottom: 0.5rem;
+		color: var(--accent);
+	}
+
+	.tagline {
+		font-size: 1.25rem;
+		color: rgb(var(--gray));
+		font-weight: 500;
+	}
+
+	.content {
+		max-width: 720px;
+		margin: 0 auto;
+	}
+
+	.content h2 {
+		margin-top: 0;
+		color: rgb(var(--gray-dark));
+	}
+
+	.content h3 {
+		color: var(--accent);
+		margin-top: 1.5rem;
+	}
+
+	.content ul {
+		list-style: none;
+		padding: 0;
+	}
+
+	.content li {
+		padding: 0.5rem 0;
+		padding-left: 1.5rem;
+		position: relative;
+		color: rgb(var(--gray-dark));
+	}
+
+	.content li:before {
+		content: "→";
+		position: absolute;
+		left: 0;
+		color: var(--accent);
+		font-weight: bold;
+	}
+
+	@media (max-width: 720px) {
+		.hero h1 {
+			font-size: 2rem;
+		}
+
+		.tagline {
+			font-size: 1rem;
+		}
+	}
+</style>

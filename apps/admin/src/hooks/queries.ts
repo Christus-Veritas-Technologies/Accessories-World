@@ -18,6 +18,20 @@ export function useKpis() {
   });
 }
 
+export function useProduct(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'products', id],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/admin/products/${id}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch product');
+      return res.json();
+    },
+    enabled: !!id,
+  });
+}
+
 export function useProducts() {
   return useQuery({
     queryKey: ['admin', 'products'],
@@ -41,6 +55,20 @@ export function useAccounts() {
       if (!res.ok) throw new Error('Failed to fetch accounts');
       return res.json();
     },
+  });
+}
+
+export function useWholesaler(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'wholesalers', id],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/admin/wholesalers/${id}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch wholesaler');
+      return res.json();
+    },
+    enabled: !!id,
   });
 }
 
@@ -200,45 +228,6 @@ export function useDeleteAccount() {
   });
 }
 
-export function useApproveWholesaler() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/wholesalers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: true }),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to approve wholesaler');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'wholesalers'] });
-    },
-  });
-}
-
-export function useRevokeWholesaler() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/wholesalers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: false }),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to revoke wholesaler');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'wholesalers'] });
-    },
-  });
-}
 
 export function useCreateWholesaler() {
   const queryClient = useQueryClient();
@@ -353,6 +342,20 @@ export function useDeleteSale() {
   });
 }
 
+export function useCustomer(id: string) {
+  return useQuery({
+    queryKey: ['admin', 'customers', id],
+    queryFn: async () => {
+      const res = await fetch(`${API_URL}/admin/customers/${id}`, {
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to fetch customer');
+      return res.json();
+    },
+    enabled: !!id,
+  });
+}
+
 export function useCustomers() {
   return useQuery({
     queryKey: ['admin', 'customers'],
@@ -436,6 +439,26 @@ export function useDeleteCustomer() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'customers'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'customers', 'top-buyers'] });
+    },
+  });
+}
+
+export function useUpdateAccount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`${API_URL}/admin/accounts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Failed to update account');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'accounts'] });
     },
   });
 }
