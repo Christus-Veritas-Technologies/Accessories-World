@@ -185,7 +185,7 @@ export default function ContactPage() {
                   <span className="text-2xl">🇿🇼</span>
                 </div>
                 <div className="space-y-3 text-sm text-gray-700">
-                  <p>49.32 Second Street</p>
+                  <p>43 Second Street</p>
                   <p>Mutare, Zimbabwe</p>
                 </div>
               </div>
