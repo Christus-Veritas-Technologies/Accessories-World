@@ -4,14 +4,38 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api';
 
+// Helper to get auth token from cookie
+function getAuthToken(): string | null {
+  if (typeof document === 'undefined') return null;
+  const cookies = document.cookie.split('; ');
+  const tokenCookie = cookies.find((row) => row.startsWith('adminToken='));
+  return tokenCookie ? tokenCookie.split('=')[1] : null;
+}
+
+// Helper to make authenticated fetch
+function authenticatedFetch(url: string, options: RequestInit = {}) {
+  const token = getAuthToken();
+  const headers: HeadersInit = {
+    ...options.headers,
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  
+  return fetch(url, {
+    ...options,
+    credentials: 'include',
+    headers,
+  });
+}
+
 // Queries
 export function useKpis() {
   return useQuery({
     queryKey: ['kpis'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/kpis`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/kpis`);
       if (!res.ok) throw new Error('Failed to fetch KPIs');
       return res.json();
     },
@@ -22,9 +46,7 @@ export function useProduct(id: string) {
   return useQuery({
     queryKey: ['admin', 'products', id],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/products/${id}`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/products/${id}`);
       if (!res.ok) throw new Error('Failed to fetch product');
       return res.json();
     },
@@ -36,9 +58,7 @@ export function useProducts() {
   return useQuery({
     queryKey: ['admin', 'products'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/products`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/products`);
       if (!res.ok) throw new Error('Failed to fetch products');
       return res.json();
     },
@@ -49,9 +69,7 @@ export function useAccounts() {
   return useQuery({
     queryKey: ['admin', 'accounts'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/accounts`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/accounts`);
       if (!res.ok) throw new Error('Failed to fetch accounts');
       return res.json();
     },
@@ -62,9 +80,7 @@ export function useWholesaler(id: string) {
   return useQuery({
     queryKey: ['admin', 'wholesalers', id],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/wholesalers/${id}`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/wholesalers/${id}`);
       if (!res.ok) throw new Error('Failed to fetch wholesaler');
       return res.json();
     },
@@ -76,9 +92,7 @@ export function useWholesalers() {
   return useQuery({
     queryKey: ['admin', 'wholesalers'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/wholesalers`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/wholesalers`);
       if (!res.ok) throw new Error('Failed to fetch wholesalers');
       return res.json();
     },
@@ -89,9 +103,7 @@ export function useAdminOrders() {
   return useQuery({
     queryKey: ['admin', 'orders'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/orders`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/orders`);
       if (!res.ok) throw new Error('Failed to fetch orders');
       return res.json();
     },
@@ -102,9 +114,7 @@ export function useCategories() {
   return useQuery({
     queryKey: ['admin', 'categories'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/categories`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/categories`);
       if (!res.ok) throw new Error('Failed to fetch categories');
       return res.json();
     },
@@ -117,11 +127,10 @@ export function useCreateCategory() {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`${API_URL}/admin/categories`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/categories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create category');
       return res.json();
@@ -137,11 +146,10 @@ export function useCreateProduct() {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`${API_URL}/admin/products`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create product');
       return res.json();
@@ -157,11 +165,10 @@ export function useUpdateProduct() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const res = await fetch(`${API_URL}/admin/products/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/products/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update product');
       return res.json();
@@ -177,9 +184,8 @@ export function useDeleteProduct() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/products/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/products/${id}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete product');
       return res.json();
@@ -195,11 +201,10 @@ export function useCreateAccount() {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`${API_URL}/admin/accounts`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/accounts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create account');
       return res.json();
@@ -215,9 +220,8 @@ export function useDeleteAccount() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/accounts/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/accounts/${id}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete account');
       return res.json();
@@ -234,11 +238,10 @@ export function useCreateWholesaler() {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`${API_URL}/admin/wholesalers`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/wholesalers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create wholesaler');
       return res.json();
@@ -254,11 +257,10 @@ export function useUpdateOrderStatus() {
   
   return useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await fetch(`${API_URL}/admin/orders/${id}/status`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/orders/${id}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update order status');
       return res.json();
@@ -272,9 +274,7 @@ export function useSales() {
   return useQuery({
     queryKey: ['admin', 'sales'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/sales`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/sales`);
       if (!res.ok) throw new Error('Failed to fetch sales');
       return res.json();
     },
@@ -286,11 +286,10 @@ export function useCreateSale() {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`${API_URL}/admin/sales`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/sales`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create sale');
       return res.json();
@@ -307,11 +306,10 @@ export function useUpdateSale() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const res = await fetch(`${API_URL}/admin/sales/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/sales/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update sale');
       return res.json();
@@ -328,9 +326,8 @@ export function useDeleteSale() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/sales/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/sales/${id}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete sale');
       return res.json();
@@ -346,9 +343,7 @@ export function useCustomer(id: string) {
   return useQuery({
     queryKey: ['admin', 'customers', id],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/customers/${id}`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/customers/${id}`);
       if (!res.ok) throw new Error('Failed to fetch customer');
       return res.json();
     },
@@ -360,9 +355,7 @@ export function useCustomers() {
   return useQuery({
     queryKey: ['admin', 'customers'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/customers`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/customers`);
       if (!res.ok) throw new Error('Failed to fetch customers');
       return res.json();
     },
@@ -373,9 +366,7 @@ export function useTopBuyers() {
   return useQuery({
     queryKey: ['admin', 'customers', 'top-buyers'],
     queryFn: async () => {
-      const res = await fetch(`${API_URL}/admin/customers/top-buyers`, {
-        credentials: 'include',
-      });
+      const res = await authenticatedFetch(`${API_URL}/admin/customers/top-buyers`);
       if (!res.ok) throw new Error('Failed to fetch top buyers');
       return res.json();
     },
@@ -387,11 +378,10 @@ export function useCreateCustomer() {
   
   return useMutation({
     mutationFn: async (data: any) => {
-      const res = await fetch(`${API_URL}/admin/customers`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/customers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to create customer');
       return res.json();
@@ -408,11 +398,10 @@ export function useUpdateCustomer() {
   
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const res = await fetch(`${API_URL}/admin/customers/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/customers/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update customer');
       return res.json();
@@ -429,9 +418,8 @@ export function useDeleteCustomer() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/customers/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/customers/${id}`, {
         method: 'DELETE',
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to delete customer');
       return res.json();
@@ -448,11 +436,10 @@ export function useUpdateAccount() {
 
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const res = await fetch(`${API_URL}/admin/accounts/${id}`, {
+      const res = await authenticatedFetch(`${API_URL}/admin/accounts/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        credentials: 'include',
       });
       if (!res.ok) throw new Error('Failed to update account');
       return res.json();

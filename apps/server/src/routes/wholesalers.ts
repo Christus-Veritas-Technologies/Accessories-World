@@ -220,11 +220,8 @@ wholesalers.get("/profile", async (c) => {
     select: {
       id: true,
       email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
     },
   });
@@ -244,29 +241,22 @@ wholesalers.patch("/profile", async (c) => {
   const session = c.get("session") as any;
   const wholesalerId = session.wholesalerId!;
 
-  const { businessName, contactPerson, phone, address } = await c.req.json<{
-    businessName?: string;
-    contactPerson?: string;
+  const { name, phone } = await c.req.json<{
+    name?: string;
     phone?: string;
-    address?: string;
   }>();
 
   const wholesaler = await prisma.wholesaler.update({
     where: { id: wholesalerId },
     data: {
-      ...(businessName && { businessName }),
-      ...(contactPerson && { contactPerson }),
+      ...(name && { name }),
       ...(phone && { phone }),
-      ...(address && { address }),
     },
     select: {
       id: true,
       email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
     },
   });

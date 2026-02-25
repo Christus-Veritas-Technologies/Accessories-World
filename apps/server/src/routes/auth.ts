@@ -66,13 +66,6 @@ auth.post("/wholesaler/login", async (c) => {
     return c.json({ error: "Invalid credentials" }, 401);
   }
 
-  if (!wholesaler.approved) {
-    return c.json(
-      { error: "Your account is pending approval. Please contact us." },
-      403
-    );
-  }
-
   const token = await createSession("WHOLESALER", wholesaler.id);
 
   return c.json({
@@ -80,8 +73,8 @@ auth.post("/wholesaler/login", async (c) => {
     user: {
       id: wholesaler.id,
       email: wholesaler.email,
-      businessName: wholesaler.businessName,
-      contactPerson: wholesaler.contactPerson,
+      name: wholesaler.name,
+      phone: wholesaler.phone,
     },
   });
 });
@@ -131,9 +124,8 @@ auth.get("/me", async (c) => {
       user: {
         id: session.wholesaler.id,
         email: session.wholesaler.email,
-        businessName: session.wholesaler.businessName,
-        contactPerson: session.wholesaler.contactPerson,
-        approved: session.wholesaler.approved,
+        name: session.wholesaler.name,
+        phone: session.wholesaler.phone,
       },
     });
   }

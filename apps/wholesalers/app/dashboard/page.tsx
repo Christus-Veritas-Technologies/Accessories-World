@@ -87,10 +87,14 @@ export default function ProductsPage() {
     setIsSubmitting(true);
     try {
       const message = getWhatsAppMessage();
-      const response = await fetch('/api/whatsapp/send-order', {
+      const agentUrl = process.env.NEXT_PUBLIC_AGENT_URL || 'http://localhost:3005/api';
+      const response = await fetch(`${agentUrl}/whatsapp/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phoneNumber: `263${phoneNumber}`, message }),
+        body: JSON.stringify({ 
+          phoneNumber: `263${phoneNumber}`, 
+          message: `${message}%0A%0AClick CONFIRM to proceed. Our sales team will get back to you shortly.`
+        }),
       });
       if (!response.ok) throw new Error('Failed to send WhatsApp message');
       setSuccessPhoneNumber(phoneNumber);

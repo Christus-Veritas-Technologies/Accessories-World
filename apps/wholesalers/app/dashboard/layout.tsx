@@ -33,7 +33,7 @@ export default function DashboardLayout({
     try {
       const raw = localStorage.getItem("wholesalerUser");
       if (!raw) return null;
-      return JSON.parse(raw)?.businessName ?? null;
+      return JSON.parse(raw)?.name ?? null;
     } catch {
       return null;
     }

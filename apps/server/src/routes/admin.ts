@@ -89,7 +89,7 @@ admin.get("/kpis", async (c) => {
       take: 5,
       orderBy: { createdAt: "desc" },
       include: {
-        wholesaler: { select: { businessName: true } },
+        wholesaler: { select: { name: true } },
       },
     }),
     // Low stock products (< 10)
@@ -179,7 +179,7 @@ admin.get("/kpis", async (c) => {
       orderNumber: o.orderNumber,
       totalAmount: o.totalAmount,
       status: o.status,
-      wholesaler: o.wholesaler.businessName,
+      wholesaler: o.wholesaler.name,
       createdAt: o.createdAt,
     })),
     recentSales: recentSales.map((s) => ({
@@ -311,11 +311,8 @@ admin.get("/wholesalers", async (c) => {
     select: {
       id: true,
       email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },
@@ -331,11 +328,8 @@ admin.get("/wholesalers/:id", async (c) => {
     select: {
       id: true,
       email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
       orders: {
         include: {
@@ -436,17 +430,15 @@ admin.post("/wholesalers", async (c) => {
 /** PATCH /api/admin/wholesalers/:id */
 admin.patch("/wholesalers/:id", async (c) => {
   const { id } = c.req.param();
-  const { approved } = await c.req.json<{ approved: boolean }>();
-  
-  // If revoking, kill any active sessions
-  if (approved === false) {
-    await prisma.session.deleteMany({ where: { wholesalerId: id } });
-  }
+  const { name, phone } = await c.req.json<{ name?: string; phone?: string }>();
   
   const wholesaler = await prisma.wholesaler.update({
     where: { id },
-    data: { approved },
-    select: { id: true, email: true, businessName: true, approved: true },
+    data: {
+      ...(name && { name }),
+      ...(phone && { phone }),
+    },
+    select: { id: true, email: true, name: true, phone: true },
   });
   return c.json(wholesaler);
 });
@@ -489,7 +481,7 @@ admin.get("/products/:id", async (c) => {
               orderNumber: true,
               status: true,
               createdAt: true,
-              wholesaler: { select: { id: true, businessName: true } },
+              wholesaler: { select: { id: true, name: true } },
             },
           },
         },
@@ -567,7 +559,7 @@ admin.get("/orders", async (c) => {
   const orders = await prisma.order.findMany({
     include: {
       wholesaler: {
-        select: { id: true, businessName: true, email: true },
+        select: { id: true, name: true, email: true },
       },
       items: {
         include: { product: { select: { id: true, name: true, sku: true } } },
