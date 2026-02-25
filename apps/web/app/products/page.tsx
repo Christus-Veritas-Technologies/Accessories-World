@@ -113,64 +113,6 @@ function ProductCard({ product, onFavorite, isFavorite }: ProductCardProps) {
   );
 }
 
-function SimilarItemsSection() {
-  const { data: trendingProducts, isLoading, error } = useTrendingProducts(4);
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-80 w-full rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (error || !trendingProducts || trendingProducts.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="py-12">
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">Similar Items You Might Like</h2>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {trendingProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RecentlyViewedSection() {
-  const { data: recentProducts, isLoading, error } = useTrendingProducts(4);
-
-  if (isLoading) {
-    return (
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-80 w-full rounded-lg" />
-        ))}
-      </div>
-    );
-  }
-
-  if (error || !recentProducts || recentProducts.length === 0) {
-    return null;
-  }
-
-  return (
-    <section className="py-12">
-      <h2 className="text-2xl font-bold text-gray-900 mb-8">Recently Viewed</h2>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {recentProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
 function ProductsContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get("category");
@@ -339,20 +281,6 @@ function ProductsContent() {
               )}
             </>
           )}
-        </div>
-      </section>
-
-      {/* Similar Items Section */}
-      <section className="px-4 py-12 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="mx-auto max-w-6xl">
-          <SimilarItemsSection />
-        </div>
-      </section>
-
-      {/* Recently Viewed Section */}
-      <section className="px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
-          <RecentlyViewedSection />
         </div>
       </section>
     </div>
