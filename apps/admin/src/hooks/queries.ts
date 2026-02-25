@@ -228,45 +228,6 @@ export function useDeleteAccount() {
   });
 }
 
-export function useApproveWholesaler() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/wholesalers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: true }),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to approve wholesaler');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'wholesalers'] });
-    },
-  });
-}
-
-export function useRevokeWholesaler() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const res = await fetch(`${API_URL}/admin/wholesalers/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approved: false }),
-        credentials: 'include',
-      });
-      if (!res.ok) throw new Error('Failed to revoke wholesaler');
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'wholesalers'] });
-    },
-  });
-}
 
 export function useCreateWholesaler() {
   const queryClient = useQueryClient();

@@ -86,9 +86,20 @@ app.get("/", (c) =>
 app.get("/api/whatsapp/status", (c) =>
   c.json({
     ready: whatsappReady,
-    status: whatsappReady ? "connected" : "disconnected",
+    hasQR: !!qrCode,
   })
 );
+
+/** GET /api/whatsapp/qr — get QR code for scanning */
+app.get("/api/whatsapp/qr", (c) => {
+  if (whatsappReady) {
+    return c.json({ message: "WhatsApp is already connected" });
+  }
+  if (!qrCode) {
+    return c.json({ message: "No QR code available yet. Initializing..." });
+  }
+  return c.json({ qr: qrCode });
+});
 
 /**
  * POST /api/whatsapp/send
@@ -113,13 +124,14 @@ app.post("/api/whatsapp/send", async (c) => {
 /**
  * POST /send-message
  * Send a WhatsApp message (alternative endpoint for web app)
- * Body: { phone: string, message: string }
+ * Body: { phone: string, message: string, replyTo?: string }
  */
 app.post("/send-message", async (c) => {
   try {
     const { phone, message } = await c.req.json<{
       phone: string;
       message: string;
+      replyTo?: string;
     }>();
 
     const result = await sendWhatsAppMessage(phone, message);
