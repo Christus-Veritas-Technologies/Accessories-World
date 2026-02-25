@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { logger } from "hono/logger";
 import { Client, LocalAuth } from "whatsapp-web.js";
+import qrcode from "qrcode-terminal";
 
 const app = new Hono();
 app.use("*", logger());
@@ -8,7 +9,6 @@ app.use("*", logger());
 // ─── WhatsApp Client ──────────────────────────────────────────────────────────
 
 let whatsappReady = false;
-let qrCode: string | null = null;
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
@@ -27,14 +27,13 @@ const client = new Client({
 });
 
 client.on("qr", (qr) => {
-  qrCode = qr;
-  console.log("📱 WhatsApp QR Code received. Scan via GET /api/whatsapp/qr");
-  console.log("QR:", qr);
+  console.log("\n📱 WhatsApp QR Code - Scan with your phone:\n");
+  qrcode.generate(qr, { small: true });
+  console.log("\n");
 });
 
 client.on("ready", () => {
   whatsappReady = true;
-  qrCode = null;
   console.log("✅ WhatsApp client is ready!");
 });
 
@@ -87,20 +86,9 @@ app.get("/", (c) =>
 app.get("/api/whatsapp/status", (c) =>
   c.json({
     ready: whatsappReady,
-    hasQR: !!qrCode,
+    status: whatsappReady ? "connected" : "disconnected",
   })
 );
-
-/** GET /api/whatsapp/qr — get QR code for scanning */
-app.get("/api/whatsapp/qr", (c) => {
-  if (whatsappReady) {
-    return c.json({ message: "WhatsApp is already connected" });
-  }
-  if (!qrCode) {
-    return c.json({ message: "No QR code available yet. Initializing..." });
-  }
-  return c.json({ qr: qrCode });
-});
 
 /**
  * POST /api/whatsapp/send
@@ -125,14 +113,13 @@ app.post("/api/whatsapp/send", async (c) => {
 /**
  * POST /send-message
  * Send a WhatsApp message (alternative endpoint for web app)
- * Body: { phone: string, message: string, replyTo?: string }
+ * Body: { phone: string, message: string }
  */
 app.post("/send-message", async (c) => {
   try {
     const { phone, message } = await c.req.json<{
       phone: string;
       message: string;
-      replyTo?: string;
     }>();
 
     const result = await sendWhatsAppMessage(phone, message);
