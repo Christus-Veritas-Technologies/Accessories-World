@@ -1,13 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckCircle, XCircle, Trash2, Search, Plus, Mail, Phone } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { CheckCircle, XCircle, Trash2, Search, Plus, Mail, Phone, Eye, Download } from 'lucide-react';
 import { useWholesalers, useApproveWholesaler, useRevokeWholesaler } from '@/hooks/queries';
 import { WholesalerDialog } from '@/components/wholesaler-dialog';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface Wholesaler {
   id: string;
@@ -21,6 +24,7 @@ interface Wholesaler {
 }
 
 export default function WholesaleUsersPage() {
+  const router = useRouter();
   const [search, setSearch] = useState('');
   const [showDialog, setShowDialog] = useState(false);
   const { data: wholesalers = [], isLoading, error } = useWholesalers();
@@ -41,6 +45,35 @@ export default function WholesaleUsersPage() {
       w.email.toLowerCase().includes(search.toLowerCase())
   );
 
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(220, 38, 38);
+    doc.text('Accessories World', 14, 20);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text('Wholesale Users Report', 14, 30);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} — ${filteredWholesalers.length} wholesalers`, 14, 38);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (doc as any).autoTable({
+      startY: 46,
+      head: [['Business Name', 'Contact Person', 'Email', 'Phone', 'Status', 'Joined']],
+      body: filteredWholesalers.map((w: Wholesaler) => [
+        w.businessName,
+        w.contactPerson,
+        w.email,
+        w.phone ?? '—',
+        w.approved ? 'Approved' : 'Pending',
+        new Date(w.createdAt).toLocaleDateString(),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [220, 38, 38] },
+    });
+    doc.save('wholesale-users.pdf');
+  };
+
   if (isLoading) {
     return <div className="py-12 text-center">Loading wholesalers...</div>;
   }
@@ -52,13 +85,19 @@ export default function WholesaleUsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Wholesale Users</h1>
-        <Button
-          onClick={() => setShowDialog(true)}
-          className="bg-red-600 hover:bg-red-700"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Add New Wholesaler
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button onClick={exportPDF} variant="outline" className="gap-2">
+            <Download className="h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button
+            onClick={() => setShowDialog(true)}
+            className="bg-red-600 hover:bg-red-700"
+          >
+            <Plus className="h-5 w-5 mr-2" />
+            Add New Wholesaler
+          </Button>
+        </div>
       </div>
 
       <WholesalerDialog open={showDialog} onOpenChange={setShowDialog} />
@@ -94,6 +133,7 @@ export default function WholesaleUsersPage() {
                   key={wholesaler.id}
                   wholesaler={wholesaler}
                   onToggle={() => handleToggle(wholesaler.id, wholesaler.approved)}
+                  onView={() => router.push(`/dashboard/wholesale-users/${wholesaler.id}`)}
                   isLoading={approveMutation.isPending || revokeMutation.isPending}
                 />
               ))}
@@ -112,6 +152,7 @@ export default function WholesaleUsersPage() {
                 key={wholesaler.id}
                 wholesaler={wholesaler}
                 onToggle={() => handleToggle(wholesaler.id, wholesaler.approved)}
+                onView={() => router.push(`/dashboard/wholesale-users/${wholesaler.id}`)}
                 isLoading={approveMutation.isPending || revokeMutation.isPending}
               />
             ))}
@@ -129,10 +170,12 @@ export default function WholesaleUsersPage() {
 function WholesalerCard({
   wholesaler,
   onToggle,
+  onView,
   isLoading,
 }: {
   wholesaler: Wholesaler;
   onToggle: () => void;
+  onView: () => void;
   isLoading: boolean;
 }) {
   const handleEmailClick = () => {
@@ -189,6 +232,13 @@ function WholesalerCard({
         </div>
 
         <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            onClick={onView}
+            className="p-2 rounded hover:bg-blue-50 text-blue-600"
+            title="View details"
+          >
+            <Eye className="h-5 w-5" />
+          </button>
           <button
             onClick={handleEmailClick}
             className="p-2 rounded hover:bg-blue-50 text-blue-600"

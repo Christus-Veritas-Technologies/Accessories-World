@@ -13,11 +13,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useCreateCategory } from '@/hooks/queries';
 import { Loader2, Search } from 'lucide-react';
 import * as Icons from 'lucide-react';
@@ -27,7 +22,6 @@ interface CategoryDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// List of commonly used lucide-react icons for products
 const PRODUCT_ICONS = [
   'Package',
   'Headphones',
@@ -41,12 +35,10 @@ const PRODUCT_ICONS = [
   'Heart',
   'Star',
   'Shirt',
-  'Shoe',
   'ShoppingBag',
   'Gift',
   'Award',
   'Settings',
-  'Tool',
   'Wrench',
   'Hammer',
   'Lightbulb',
@@ -65,7 +57,6 @@ const PRODUCT_ICONS = [
   'Keyboard',
   'Mouse',
   'Tablet',
-  'Airpods',
   'Bluetooth',
   'Radio',
   'Tv',
@@ -73,7 +64,6 @@ const PRODUCT_ICONS = [
   'Joystick',
   'BarChart3',
   'TrendingUp',
-  'Zap',
   'AlertCircle',
   'CheckCircle',
   'Clock',
@@ -83,7 +73,6 @@ const PRODUCT_ICONS = [
   'Sun',
   'Moon',
   'Wind',
-  'Droplets',
   'Folder',
   'Grid',
   'List',
@@ -93,17 +82,13 @@ const PRODUCT_ICONS = [
   'Compass',
   'Anchor',
   'Eye',
-  'EyeOff',
   'Smile',
   'ThumbsUp',
-  'Hand',
   'Flag',
   'Bookmark',
   'Layers',
   'Lock',
-  'Unlock',
   'Key',
-  'Search',
   'Filter',
   'Download',
   'Upload',
@@ -113,13 +98,10 @@ const PRODUCT_ICONS = [
   'Trash2',
   'Plus',
   'Minus',
-  'MoreVertical',
-  'MoreHorizontal',
 ] as const;
 
 type IconName = typeof PRODUCT_ICONS[number];
 
-// Create icon components map outside of component to avoid re-renders
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const iconComponentsMap: Record<string, any> = {};
 PRODUCT_ICONS.forEach((iconName) => {
@@ -132,18 +114,11 @@ const getIconComponent = (iconName: IconName) => {
   return iconComponentsMap[iconName] || Icons.Package;
 };
 
-// Small display component to show icon
-function IconDisplay({ iconName }: { iconName: IconName }) {
-  const IconComponent = getIconComponent(iconName);
-  return React.createElement(IconComponent, { className: 'h-4 w-4' });
-}
-
 export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
   const [formData, setFormData] = useState({
     name: '',
     icon: 'Package' as IconName,
   });
-  const [showIconPicker, setShowIconPicker] = useState(false);
   const [iconSearch, setIconSearch] = useState('');
 
   const createCategoryMutation = useCreateCategory();
@@ -157,10 +132,7 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,12 +151,8 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
       });
 
       toast.success('Category created successfully');
-      setFormData({
-        name: '',
-        icon: 'Package',
-      });
+      setFormData({ name: '', icon: 'Package' });
       setIconSearch('');
-      setShowIconPicker(false);
       onOpenChange(false);
     } catch (error) {
       toast.error(
@@ -193,12 +161,11 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
     }
   };
 
-  // Get the icon component for display
-  const selectedIconName = formData.icon as IconName;
+  const SelectedIcon = getIconComponent(formData.icon as IconName);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Category</DialogTitle>
           <DialogDescription>
@@ -221,72 +188,57 @@ export function CategoryDialog({ open, onOpenChange }: CategoryDialogProps) {
               />
             </div>
 
-            {/* Icon Picker */}
+            {/* Icon Picker — always visible */}
             <div className="space-y-2">
-              <label className="block text-sm font-semibold">Icon</label>
-              <Popover open={showIconPicker} onOpenChange={setShowIconPicker}>
-                <PopoverTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full justify-start gap-2"
-                    disabled={createCategoryMutation.isPending}
-                  >
-                    <IconDisplay iconName={selectedIconName} />
-                    <span>{formData.icon}</span>
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-96 sm:w-[28rem] p-4" side="bottom" align="start">
-                  <div className="space-y-3">
-                    {/* Icon Search */}
-                    <div className="relative">
-                      <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                      <Input
-                        placeholder="Search icons..."
-                        value={iconSearch}
-                        onChange={(e) => setIconSearch(e.target.value)}
-                        className="pl-8"
-                      />
-                    </div>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-semibold">Icon</label>
+                <span className="flex items-center gap-1.5 text-sm font-medium text-red-600">
+                  <SelectedIcon className="h-4 w-4" />
+                  {formData.icon}
+                </span>
+              </div>
 
-                    {/* Icons Grid - Responsive */}
-                    <div className="grid grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2 max-h-60 overflow-y-auto">
-                      {filteredIcons.map((iconName) => {
-                        return (
-                          <button
-                            key={iconName}
-                            type="button"
-                            onClick={() => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                icon: iconName,
-                              }));
-                              setShowIconPicker(false);
-                              setIconSearch('');
-                            }}
-                            className={`flex items-center justify-center h-10 rounded-md border transition-all hover:scale-110 cursor-pointer ${
-                              formData.icon === iconName
-                                ? 'border-red-500 bg-red-50'
-                                : 'border-gray-200 hover:border-gray-300 bg-white'
-                            }`}
-                            title={iconName}
-                          >
-                            {React.createElement(getIconComponent(iconName as IconName), {
-                              className: 'h-5 w-5',
-                            })}
-                          </button>
-                        );
-                      })}
-                    </div>
+              {/* Search */}
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search icons..."
+                  value={iconSearch}
+                  onChange={(e) => setIconSearch(e.target.value)}
+                  className="pl-8"
+                  disabled={createCategoryMutation.isPending}
+                />
+              </div>
 
-                    {filteredIcons.length === 0 && (
-                      <div className="text-center py-4 text-gray-500 text-sm">
-                        No icons found
-                      </div>
-                    )}
-                  </div>
-                </PopoverContent>
-              </Popover>
+              {/* Icons Grid */}
+              {filteredIcons.length > 0 ? (
+                <div className="grid grid-cols-9 gap-1.5 max-h-44 overflow-y-auto pr-1">
+                  {filteredIcons.map((iconName) => {
+                    const IconComp = getIconComponent(iconName as IconName);
+                    const isSelected = formData.icon === iconName;
+                    return (
+                      <button
+                        key={iconName}
+                        type="button"
+                        title={iconName}
+                        disabled={createCategoryMutation.isPending}
+                        onClick={() =>
+                          setFormData((prev) => ({ ...prev, icon: iconName }))
+                        }
+                        className={`flex items-center justify-center h-9 w-9 rounded-md border transition-colors cursor-pointer ${
+                          isSelected
+                            ? 'border-red-500 bg-red-50 text-red-600 shadow-sm ring-1 ring-red-400'
+                            : 'border-gray-200 bg-white text-gray-500 hover:border-red-300 hover:bg-red-50/50 hover:text-red-500'
+                        }`}
+                      >
+                        <IconComp className="h-4 w-4" />
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="py-4 text-center text-sm text-gray-500">No icons found</p>
+              )}
             </div>
 
             {createCategoryMutation.error && (

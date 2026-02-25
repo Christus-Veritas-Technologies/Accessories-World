@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bunx prisma db push)",
+      "Bash(bunx prisma generate)",
+      "Bash(git add packages/db/prisma/schema.prisma)",
+      "Bash(git commit:*)",
+      "Bash(git add apps/admin/src/components/new-sale-dialog.tsx)"
+    ]
+  }
+}

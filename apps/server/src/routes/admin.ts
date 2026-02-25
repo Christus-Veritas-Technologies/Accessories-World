@@ -265,6 +265,22 @@ admin.post("/accounts", async (c) => {
     (err) => console.error("Failed to send new account email:", err)
   );
 
+  // Send WhatsApp notification via agent (non-blocking)
+  const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+  const role = makeAdmin ? "Administrator" : "Staff Member";
+  const whatsappMessage = `🔐 *Your Accessories World Account*\n\n👋 Hello ${name}!\n\nYour ${role} account has been created.\n\n📧 *Email:* ${email}\n🔑 *Password:* ${password}\n\n⚠️ Please change your password after first login.\n\n🚀 Ready to get started!`;
+  
+  fetch(`${agentUrl}/api/whatsapp/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      phone: process.env.BUSINESS_WHATSAPP ?? "+263784923973",
+      message: whatsappMessage,
+    }),
+  }).catch((err) =>
+    console.error("Failed to send admin WhatsApp notification:", err)
+  );
+
   return c.json(account, 201);
 });
 
@@ -305,6 +321,34 @@ admin.get("/wholesalers", async (c) => {
     orderBy: { createdAt: "desc" },
   });
   return c.json(wholesalers);
+});
+
+/** GET /api/admin/wholesalers/:id — single wholesaler with orders */
+admin.get("/wholesalers/:id", async (c) => {
+  const { id } = c.req.param();
+  const wholesaler = await prisma.wholesaler.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      email: true,
+      businessName: true,
+      contactPerson: true,
+      phone: true,
+      address: true,
+      approved: true,
+      createdAt: true,
+      orders: {
+        include: {
+          items: {
+            include: { product: { select: { id: true, name: true } } },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+  if (!wholesaler) return c.json({ error: "Wholesaler not found" }, 404);
+  return c.json(wholesaler);
 });
 
 /** POST /api/admin/wholesalers — create a new wholesaler */
@@ -349,7 +393,7 @@ admin.post("/wholesalers", async (c) => {
     const password = shouldGeneratePassword ? generatePassword(8) : null;
     const passwordHash = password ? await Bun.password.hash(password) : "";
 
-    // Create wholesaler
+    // Create wholesaler — set approved: true immediately
     const wholesaler = await prisma.wholesaler.create({
       data: {
         email,
@@ -358,11 +402,11 @@ admin.post("/wholesalers", async (c) => {
         phone,
         address: address || null,
         passwordHash,
-        approved: false, // Start as pending
+        approved: true, // Auto-approve on creation
       },
     });
 
-    // Send email notification (non-blocking)
+    // Send email and WhatsApp notifications (non-blocking)
     if (password) {
       sendNewAccountEmail(email, contactPerson, password, false).catch((err) =>
         console.error("Failed to send wholesaler welcome email:", err)
@@ -370,7 +414,7 @@ admin.post("/wholesalers", async (c) => {
 
       // Send WhatsApp notification via agent (non-blocking)
       const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-      const whatsappMessage = `👋 Welcome to Accessories World!\n\n${contactPerson}, your account has been created.\n\n📧 Email: ${email}\n🔐 Password: ${password}\n\nPlease change your password after first login.\n\nWelcome aboard! 🚀`;
+      const whatsappMessage = `🎉 *Welcome to Accessories World!*\n\n👋 Hello ${contactPerson}!\n\nYour Wholesaler account has been created and is ready to use.\n\n🏢 *Business:* ${businessName}\n📧 *Email:* ${email}\n🔑 *Password:* ${password}\n\n⚠️ Please change your password after first login.\n\n🚀 Start placing orders now!`;
 
       fetch(`${agentUrl}/api/whatsapp/send`, {
         method: "POST",
@@ -441,6 +485,33 @@ admin.get("/products", async (c) => {
     orderBy: { createdAt: "desc" },
   });
   return c.json(products);
+});
+
+/** GET /api/admin/products/:id — single product with wholesale order history */
+admin.get("/products/:id", async (c) => {
+  const { id } = c.req.param();
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: {
+      category: { select: { id: true, name: true, slug: true } },
+      images: { orderBy: { order: "asc" } },
+      orderItems: {
+        include: {
+          order: {
+            select: {
+              id: true,
+              orderNumber: true,
+              status: true,
+              createdAt: true,
+              wholesaler: { select: { id: true, businessName: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!product) return c.json({ error: "Product not found" }, 404);
+  return c.json(product);
 });
 
 /** POST /api/admin/products — create product */
@@ -730,6 +801,21 @@ admin.get("/customers/top-buyers", async (c) => {
     .slice(0, limit);
 
   return c.json(sorted);
+});
+
+/** GET /api/admin/customers/:id — single customer with full sales history */
+admin.get("/customers/:id", async (c) => {
+  const { id } = c.req.param();
+  const customer = await prisma.customer.findUnique({
+    where: { id },
+    include: {
+      sales: {
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+  if (!customer) return c.json({ error: "Customer not found" }, 404);
+  return c.json(customer);
 });
 
 /** POST /api/admin/customers — create new customer */

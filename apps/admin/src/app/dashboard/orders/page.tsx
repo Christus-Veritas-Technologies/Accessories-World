@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useAdminOrders } from '@/hooks/queries';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader, Package, Eye, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Download, Loader, Package, Eye, CheckCircle2, XCircle, Clock } from 'lucide-react';
 import Image from 'next/image';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface OrderItem {
   id: string;
@@ -70,6 +72,35 @@ export default function OrdersPage() {
       ? orders
       : orders.filter((order: Order) => order.status === statusFilter);
 
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.setTextColor(220, 38, 38);
+    doc.text('Accessories World', 14, 20);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(13);
+    doc.text('Orders Report', 14, 30);
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} — ${(filteredOrders ?? []).length} orders`, 14, 38);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (doc as any).autoTable({
+      startY: 46,
+      head: [['Order #', 'Wholesaler', 'Status', 'Items', 'Total', 'Date']],
+      body: (filteredOrders ?? []).map((order: Order) => [
+        `#${order.orderNumber}`,
+        order.customerName,
+        order.status,
+        order.items.length,
+        `$${Number(order.totalAmount).toFixed(2)}`,
+        new Date(order.createdAt).toLocaleDateString(),
+      ]),
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [220, 38, 38] },
+    });
+    doc.save('orders.pdf');
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-gray-100">
@@ -96,16 +127,22 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-4 mb-2">
-          <img
-            src="/logo-aw.jpg"
-            alt="Accessories World"
-            className="h-10 w-10 object-contain"
-          />
-          <h1 className="text-3xl font-bold">Orders Management</h1>
+      <div className="flex items-start justify-between">
+        <div>
+          <div className="flex items-center gap-4 mb-2">
+            <img
+              src="/logo-aw.jpg"
+              alt="Accessories World"
+              className="h-10 w-10 object-contain"
+            />
+            <h1 className="text-3xl font-bold">Orders Management</h1>
+          </div>
+          <p className="text-muted-foreground">Manage and track all customer orders</p>
         </div>
-        <p className="text-muted-foreground">Manage and track all customer orders</p>
+        <Button onClick={exportPDF} variant="outline" className="gap-2">
+          <Download className="h-4 w-4" />
+          Export PDF
+        </Button>
       </div>
 
       {/* Status Filter */}

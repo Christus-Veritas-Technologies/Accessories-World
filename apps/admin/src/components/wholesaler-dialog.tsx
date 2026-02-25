@@ -71,7 +71,7 @@ export function WholesalerDialog({ open, onOpenChange }: WholesalerDialogProps) 
         generatePassword: formData.generatePassword,
       });
 
-      toast.success('Wholesaler created successfully and notifications sent');
+      toast.success('🎉 Wholesaler created and activated! Account ready to use.\n✉️ Credentials sent via email & WhatsApp');
       setFormData({
         businessName: '',
         contactPerson: '',
