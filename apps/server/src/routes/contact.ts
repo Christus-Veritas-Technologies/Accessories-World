@@ -1,95 +1,57 @@
 import { Hono } from "hono";
 import { prisma } from "@repo/db";
-import { sendContactNotification, sendContactConfirmation } from "../lib/email.js";
 
 const contact = new Hono();
 
+const BUSINESS_PHONE = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
+const AGENT_URL = process.env.AGENT_URL ?? "http://localhost:3004";
+
+async function sendWhatsApp(phone: string, message: string): Promise<void> {
+  const res = await fetch(`${AGENT_URL}/api/whatsapp/send`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, message }),
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(body.error ?? `Agent responded with ${res.status}`);
+  }
+}
+
 /**
  * POST /api/contact
- * Public — submit a contact form
+ * Public — submit a contact form (name, phone, message only)
  */
 contact.post("/", async (c) => {
-  const { name, email, phone, message } = await c.req.json<{
+  const { name, phone, message } = await c.req.json<{
     name: string;
-    email: string;
-    phone?: string;
+    phone: string;
     message: string;
   }>();
 
-  if (!name || !email || !message) {
-    return c.json(
-      { error: "Name, email and message are required" },
-      400
-    );
+  if (!name || !phone || !message) {
+    return c.json({ error: "Name, phone number and message are required" }, 400);
   }
 
   // Save to DB
   const submission = await prisma.contactSubmission.create({
-    data: { name, email, phone, message },
+    data: { name, phone, message },
   });
 
-  // Send email notification (non-blocking)
-  sendContactNotification({ name, email, phone, message }).catch((err) =>
-    console.error("Failed to send contact notification email:", err)
-  );
+  // Send WhatsApp to business — non-blocking, errors are logged only
+  sendWhatsApp(
+    BUSINESS_PHONE,
+    `📩 *${name}* just entered a message on the website:\n\n${message}\n\n📞 ${phone}`,
+  ).catch((err) => console.error("[contact] Failed to notify business via WhatsApp:", err));
 
-  // Send WhatsApp notification via agent (non-blocking)
-  const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-  fetch(`${agentUrl}/api/whatsapp/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      phone: process.env.BUSINESS_WHATSAPP ?? "+263784923973",
-      message: `📩 New Contact Form\n\nName: ${name}\nEmail: ${email}${phone ? `\nPhone: ${phone}` : ""}\n\nMessage:\n${message}`,
-    }),
-  }).catch((err) =>
-    console.error("Failed to send WhatsApp notification:", err)
-  );
+  // Send WhatsApp confirmation to the person who submitted — non-blocking
+  sendWhatsApp(
+    phone,
+    `Hi ${name}! 👋\n\nThank you for your message. We've received it and will get back to you as soon as possible.\n\n— Accessories World`,
+  ).catch((err) => console.error("[contact] Failed to send confirmation to user via WhatsApp:", err));
 
   return c.json({ success: true, id: submission.id }, 201);
-});
-
-/**
- * POST /api/contact/send-email
- * Public — send contact form confirmation and notification emails
- */
-contact.post("/send-email", async (c) => {
-  const { name, email, phone, message } = await c.req.json<{
-    name: string;
-    email: string;
-    phone?: string;
-    message: string;
-  }>();
-
-  if (!name || !email || !message) {
-    return c.json(
-      { error: "Name, email and message are required" },
-      400
-    );
-  }
-
-  try {
-    // Send confirmation email to user (non-blocking)
-    sendContactConfirmation({ name, email, message }).catch((err) =>
-      console.error("Failed to send confirmation email:", err)
-    );
-
-    // Send notification email to business (non-blocking)
-    sendContactNotification({ name, email, phone, message }).catch((err) =>
-      console.error("Failed to send contact notification email:", err)
-    );
-
-    return c.json(
-      { success: true, message: "Emails sent successfully" },
-      200
-    );
-  } catch (error) {
-    console.error("Email sending error:", error);
-    return c.json(
-      { error: "Failed to send emails" },
-      500
-    );
-  }
 });
 
 export { contact };
