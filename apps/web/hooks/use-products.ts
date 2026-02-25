@@ -33,21 +33,23 @@ interface UseProductsOptions {
   category?: string;
   priceRange?: string;
   stockFilter?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const { category, priceRange = "all", stockFilter = "all", page = 1, limit = 10 } = options;
+  const { category, priceRange = "all", stockFilter = "all", search, page = 1, limit = 10 } = options;
 
   return useQuery({
-    queryKey: ["products", { category, priceRange, stockFilter, page, limit }],
+    queryKey: ["products", { category, priceRange, stockFilter, search, page, limit }],
     queryFn: async () => {
       const params = new URLSearchParams();
 
       if (category) params.append("category", category);
       if (priceRange && priceRange !== "all") params.append("price", priceRange);
       if (stockFilter && stockFilter !== "all") params.append("stock", stockFilter);
+      if (search) params.append("search", search);
 
       params.append("page", String(page));
       params.append("limit", String(limit));
