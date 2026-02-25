@@ -9,6 +9,7 @@ app.use("*", logger());
 // ─── WhatsApp Client ──────────────────────────────────────────────────────────
 
 let whatsappReady = false;
+let qrCode: string | null = null;
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: ".wwebjs_auth" }),
@@ -27,6 +28,7 @@ const client = new Client({
 });
 
 client.on("qr", (qr) => {
+  qrCode = qr;
   console.log("\n📱 WhatsApp QR Code - Scan with your phone:\n");
   qrcode.generate(qr, { small: true });
   console.log("\n");
@@ -34,6 +36,7 @@ client.on("qr", (qr) => {
 
 client.on("ready", () => {
   whatsappReady = true;
+  qrCode = null;
   console.log("✅ WhatsApp client is ready!");
 });
 
