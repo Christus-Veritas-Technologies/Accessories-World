@@ -107,8 +107,7 @@ model ProductView {
 model ContactSubmission {
   id        String   @id @default(cuid())
   name      String
-  email     String
-  phone     String?
+  phone     String
   message   String
   createdAt DateTime @default(now())
 }
