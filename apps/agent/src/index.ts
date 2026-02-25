@@ -56,6 +56,9 @@ client.initialize().catch((err) => {
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
+// Serialize all sends — whatsapp-web.js can't handle concurrent sendMessage calls
+let sendQueue: Promise<void> = Promise.resolve();
+
 /** Send a WhatsApp message */
 async function sendWhatsAppMessage(phone: string, message: string) {
   if (!whatsappReady) {
@@ -70,8 +73,18 @@ async function sendWhatsAppMessage(phone: string, message: string) {
   const cleanPhone = phone.replace(/[\s\-\+]/g, "");
   const chatId = `${cleanPhone}@c.us`;
 
-  await client.sendMessage(chatId, message);
-  return { success: true, chatId };
+  return new Promise<{ success: boolean; chatId: string }>((resolve, reject) => {
+    sendQueue = sendQueue
+      .catch(() => {}) // don't let a previous failure stall the queue
+      .then(async () => {
+        try {
+          await client.sendMessage(chatId, message);
+          resolve({ success: true, chatId });
+        } catch (err) {
+          reject(err);
+        }
+      });
+  });
 }
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
