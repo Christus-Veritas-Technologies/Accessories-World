@@ -185,7 +185,7 @@ export default function AboutPage() {
                     <div>
                       <p className="font-semibold text-black text-sm">Address</p>
                       <p className="text-gray-600 text-sm mt-1">
-                        123 Main Street, Harare<br />
+                        43 Second Street, Mutare<br />
                         Zimbabwe
                       </p>
                     </div>
@@ -197,9 +197,7 @@ export default function AboutPage() {
                 <div>
                   <h4 className="font-semibold text-black mb-2">Opening Hours</h4>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p>Monday - Friday: 8:00 AM - 5:30 PM</p>
-                    <p>Saturday: 8:00 AM - 3:00 PM</p>
-                    <p className="text-red-500">Sunday: Closed</p>
+                    <p>Everyday: 7:30 AM - 6 PM</p>
                   </div>
                 </div>
 
