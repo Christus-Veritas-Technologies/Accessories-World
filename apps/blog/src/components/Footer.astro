@@ -4,7 +4,9 @@ const today = new Date();
 
 <footer>
 	<div class="footer-content">
-		<p>&copy; {today.getFullYear()} Accessories World Zimbabwe. All rights reserved.</p>
+		<div class="footer-logo">
+			<img src="/logo-aw.jpg" alt="Accessories World" />
+		</div>
 		<p class="tagline">Every accessory at an affordable price</p>
 		<div class="footer-links">
 			<a href="https://accessoriesworld.co.zw">Main Site</a>
@@ -13,41 +15,59 @@ const today = new Date();
 			<span class="separator">·</span>
 			<span>49, 51 Second St, Mutare, Zimbabwe</span>
 		</div>
+		<p className="copyright">&copy; {today.getFullYear()} Accessories World Zimbabwe. All rights reserved.</p>
 	</div>
 </footer>
 <style>
 	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
-		color: rgb(var(--gray));
+		padding: 3em 1em;
+		background: rgb(var(--gray-light));
+		border-top: 2px solid rgb(229, 231, 235);
+		color: rgb(var(--gray-dark));
 		text-align: center;
 	}
 	.footer-content {
 		max-width: 720px;
 		margin: 0 auto;
 	}
+	.footer-logo {
+		margin-bottom: 1.5rem;
+	}
+	.footer-logo img {
+		height: 48px;
+		width: 48px;
+		object-fit: contain;
+	}
 	.tagline {
-		font-style: italic;
-		margin-top: 0.5em;
-		color: rgb(var(--gray));
+		font-size: 1.1rem;
+		font-weight: 500;
+		color: var(--accent);
+		margin: 0.5em 0;
 	}
 	.footer-links {
 		display: flex;
 		justify-content: center;
 		align-items: center;
 		gap: 0.5em;
-		margin-top: 1em;
+		margin: 1.5em 0;
 		flex-wrap: wrap;
+		font-size: 0.95rem;
 	}
 	.footer-links a {
 		text-decoration: none;
-		color: rgb(var(--gray));
+		color: rgb(var(--gray-dark));
+		font-weight: 500;
 		transition: color 0.2s;
 	}
 	.footer-links a:hover {
-		color: rgb(var(--gray-dark));
+		color: var(--accent);
 	}
 	.separator {
-		color: rgb(var(--gray-light));
+		color: rgb(107, 114, 128);
+	}
+	.copyright {
+		font-size: 0.85rem;
+		color: rgb(var(--gray));
+		margin-top: 1.5em;
 	}
 </style>
