@@ -42,13 +42,13 @@ contact.post("/", async (c) => {
   // Send WhatsApp to business — non-blocking, errors are logged only
   sendWhatsApp(
     BUSINESS_PHONE,
-    `📩 *${name}* just entered a message on the website:\n\n${message}\n\n📞 ${phone}`,
+    `New contact form submission\n\nName: ${name}\nPhone: ${phone}\n\nMessage:\n${message}`,
   ).catch((err) => console.error("[contact] Failed to notify business via WhatsApp:", err));
 
   // Send WhatsApp confirmation to the person who submitted — non-blocking
   sendWhatsApp(
     phone,
-    `Hi ${name}! 👋\n\nThank you for your message. We've received it and will get back to you as soon as possible.\n\n— Accessories World`,
+    `Hi ${name}, thanks for reaching out! We've received your message and will get back to you as soon as possible.\n\n- Accessories World`,
   ).catch((err) => console.error("[contact] Failed to send confirmation to user via WhatsApp:", err));
 
   return c.json({ success: true, id: submission.id }, 201);
