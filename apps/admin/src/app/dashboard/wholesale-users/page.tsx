@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Plus, Mail, Phone, Eye } from 'lucide-react';
+import { Search, Plus, Phone, Eye } from 'lucide-react';
 import { useWholesalers } from '@/hooks/queries';
 import { WholesalerDialog } from '@/components/wholesaler-dialog';
 import { Card } from '@/components/ui/card';
@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 
 interface Wholesaler {
   id: string;
-  email: string;
   name: string;
   phone: string;
   createdAt: string;
@@ -26,7 +25,7 @@ export default function WholesaleUsersPage() {
   const filteredWholesalers = (wholesalers || []).filter(
     (w: Wholesaler) =>
       w.name.toLowerCase().includes(search.toLowerCase()) ||
-      w.email.toLowerCase().includes(search.toLowerCase())
+      w.phone.toLowerCase().includes(search.toLowerCase())
   );
 
   if (isLoading) {
@@ -59,7 +58,7 @@ export default function WholesaleUsersPage() {
         <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
         <Input
           type="text"
-          placeholder="Search by name or email..."
+          placeholder="Search by name or phone..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-10"
@@ -93,10 +92,6 @@ function WholesalerCard({
   wholesaler: Wholesaler;
   onView: () => void;
 }) {
-  const handleEmailClick = () => {
-    window.location.href = `mailto:${wholesaler.email}`;
-  };
-
   const handleWhatsAppClick = () => {
     const message = `Hi ${wholesaler.name}, I'm reaching out from Accessories World`;
     const encodedMessage = encodeURIComponent(message);
@@ -113,12 +108,6 @@ function WholesalerCard({
           </div>
 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <a href={`mailto:${wholesaler.email}`} className="text-blue-600 hover:underline truncate">
-                {wholesaler.email}
-              </a>
-            </div>
             {wholesaler.phone && (
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
@@ -140,13 +129,6 @@ function WholesalerCard({
             title="View details"
           >
             <Eye className="h-5 w-5" />
-          </button>
-          <button
-            onClick={handleEmailClick}
-            className="p-2 rounded hover:bg-blue-50 text-blue-600"
-            title="Send email"
-          >
-            <Mail className="h-5 w-5" />
           </button>
           <button
             onClick={handleWhatsAppClick}

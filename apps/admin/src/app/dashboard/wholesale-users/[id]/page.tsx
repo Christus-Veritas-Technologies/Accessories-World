@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowLeft, Mail, Phone, Loader2 } from 'lucide-react';
+import { ArrowLeft, Phone, Loader2 } from 'lucide-react';
 
 interface OrderItem {
   id: string;
@@ -116,12 +116,6 @@ export default function WholesalerDetailPage({
         </CardHeader>
         <CardContent>
           <div className="space-y-3 text-sm">
-            <div className="flex items-center gap-2">
-              <Mail className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              <a href={`mailto:${wholesaler.email}`} className="text-blue-600 hover:underline">
-                {wholesaler.email}
-              </a>
-            </div>
             <div className="flex items-center gap-2">
               <Phone className="h-4 w-4 text-gray-400 flex-shrink-0" />
               <a href={`tel:${wholesaler.phone}`} className="text-blue-600 hover:underline">

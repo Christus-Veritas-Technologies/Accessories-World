@@ -44,19 +44,19 @@ auth.post("/admin/login", async (c) => {
 
 /**
  * POST /api/auth/wholesaler/login
- * Body: { email, password }
+ * Body: { phone, password }
  */
 auth.post("/wholesaler/login", async (c) => {
-  const { email, password } = await c.req.json<{
-    email: string;
+  const { phone, password } = await c.req.json<{
+    phone: string;
     password: string;
   }>();
 
-  if (!email || !password) {
-    return c.json({ error: "Email and password are required" }, 400);
+  if (!phone || !password) {
+    return c.json({ error: "Phone and password are required" }, 400);
   }
 
-  const wholesaler = await prisma.wholesaler.findUnique({ where: { email } });
+  const wholesaler = await prisma.wholesaler.findUnique({ where: { phone } });
   if (!wholesaler) {
     return c.json({ error: "Invalid credentials" }, 401);
   }
@@ -72,7 +72,6 @@ auth.post("/wholesaler/login", async (c) => {
     token,
     user: {
       id: wholesaler.id,
-      email: wholesaler.email,
       name: wholesaler.name,
       phone: wholesaler.phone,
     },
@@ -123,7 +122,6 @@ auth.get("/me", async (c) => {
       userType: "WHOLESALER",
       user: {
         id: session.wholesaler.id,
-        email: session.wholesaler.email,
         name: session.wholesaler.name,
         phone: session.wholesaler.phone,
       },

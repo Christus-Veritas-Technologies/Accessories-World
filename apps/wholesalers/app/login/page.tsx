@@ -10,7 +10,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api';
 
 export default function WholesalerLogin() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -24,13 +24,13 @@ export default function WholesalerLogin() {
       const res = await fetch(`${API_URL}/auth/wholesaler/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ phone, password }),
         credentials: 'include',
       });
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error || 'Invalid email or password');
+        setError(data.error || 'Invalid phone or password');
         setIsLoading(false);
         return;
       }
@@ -64,15 +64,15 @@ export default function WholesalerLogin() {
           )}
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
+            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+              Phone Number
             </label>
             <Input
-              id="email"
-              type="email"
-              placeholder="wholesaler@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              id="phone"
+              type="tel"
+              placeholder="+263784923973"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               disabled={isLoading}
               required
             />

@@ -23,7 +23,6 @@ interface WholesalerDialogProps {
 export function WholesalerDialog({ open, onOpenChange }: WholesalerDialogProps) {
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     phone: '',
   });
 
@@ -45,10 +44,6 @@ export function WholesalerDialog({ open, onOpenChange }: WholesalerDialogProps) 
       toast.error('Name is required');
       return;
     }
-    if (!formData.email.trim()) {
-      toast.error('Email is required');
-      return;
-    }
     if (!formData.phone.trim()) {
       toast.error('Phone number is required');
       return;
@@ -57,14 +52,12 @@ export function WholesalerDialog({ open, onOpenChange }: WholesalerDialogProps) 
     try {
       await createWholesalerMutation.mutateAsync({
         name: formData.name,
-        email: formData.email,
         phone: formData.phone,
       });
 
-      toast.success('✅ Wholesaler created! Credentials sent via email & WhatsApp');
+      toast.success('✅ Wholesaler created! Credentials sent via WhatsApp');
       setFormData({
         name: '',
-        email: '',
         phone: '',
       });
       onOpenChange(false);
@@ -81,7 +74,7 @@ export function WholesalerDialog({ open, onOpenChange }: WholesalerDialogProps) 
         <DialogHeader>
           <DialogTitle>Add New Wholesaler</DialogTitle>
           <DialogDescription>
-            Create a new wholesaler account. Password will be auto-generated and sent via email & WhatsApp.
+            Create a new wholesaler account. Password will be auto-generated and sent via WhatsApp.
           </DialogDescription>
         </DialogHeader>
 
@@ -94,18 +87,6 @@ export function WholesalerDialog({ open, onOpenChange }: WholesalerDialogProps) 
                 name="name"
                 placeholder="e.g., John Doe"
                 value={formData.name}
-                onChange={handleChange}
-                disabled={createWholesalerMutation.isPending}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold">Email *</label>
-              <Input
-                type="email"
-                name="email"
-                placeholder="e.g., john@example.com"
-                value={formData.email}
                 onChange={handleChange}
                 disabled={createWholesalerMutation.isPending}
               />

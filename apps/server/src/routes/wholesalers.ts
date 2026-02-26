@@ -219,7 +219,6 @@ wholesalers.get("/profile", async (c) => {
     where: { id: wholesalerId },
     select: {
       id: true,
-      email: true,
       name: true,
       phone: true,
       createdAt: true,
@@ -254,7 +253,6 @@ wholesalers.patch("/profile", async (c) => {
     },
     select: {
       id: true,
-      email: true,
       name: true,
       phone: true,
       createdAt: true,

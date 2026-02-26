@@ -1,6 +1,6 @@
 "use client";
 
-import { Mail, User, Phone, Loader2 } from "lucide-react";
+import { User, Phone, Loader2 } from "lucide-react";
 import { useWholesalerProfile } from "@/hooks/queries";
 
 export default function AccountPage() {
@@ -47,14 +47,6 @@ export default function AccountPage() {
               Name
             </label>
             <p className="text-lg font-semibold">{profile.name}</p>
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-2">
-              <Mail className="h-4 w-4" />
-              Email
-            </label>
-            <p className="text-lg font-semibold">{profile.email}</p>
           </div>
 
           <div>
