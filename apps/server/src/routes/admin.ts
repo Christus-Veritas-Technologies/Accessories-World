@@ -507,15 +507,19 @@ admin.post("/products", async (c) => {
     featured?: boolean;
     active?: boolean;
     categoryId?: string;
+    imageUrl?: string;
   }>();
+
+  const { imageUrl, ...productData } = body;
 
   const product = await prisma.product.create({
     data: {
-      ...body,
-      retailPrice: body.retailPrice,
-      wholesalePrice: body.wholesalePrice,
-      retailDiscount: body.retailDiscount ?? 0,
-      wholesaleDiscount: body.wholesaleDiscount ?? 0,
+      ...productData,
+      retailDiscount: productData.retailDiscount ?? 0,
+      wholesaleDiscount: productData.wholesaleDiscount ?? 0,
+      ...(imageUrl && {
+        images: { create: { url: imageUrl, alt: productData.name, order: 0 } },
+      }),
     },
     include: {
       category: true,
@@ -529,11 +533,19 @@ admin.post("/products", async (c) => {
 /** PATCH /api/admin/products/:id — update product */
 admin.patch("/products/:id", async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json();
+  const body = await c.req.json<{ imageUrl?: string; [key: string]: unknown }>();
+  const { imageUrl, ...productData } = body;
+
+  if (imageUrl) {
+    await prisma.productImage.deleteMany({ where: { productId: id } });
+    await prisma.productImage.create({
+      data: { url: imageUrl, alt: String(productData.name ?? "Product image"), productId: id, order: 0 },
+    });
+  }
 
   const product = await prisma.product.update({
     where: { id },
-    data: body,
+    data: productData,
     include: {
       category: true,
       images: true,
