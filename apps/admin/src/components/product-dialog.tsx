@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCreateProduct, useUpdateProduct, useCategories } from '@/hooks/queries';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, X } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -41,6 +41,7 @@ interface Product {
   featured: boolean;
   active: boolean;
   category: { id: string; name: string; slug: string };
+  images?: { url: string; alt?: string }[];
 }
 
 interface ProductDialogProps {
@@ -63,13 +64,18 @@ const emptyForm = {
 
 export function ProductDialog({ open, onOpenChange, product }: ProductDialogProps) {
   const [formData, setFormData] = useState(emptyForm);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const createProductMutation = useCreateProduct();
   const updateProductMutation = useUpdateProduct();
   const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
   const isEdit = !!product;
-  const isPending = createProductMutation.isPending || updateProductMutation.isPending;
+  const isPending = createProductMutation.isPending || updateProductMutation.isPending || isUploading;
   const mutationError = createProductMutation.error || updateProductMutation.error;
 
   // Sync form when dialog opens: populate for edit, reset for create
@@ -86,8 +92,12 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         featured: product.featured,
         description: product.description ?? '',
       });
+      setExistingImageUrl(product.images?.[0]?.url ?? null);
     } else if (!open) {
       setFormData(emptyForm);
+      setImageFile(null);
+      setImagePreview(null);
+      setExistingImageUrl(null);
     }
   }, [open, product]);
 
@@ -101,6 +111,20 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const handleClearImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setExistingImageUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -123,6 +147,25 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       return;
     }
 
+    let imageUrl: string | undefined = existingImageUrl ?? undefined;
+
+    if (imageFile) {
+      setIsUploading(true);
+      try {
+        const form = new FormData();
+        form.append('file', imageFile);
+        const res = await fetch('/api/upload', { method: 'POST', body: form });
+        if (!res.ok) throw new Error('Image upload failed');
+        const data = await res.json() as { url: string };
+        imageUrl = data.url;
+      } catch {
+        toast.error('Failed to upload image. Please try again.');
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
     const payload = {
       name: formData.name,
       categoryId: formData.categoryId || undefined,
@@ -133,6 +176,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       stock: parseInt(formData.stock),
       featured: formData.featured,
       description: formData.description || undefined,
+      ...(imageUrl && { imageUrl }),
     };
 
     try {
@@ -153,6 +197,8 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       );
     }
   };
+
+  const displayImage = imagePreview ?? existingImageUrl;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -297,6 +343,60 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               />
             </div>
 
+            {/* Product Image */}
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold">Product Image</label>
+              <div className="flex items-center gap-4">
+                {/* Preview */}
+                {displayImage ? (
+                  <div className="relative w-20 h-20 rounded-md border border-gray-200 overflow-hidden flex-shrink-0">
+                    {isUploading ? (
+                      <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
+                        <Loader2 className="h-5 w-5 animate-spin text-red-600" />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleClearImage}
+                        disabled={isPending}
+                        className="absolute top-1 right-1 z-10 rounded-full bg-white shadow p-0.5 hover:bg-red-50"
+                        title="Remove image"
+                      >
+                        <X className="h-3 w-3 text-gray-600" />
+                      </button>
+                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={displayImage} alt="Product preview" className="w-full h-full object-cover" />
+                  </div>
+                ) : null}
+
+                {/* Upload button */}
+                <div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={isPending}
+                    className="hidden"
+                    id="product-image-input"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    {displayImage ? 'Replace image' : 'Upload image'}
+                  </Button>
+                  <p className="text-xs text-gray-400 mt-1">JPG, PNG, WebP — max 10MB</p>
+                </div>
+              </div>
+            </div>
+
             {/* Featured */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
@@ -333,7 +433,12 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
               className="bg-red-600 hover:bg-red-700"
               disabled={isPending}
             >
-              {isPending ? (
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   {isEdit ? 'Saving...' : 'Creating...'}
