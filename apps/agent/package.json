@@ -4,6 +4,7 @@
     "dev": "bun run --hot src/index.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.999.0",
     "hono": "^4.12.1",
     "pdfkit": "^0.15.2",
     "qrcode-terminal": "^0.12.0",

@@ -4,9 +4,48 @@ import { Client, LocalAuth, MessageMedia } from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
 import PDFDocument from "pdfkit";
 import { randomUUID } from "crypto";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const app = new Hono();
 app.use("*", logger());
+
+// ─── R2 Storage Client ────────────────────────────────────────────────────────
+
+const s3 = new S3Client({
+  region: "auto",
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
+  },
+});
+
+/** Upload PDF buffer to R2 and return public URL */
+async function uploadPdfToR2(pdfBuffer: Buffer, fileName: string, requestId: string): Promise<string> {
+  console.log(`☁️  [${requestId}] Starting R2 upload for: ${fileName}`);
+  
+  const safeName = fileName.replace(/\s+/g, "-").replace(/[^a-zA-Z0-9.\-_]/g, "");
+  const key = `receipts/${Date.now()}-${safeName}`;
+  
+  try {
+    console.log(`☁️  [${requestId}] Uploading to R2: s3://${process.env.R2_BUCKET}/${key}`);
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET!,
+        Key: key,
+        Body: pdfBuffer,
+        ContentType: "application/pdf",
+      })
+    );
+    
+    const url = `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${key}`;
+    console.log(`✓ [${requestId}] PDF uploaded to R2: ${url}`);
+    return url;
+  } catch (err: any) {
+    console.error(`❌ [${requestId}] R2 upload failed:`, err?.message);
+    throw new Error(`Failed to upload PDF to R2: ${err?.message || "Unknown error"}`);
+  }
+}
 
 // ─── WhatsApp Client ──────────────────────────────────────────────────────────
 
@@ -508,6 +547,20 @@ app.post("/api/receipt/send", async (c) => {
     const pdfGenerationTime = Date.now() - startPdfTime;
     console.log(`✓ [${requestId}] PDF generated successfully in ${pdfGenerationTime}ms (${pdfBuffer.length} bytes)`);
 
+    // Step 1b: Upload PDF to R2
+    console.log(`📝 [${requestId}] Step 1b: Uploading PDF to R2...`);
+    let pdfUrl: string;
+    try {
+      pdfUrl = await uploadPdfToR2(
+        pdfBuffer,
+        `receipt-${receiptData.saleNumber}.pdf`,
+        requestId
+      );
+    } catch (uploadErr: any) {
+      console.error(`❌ [${requestId}] PDF upload failed:`, uploadErr.message);
+      return c.json({ error: uploadErr.message }, 500);
+    }
+
     // Step 2: Prepare WhatsApp message + media
     console.log(`📲 [${requestId}] Step 2: Preparing WhatsApp message...`);
     
@@ -534,12 +587,16 @@ app.post("/api/receipt/send", async (c) => {
 
     console.log(`📝 [${requestId}] Greeting message prepared:\n${greeting}`);
 
-    const media = new MessageMedia(
-      "application/pdf",
-      pdfBuffer.toString("base64"),
-      `receipt-${receiptData.saleNumber}.pdf`
-    );
-    console.log(`✓ [${requestId}] Media object created for PDF (${pdfBuffer.length} bytes)`);
+    // Load PDF from R2 URL as MessageMedia
+    console.log(`📄 [${requestId}] Loading PDF from R2: ${pdfUrl}`);
+    let media: MessageMedia;
+    try {
+      media = await MessageMedia.fromUrl(pdfUrl);
+      console.log(`✓ [${requestId}] PDF loaded from R2 as MessageMedia`);
+    } catch (mediaErr: any) {
+      console.error(`❌ [${requestId}] Failed to load PDF from R2:`, mediaErr.message);
+      return c.json({ error: `Failed to load PDF: ${mediaErr.message}` }, 500);
+    }
 
     // Step 3: Send via serialized queue
     console.log(`⏳ [${requestId}] Step 3: Adding to WhatsApp send queue...`);
@@ -572,26 +629,20 @@ app.post("/api/receipt/send", async (c) => {
             // Add delay between messages for stability
             await new Promise(r => setTimeout(r, 300));
 
-            console.log(`📤 [${requestId}] Sending receipt details as text message to ${chatId}...`);
-            
-            // Format receipt as text instead of PDF for testing
-            const receiptText = 
-              `📄 *RECEIPT DETAILS*\n\n` +
-              `Receipt #: ${receiptData.saleNumber}\n` +
-              `Customer: ${receiptData.customerName}\n` +
-              `Product: ${receiptData.productName || "Accessories"}\n` +
-              `Quantity: ${receiptData.quantity}\n` +
-              `Amount: $${Number(receiptData.revenue).toFixed(2)}\n` +
-              `Date: ${new Date().toLocaleDateString("en-GB")}\n\n` +
-              `Thank you for your purchase!`;
-            
-            console.log(`📝 [${requestId}] Receipt text message:\n${receiptText}`);
+            console.log(`📤 [${requestId}] Sending PDF receipt to ${chatId}...`);
+            console.log(`📤 [${requestId}] PDF URL: ${pdfUrl}`);
+            console.log(`📤 [${requestId}] Media caption: "Your receipt is attached 📄"`);
             
             const sendTime2 = Date.now();
-            client.sendMessage(chatId, receiptText);
-
+            await retryWithBackoff(
+              () => client.sendMessage(chatId, media, {
+                caption: "Your receipt is attached 📄",
+              }),
+              2,
+              600
+            );
             const time2 = Date.now() - sendTime2;
-            console.log(`✓ [${requestId}] Receipt text message sent successfully in ${time2}ms`);
+            console.log(`✓ [${requestId}] PDF receipt sent successfully in ${time2}ms`);
 
             console.log(`✅ [${requestId}] Both messages sent successfully to ${chatId}`);
             resolve();
