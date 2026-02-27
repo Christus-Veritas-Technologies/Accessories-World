@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useSales } from '@/hooks/queries';
+import { useSales, useKpis } from '@/hooks/queries';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,20 +14,14 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { NewSaleDialog } from '@/components/new-sale-dialog';
-import { Loader2, Plus, Download, DollarSign, TrendingUp, CheckCircle2 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { Loader2, Plus, DollarSign, Hash } from 'lucide-react';
 
 interface Sale {
   id: string;
   saleNumber: string;
-  productName?: string;
-  customer?: { fullName: string };
-  revenue: number;
-  profit: number;
-  quantity: number;
-  invoiceSent: boolean;
-  notes?: string;
+  amount: number;
+  customerName?: string;
+  customerWhatsapp?: string;
   createdAt: string;
 }
 
@@ -41,6 +35,7 @@ export default function SalesPage() {
   const itemsPerPage = 10;
 
   const { data: sales, isLoading, error } = useSales() as any;
+  const { data: kpis } = useKpis() as any;
 
   const filteredSales = useMemo(() => {
     if (!sales) return [];
@@ -50,12 +45,11 @@ export default function SalesPage() {
       const matchesSearch =
         !searchTerm ||
         sale.saleNumber.toLowerCase().includes(q) ||
-        (sale.productName && sale.productName.toLowerCase().includes(q)) ||
-        (sale.customer?.fullName && sale.customer.fullName.toLowerCase().includes(q)) ||
-        (sale.notes && sale.notes.toLowerCase().includes(q));
+        (sale.customerName && sale.customerName.toLowerCase().includes(q)) ||
+        (sale.customerWhatsapp && sale.customerWhatsapp.includes(q));
 
       const matchesAmount =
-        !amountFilter || Number(sale.revenue) >= parseFloat(amountFilter);
+        !amountFilter || Number(sale.amount) >= parseFloat(amountFilter);
 
       const saleDate = new Date(sale.createdAt);
       const matchesDateFrom = !dateFrom || saleDate >= new Date(dateFrom);
@@ -71,17 +65,13 @@ export default function SalesPage() {
     currentPage * itemsPerPage
   );
 
-  const totals = useMemo(() => {
-    return filteredSales.reduce(
-      (acc: any, sale: Sale) => ({
-        revenue: acc.revenue + Number(sale.revenue),
-        profit: acc.profit + Number(sale.profit),
-        quantity: acc.quantity + sale.quantity,
-        count: acc.count + 1,
-      }),
-      { revenue: 0, profit: 0, quantity: 0, count: 0 }
-    );
-  }, [filteredSales]);
+  const retailTotal = useMemo(
+    () => filteredSales.reduce((acc: number, sale: Sale) => acc + Number(sale.amount), 0),
+    [filteredSales]
+  );
+
+  const wholesaleTotal = kpis?.revenue?.total ?? 0;
+  const combinedTotal = retailTotal + wholesaleTotal;
 
   const clearFilters = () => {
     setSearchTerm('');
@@ -92,66 +82,6 @@ export default function SalesPage() {
   };
 
   const hasActiveFilters = searchTerm || amountFilter || dateFrom || dateTo;
-
-  const exportAsPDF = () => {
-    const doc = new jsPDF();
-
-    doc.setFontSize(18);
-    doc.text('Sales Report', 14, 22);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100);
-    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 32);
-    doc.setTextColor(0);
-
-    doc.setFontSize(11);
-    doc.setFont(undefined, 'bold');
-    doc.text('Summary Statistics', 14, 45);
-
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    const summaryData = [
-      ['Total Sales', totals.count.toString()],
-      ['Total Revenue', `$${totals.revenue.toFixed(2)}`],
-      ['Total Profit', `$${totals.profit.toFixed(2)}`],
-      ['Total Quantity', totals.quantity.toString()],
-      ['Average Profit per Sale', `$${(totals.profit / totals.count || 0).toFixed(2)}`],
-    ];
-
-    let yPos = 52;
-    summaryData.forEach(([label, value]) => {
-      doc.text(`${label}:`, 14, yPos);
-      doc.text(value, 120, yPos);
-      yPos += 7;
-    });
-
-    const tableData = filteredSales.map((sale: Sale) => [
-      sale.saleNumber,
-      sale.customer?.fullName || '-',
-      sale.productName || '-',
-      new Date(sale.createdAt).toLocaleDateString(),
-      `$${Number(sale.revenue).toFixed(2)}`,
-      `$${Number(sale.profit).toFixed(2)}`,
-      sale.quantity.toString(),
-      sale.notes || '-',
-    ]);
-
-    (doc as any).autoTable({
-      head: [['Sale #', 'Customer', 'Product', 'Date', 'Revenue', 'Profit', 'Qty', 'Notes']],
-      body: tableData,
-      startY: yPos + 8,
-      headStyles: {
-        fillColor: [220, 38, 38],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-      },
-      bodyStyles: { textColor: [50, 50, 50] },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-      margin: { left: 14, right: 14 },
-    });
-
-    doc.save(`sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
-  };
 
   if (error) {
     return (
@@ -184,38 +114,42 @@ export default function SalesPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Sales</CardTitle>
+            <CardTitle className="flex items-center justify-between text-sm font-medium text-gray-600">
+              Retail Sales <DollarSign className="h-4 w-4 text-green-600" />
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{totals.count}</div>
+            <div className="text-2xl font-bold text-gray-900">${retailTotal.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between text-sm font-medium text-gray-600">
-              Total Revenue <DollarSign className="h-4 w-4 text-green-600" />
+              Wholesale Sales <DollarSign className="h-4 w-4 text-blue-600" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">${totals.revenue.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-gray-900">${Number(wholesaleTotal).toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center justify-between text-sm font-medium text-gray-600">
-              Total Profit <TrendingUp className="h-4 w-4 text-blue-600" />
+              Total Sales <DollarSign className="h-4 w-4 text-red-600" />
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">${totals.profit.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-gray-900">${combinedTotal.toFixed(2)}</div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">Total Quantity</CardTitle>
+            <CardTitle className="flex items-center justify-between text-sm font-medium text-gray-600">
+              Transactions <Hash className="h-4 w-4 text-purple-600" />
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-gray-900">{totals.quantity}</div>
+            <div className="text-2xl font-bold text-gray-900">{filteredSales.length}</div>
           </CardContent>
         </Card>
       </div>
@@ -233,12 +167,12 @@ export default function SalesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
             <div className="lg:col-span-2 space-y-1">
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Search</label>
               <Input
                 type="text"
-                placeholder="Sale #, customer, product, notes..."
+                placeholder="Sale #, customer name, WhatsApp..."
                 value={searchTerm}
                 onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
               />
@@ -257,28 +191,24 @@ export default function SalesPage() {
                 />
               </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date From</label>
-              <Input
-                type="date"
-                value={dateFrom}
-                onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">From</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => { setDateFrom(e.target.value); setCurrentPage(1); }}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">To</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date To</label>
-              <Input
-                type="date"
-                value={dateTo}
-                onChange={(e) => { setDateTo(e.target.value); setCurrentPage(1); }}
-              />
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <Button variant="outline" className="gap-2" onClick={exportAsPDF}>
-              <Download className="h-4 w-4" />
-              Export PDF
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -307,13 +237,9 @@ export default function SalesPage() {
                     <TableRow>
                       <TableHead>Sale #</TableHead>
                       <TableHead>Customer</TableHead>
-                      <TableHead>Product</TableHead>
+                      <TableHead>WhatsApp</TableHead>
                       <TableHead>Date</TableHead>
-                      <TableHead className="text-right">Revenue</TableHead>
-                      <TableHead className="text-right">Profit</TableHead>
-                      <TableHead className="text-center">Qty</TableHead>
-                      <TableHead className="text-center">Invoice</TableHead>
-                      <TableHead>Notes</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -323,45 +249,16 @@ export default function SalesPage() {
                           {sale.saleNumber}
                         </TableCell>
                         <TableCell className="text-sm text-gray-700">
-                          {sale.customer?.fullName || <span className="text-gray-400">—</span>}
+                          {sale.customerName || <span className="text-gray-400">—</span>}
                         </TableCell>
-                        <TableCell className="text-sm text-gray-700 max-w-[140px]">
-                          {sale.productName ? (
-                            <span className="truncate block" title={sale.productName}>
-                              {sale.productName}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
+                        <TableCell className="text-sm text-gray-600">
+                          {sale.customerWhatsapp || <span className="text-gray-400">—</span>}
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
                           {new Date(sale.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell className="text-right font-semibold text-green-600">
-                          ${Number(sale.revenue).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right font-semibold text-blue-600">
-                          ${Number(sale.profit).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-center">{sale.quantity}</TableCell>
-                        <TableCell className="text-center">
-                          {sale.invoiceSent ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-green-600 font-medium">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Sent
-                            </span>
-                          ) : (
-                            <span className="text-xs text-gray-400">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-600 max-w-[140px]">
-                          {sale.notes ? (
-                            <span className="truncate block" title={sale.notes}>
-                              {sale.notes}
-                            </span>
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
+                          ${Number(sale.amount).toFixed(2)}
                         </TableCell>
                       </TableRow>
                     ))}
