@@ -91,6 +91,24 @@ auth.post("/logout", async (c) => {
 });
 
 /**
+ * GET /api/auth/validate
+ * Validates the current session (returns 200 if valid, 401 if invalid)
+ */
+auth.get("/validate", async (c) => {
+  const token = extractToken(c.req.header("Authorization"));
+  if (!token) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const session = await validateSession(token);
+  if (!session) {
+    return c.json({ error: "Invalid or expired session" }, 401);
+  }
+
+  return c.json({ valid: true });
+});
+
+/**
  * GET /api/auth/me
  * Returns the current session user
  */
