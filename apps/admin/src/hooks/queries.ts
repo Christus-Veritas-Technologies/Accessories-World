@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3003/api';
 
@@ -10,6 +11,14 @@ function getAuthToken(): string | null {
   const cookies = document.cookie.split('; ');
   const tokenCookie = cookies.find((row) => row.startsWith('adminToken='));
   return tokenCookie ? tokenCookie.split('=')[1] : null;
+}
+
+// Helper to clear auth and redirect
+function handleAuthError() {
+  document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+  if (typeof window !== 'undefined') {
+    window.location.href = '/login';
+  }
 }
 
 // Helper to make authenticated fetch
@@ -27,6 +36,13 @@ function authenticatedFetch(url: string, options: RequestInit = {}) {
     ...options,
     credentials: 'include',
     headers,
+  }).then(async (res) => {
+    // Handle 401/403 by clearing auth and redirecting
+    if (res.status === 401 || res.status === 403) {
+      handleAuthError();
+      throw new Error('Session invalid or expired');
+    }
+    return res;
   });
 }
 
@@ -354,6 +370,29 @@ export function useUpdateAccount() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'accounts'] });
+    },
+  });
+}
+
+// Auth & Session
+export function useLogout() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const res = await authenticatedFetch(`${API_URL}/auth/logout`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Failed to logout');
+      return res.json();
+    },
+    onSuccess: () => {
+      // Clear all cache
+      queryClient.clear();
+      // Clear auth token cookie
+      document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
+      // Redirect to login
+      window.location.href = '/login';
     },
   });
 }

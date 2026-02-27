@@ -4,6 +4,7 @@ import { Home, Package, Users, LogOut, LayoutDashboard, DollarSign } from "lucid
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useLogout } from "@/hooks/queries"
 
 import {
   Sidebar,
@@ -48,23 +49,23 @@ const menuItems = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const logoutMutation = useLogout()
+
+  const handleLogout = () => {
+    logoutMutation.mutate()
+  }
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center justify-center py-2">
+    <Sidebar className="border-r border-gray-200">
+      <SidebarHeader className="border-b border-gray-200">
+        <div className="flex items-center justify-between py-2">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="relative w-12 h-12">
-              <Image
-                src="/logo-aw.jpg"
-                alt="Accessories World"
-                fill
-                className="object-contain"
-              />
+            <div className="relative w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-white font-bold text-sm">AW</span>
             </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-bold text-black">ACCESSORIES</p>
-              <p className="text-xs font-bold text-black">WORLD</p>
+            <div className="hidden md:block">
+              <p className="text-xs font-bold text-gray-900">ACCESSORIES</p>
+              <p className="text-xs font-bold text-gray-900">WORLD</p>
             </div>
           </Link>
         </div>
@@ -72,12 +73,11 @@ export function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Management</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-600">Management</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => {
                 const Icon = item.icon
-                // Only mark as active if exact match or direct child (not parent routes)
                 const isActive = pathname === item.href
 
                 return (
@@ -89,7 +89,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href} className="flex items-center gap-2">
                         <Icon className="h-4 w-4" />
-                        <span>{item.title}</span>
+                        <span className="hidden md:inline">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -100,18 +100,19 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-gray-200">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild>
-              <button className="flex items-center gap-2 w-full text-left">
-                <LogOut className="h-4 w-4" />
-                <span>Logout</span>
-              </button>
+            <SidebarMenuButton
+              onClick={handleLogout}
+              disabled={logoutMutation.isPending}
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden md:inline">{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )
-}
