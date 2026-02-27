@@ -3,12 +3,11 @@
 import {
   Package,
   ShoppingCart,
-  Users,
   TrendingUp,
-  Eye,
   AlertCircle,
   LogOut,
   DollarSign,
+  ShoppingBag,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useKpis } from "@/hooks/queries";
@@ -19,7 +18,7 @@ import { Button } from "@/components/ui/button";
 interface KPIData {
   revenue: { total: number; monthly: number };
   sales: { revenue: { total: number; monthly: number }; profit: { total: number; monthly: number } };
-  views: { weekly: number; monthly: number };
+  salesCount: number;
   mostViewedProducts: Array<{ product: { name: string }; views: number }>;
   topSellingProducts: Array<{ product: { name: string }; totalSold: number }>;
   recentOrders: Array<{
@@ -30,15 +29,6 @@ interface KPIData {
     wholesaler: string;
     createdAt: string;
   }>;
-  recentSales: Array<{
-    id: string;
-    saleNumber: string;
-    revenue: number;
-    profit: number;
-    quantity: number;
-    createdAt: string;
-  }>;
-  lowStockProducts: Array<{ id: string; name: string; stock: number; sku: string }>;
 }
 
 export default function Dashboard() {
@@ -60,7 +50,6 @@ export default function Dashboard() {
       console.error("Logout error:", err);
     }
 
-    // Clear auth
     document.cookie = "adminToken=; path=/; max-age=0";
     localStorage.removeItem("adminSession");
     router.push("/login");
@@ -71,8 +60,8 @@ export default function Dashboard() {
       <div className="p-6 lg:p-8">
         <div className="space-y-6">
           <div className="h-10 bg-gray-200 rounded animate-pulse w-48" />
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {[...Array(2)].map((_, i) => (
               <div key={i} className="h-32 bg-gray-200 rounded-lg animate-pulse" />
             ))}
           </div>
@@ -93,6 +82,8 @@ export default function Dashboard() {
   }
 
   if (!kpis) return null;
+
+  const totalRevenue = (kpis.revenue?.total ?? 0) + (kpis.sales?.amount?.total ?? 0);
 
   return (
     <div className="space-y-8">
@@ -121,30 +112,18 @@ export default function Dashboard() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <KPICard
-          title="Total Revenue"
-          value={`$${kpis.revenue.total.toFixed(2)}`}
-          icon={TrendingUp}
+          title="Total Sales"
+          value={String(kpis.salesCount ?? 0)}
+          icon={ShoppingBag}
           color="bg-red-100 text-red-600"
         />
         <KPICard
-          title="Sales Revenue"
-          value={`$${kpis.sales.revenue.total.toFixed(2)}`}
+          title="Total Revenue"
+          value={`$${Number(totalRevenue).toFixed(2)}`}
           icon={DollarSign}
           color="bg-green-100 text-green-600"
-        />
-        <KPICard
-          title="Total Profit"
-          value={`$${kpis.sales.profit.total.toFixed(2)}`}
-          icon={TrendingUp}
-          color="bg-blue-100 text-blue-600"
-        />
-        <KPICard
-          title="Monthly Sales Profit"
-          value={`$${kpis.sales.profit.monthly.toFixed(2)}`}
-          icon={Package}
-          color="bg-purple-100 text-purple-600"
         />
       </div>
 
@@ -204,28 +183,6 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Low Stock Alert */}
-      {kpis.lowStockProducts?.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-900">
-              <AlertCircle className="h-5 w-5" />
-              Low Stock Alert
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {kpis.lowStockProducts.map((product: any) => (
-                <p key={product.id} className="text-sm text-red-800">
-                  <strong>{product.name}</strong> ({product.sku}): {product.stock}{' '}
-                  remaining
-                </p>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Recent Orders */}
       <Card>
         <CardHeader>
@@ -273,58 +230,6 @@ export default function Dashboard() {
                   <tr>
                     <td colSpan={4} className="px-4 py-8 text-center text-gray-500">
                       No orders yet
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Recent Sales */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="h-5 w-5 text-green-500" />
-            Most Recent Sales
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Sale #</th>
-                  <th className="px-4 py-3 text-left font-semibold text-gray-700">Date</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-700">Revenue</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-700">Profit</th>
-                  <th className="px-4 py-3 text-right font-semibold text-gray-700">Qty</th>
-                </tr>
-              </thead>
-              <tbody>
-                {kpis.recentSales?.length > 0 ? (
-                  kpis.recentSales.map((sale: any) => (
-                    <tr key={sale.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-900">{sale.saleNumber}</td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {new Date(sale.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold text-green-600">
-                        ${sale.revenue.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold text-blue-600">
-                        ${sale.profit.toFixed(2)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-gray-900">
-                        {sale.quantity}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-8 text-center text-gray-500">
-                      No sales yet
                     </td>
                   </tr>
                 )}
