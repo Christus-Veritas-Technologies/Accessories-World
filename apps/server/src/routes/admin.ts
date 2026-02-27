@@ -48,7 +48,6 @@ admin.get("/kpis", async (c) => {
     monthlyViews,
     mostViewedProducts,
     recentOrders,
-    lowStockProducts,
     topSellingProducts,
     totalSalesRevenue,
     monthlySalesRevenue,
@@ -91,13 +90,6 @@ admin.get("/kpis", async (c) => {
       include: {
         wholesaler: { select: { name: true } },
       },
-    }),
-    // Low stock products (< 10)
-    prisma.product.findMany({
-      where: { active: true, stock: { lt: 10 } },
-      select: { id: true, name: true, stock: true, sku: true },
-      orderBy: { stock: "asc" },
-      take: 10,
     }),
     // Top selling products
     prisma.orderItem.groupBy({
@@ -190,7 +182,6 @@ admin.get("/kpis", async (c) => {
       quantity: s.quantity,
       createdAt: s.createdAt,
     })),
-    lowStockProducts,
   });
 });
 
@@ -483,7 +474,6 @@ admin.post("/products", async (c) => {
     wholesalePrice: number;
     retailDiscount?: number;
     wholesaleDiscount?: number;
-    stock: number;
     featured?: boolean;
     active?: boolean;
     categoryId?: string;
@@ -640,34 +630,32 @@ admin.post("/sales", async (c) => {
     },
   });
 
-  // Send WhatsApp invoice if customer exists
+  // Send WhatsApp receipt (PDF) if customer exists
   if (sale.customer) {
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-    const productLine = sale.productName ? `\nProduct: ${sale.productName}` : "";
 
-    // Invoice message — starts with "Hope you enjoyed"
-    const invoiceMessage = `Hope you enjoyed your purchase! 🎉${productLine}
-
-Sale #: ${sale.saleNumber}
-Total: $${Number(sale.revenue).toFixed(2)}
-Qty: ${sale.quantity}
-
-Thank you for supporting Accessories World — it means the world to us! 💜`.trim();
-
-    fetch(`${agentUrl}/api/whatsapp/send`, {
+    // Send receipt via agent — generates PDF and sends via WhatsApp
+    fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        phone: sale.customer.whatsapp,
-        message: invoiceMessage,
+        saleNumber: sale.saleNumber,
+        customerName: sale.customer.fullName,
+        customerWhatsapp: sale.customer.whatsapp,
+        productName: sale.productName ?? undefined,
+        revenue: Number(sale.revenue),
+        quantity: sale.quantity,
       }),
     })
-      .then(() =>
-        prisma.sale.update({ where: { id: sale.id }, data: { invoiceSent: true } })
-      )
-      .catch((err) => console.error("Failed to send invoice message:", err));
+      .then((res) => {
+        if (res.ok) {
+          return prisma.sale.update({ where: { id: sale.id }, data: { invoiceSent: true } });
+        }
+        return res.json().then((err: any) => console.error("Receipt send failed:", err));
+      })
+      .catch((err) => console.error("Failed to send receipt:", err));
 
-    // Schedule follow-up message (15 seconds later)
+    // Schedule follow-up message (3 days later)
     const firstName = sale.customer.fullName.split(" ")[0];
     const productRef = sale.productName
       ? sale.quantity > 1
@@ -692,7 +680,7 @@ Thank you for your support. 🙏`.trim();
           message: followUpMessage,
         }),
       }).catch((err) => console.error("Failed to send follow-up message:", err));
-    }, 15000); // 15 seconds
+    }, 3 * 24 * 60 * 60 * 1000); // 3 days
   }
 
   return c.json(sale, 201);
