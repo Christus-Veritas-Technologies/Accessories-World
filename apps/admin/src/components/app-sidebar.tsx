@@ -58,10 +58,15 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-gray-200">
       <SidebarHeader className="border-b border-gray-200">
-        <div className="flex items-center justify-between py-2">
+        <div className="flex items-center justify-between py-2 px-2">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="relative w-10 h-10 rounded-lg bg-red-600 flex items-center justify-center flex-shrink-0">
-              <span className="text-white font-bold text-sm">AW</span>
+            <div className="relative w-12 h-12 flex-shrink-0">
+              <Image
+                src="/logo-aw.jpg"
+                alt="Accessories World"
+                fill
+                className="object-contain"
+              />
             </div>
             <div className="hidden md:block">
               <p className="text-xs font-bold text-gray-900">ACCESSORIES</p>
