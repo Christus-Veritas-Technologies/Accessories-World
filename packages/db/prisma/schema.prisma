@@ -127,12 +127,15 @@ model Order {
 
 // ─── Sales ──────────────────────────────────────────────────
 
+// ─── Sales ──────────────────────────────────────────────
+
 model Sale {
   id               String   @id @default(cuid())
   saleNumber       String   @unique
   amount           Decimal  @db.Decimal(10, 2)
   customerName     String?
   customerWhatsapp String?
+  products         Json     @default("[]") // MinifiedProduct[] : {name: string, price: string}[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
