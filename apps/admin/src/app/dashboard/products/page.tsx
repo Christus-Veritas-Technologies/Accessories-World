@@ -7,7 +7,6 @@ import { useProducts, useDeleteProduct, useCategories } from '@/hooks/queries';
 import { ProductDialog } from '@/components/product-dialog';
 import { CategoryDialog } from '@/components/category-dialog';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import jsPDF from 'jspdf';
@@ -25,7 +24,6 @@ interface Product {
   wholesalePrice: number;
   retailDiscount: number;
   wholesaleDiscount: number;
-  stock: number;
   featured: boolean;
   active: boolean;
   category: { id: string; name: string; slug: string };
@@ -82,13 +80,12 @@ export default function ProductsPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (doc as any).autoTable({
       startY: 46,
-      head: [['Name', 'Category', 'Retail Price', 'Wholesale Price', 'Stock', 'Featured']],
+      head: [['Name', 'Category', 'Retail Price', 'Wholesale Price', 'Featured']],
       body: filteredProducts.map((p: Product) => [
         p.name,
         p.category?.name ?? '—',
         `$${Number(p.retailPrice).toFixed(2)}`,
         `$${Number(p.wholesalePrice).toFixed(2)}`,
-        p.stock,
         p.featured ? 'Yes' : 'No',
       ]),
       styles: { fontSize: 9 },
@@ -210,7 +207,6 @@ export default function ProductsPage() {
                 <th className="px-6 py-3 text-left font-semibold">Name</th>
                 <th className="px-6 py-3 text-right font-semibold">Retail Price</th>
                 <th className="px-6 py-3 text-right font-semibold">Wholesale Price</th>
-                <th className="px-6 py-3 text-right font-semibold">Stock</th>
                 <th className="px-6 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -239,11 +235,6 @@ export default function ProductsPage() {
                           -{Number(product.wholesaleDiscount).toFixed(1)}%
                         </span>
                       )}
-                    </td>
-                    <td className="px-6 py-3 text-right">
-                      <Badge variant={product.stock < 10 ? 'destructive' : 'secondary'}>
-                        {product.stock}
-                      </Badge>
                     </td>
                     <td className="px-6 py-3">
                       <div className="flex items-center gap-1">
@@ -278,7 +269,7 @@ export default function ProductsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                     No products found
                   </td>
                 </tr>

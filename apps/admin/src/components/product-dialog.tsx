@@ -37,7 +37,6 @@ interface Product {
   wholesalePrice: number;
   retailDiscount: number;
   wholesaleDiscount: number;
-  stock: number;
   featured: boolean;
   active: boolean;
   category: { id: string; name: string; slug: string };
@@ -57,7 +56,6 @@ const emptyForm = {
   wholesalePrice: '',
   retailDiscount: '0',
   wholesaleDiscount: '0',
-  stock: '',
   featured: false,
   description: '',
 };
@@ -88,7 +86,6 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         wholesalePrice: String(product.wholesalePrice),
         retailDiscount: String(product.retailDiscount),
         wholesaleDiscount: String(product.wholesaleDiscount),
-        stock: String(product.stock),
         featured: product.featured,
         description: product.description ?? '',
       });
@@ -142,10 +139,6 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       toast.error('Wholesale price is required');
       return;
     }
-    if (formData.stock === '') {
-      toast.error('Stock quantity is required');
-      return;
-    }
 
     let imageUrl: string | undefined = existingImageUrl ?? undefined;
 
@@ -173,7 +166,6 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
       wholesalePrice: parseFloat(formData.wholesalePrice),
       retailDiscount: parseFloat(formData.retailDiscount) || 0,
       wholesaleDiscount: parseFloat(formData.wholesaleDiscount) || 0,
-      stock: parseInt(formData.stock),
       featured: formData.featured,
       description: formData.description || undefined,
       ...(imageUrl && { imageUrl }),
@@ -208,7 +200,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
           <DialogDescription>
             {isEdit
               ? 'Update the product details below.'
-              : 'Create a new product with details including pricing and inventory information.'}
+              : 'Create a new product with details including pricing information.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -313,20 +305,6 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
                   />
                 </div>
               </div>
-            </div>
-
-            {/* Inventory */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold">Stock Quantity *</label>
-              <Input
-                type="number"
-                name="stock"
-                placeholder="0"
-                min="0"
-                value={formData.stock}
-                onChange={handleChange}
-                disabled={isPending}
-              />
             </div>
 
             {/* Description */}
