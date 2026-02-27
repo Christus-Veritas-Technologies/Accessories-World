@@ -15,10 +15,13 @@ interface ProductCardProps {
 export function ProductCard({ product }: ProductCardProps) {
   const imageSrc = getProductImage(product.images);
 
+  console.log("Image src: ", imageSrc);
+  console.log("Product: ", product);
+
   return (
     <Card className="h-full overflow-hidden flex flex-col">
       <div className="relative aspect-square w-full border-b border-gray-100 bg-gray-50">
-        <Image
+        <img
           src={imageSrc}
           alt={product.images[0]?.alt ?? product.name}
           fill
