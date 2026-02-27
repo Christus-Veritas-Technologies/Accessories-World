@@ -13,7 +13,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useCreateSale } from '@/hooks/queries';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+
+interface MinifiedProduct {
+  name: string;
+  price: string;
+}
 
 interface NewSaleDialogProps {
   open: boolean;
@@ -22,77 +27,180 @@ interface NewSaleDialogProps {
 
 export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
   const [formData, setFormData] = useState({
-    revenue: '', // ✅ rename amount -> revenue to match backend ReceiptData
+    products: [{ name: '', price: '' }] as MinifiedProduct[],
     customerName: '',
     customerWhatsapp: '',
   });
 
   const createSaleMutation = useCreateSale();
 
+  const handleProductChange = (index: number, field: keyof MinifiedProduct, value: string) => {
+    const newProducts = [...formData.products];
+    newProducts[index][field] = value;
+    setFormData((prev) => ({ ...prev, products: newProducts }));
+  };
+
+  const handleAddProduct = () => {
+    setFormData((prev) => ({
+      ...prev,
+      products: [...prev.products, { name: '', price: '' }],
+    }));
+  };
+
+  const handleRemoveProduct = (index: number) => {
+    if (formData.products.length > 1) {
+      setFormData((prev) => ({
+        ...prev,
+        products: prev.products.filter((_, i) => i !== index),
+      }));
+    } else {
+      toast.error('At least one product is required');
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const calculateTotal = () => {
+    return formData.products.reduce((sum, product) => {
+      const price = parseFloat(product.price) || 0;
+      return sum + price;
+    }, 0);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.revenue.trim()) {
-      toast.error('Amount is required');
+    // Validate products
+    if (formData.products.length === 0) {
+      toast.error('At least one product is required');
       return;
     }
 
-    const revenueNumber = Number(formData.revenue);
-    if (!Number.isFinite(revenueNumber) || revenueNumber <= 0) {
-      toast.error('Enter a valid amount greater than 0');
+    for (const product of formData.products) {
+      if (!product.name.trim()) {
+        toast.error('Product name is required for all items');
+        return;
+      }
+      if (!product.price.trim()) {
+        toast.error('Product price is required for all items');
+        return;
+      }
+      const price = parseFloat(product.price);
+      if (!Number.isFinite(price) || price <= 0) {
+        toast.error('Each product price must be a valid number greater than 0');
+        return;
+      }
+    }
+
+    const total = calculateTotal();
+    if (total <= 0) {
+      toast.error('Total amount must be greater than 0');
       return;
     }
 
     try {
       await createSaleMutation.mutateAsync({
-        revenue: revenueNumber, // ✅ send revenue to backend
+        revenue: total,
         customerName: formData.customerName || null,
         customerWhatsapp: formData.customerWhatsapp || null,
+        products: formData.products,
       });
 
       toast.success('Sale recorded successfully');
-      setFormData({ revenue: '', customerName: '', customerWhatsapp: '' });
+      setFormData({
+        products: [{ name: '', price: '' }],
+        customerName: '',
+        customerWhatsapp: '',
+      });
       onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to record sale');
     }
   };
 
+  const total = calculateTotal();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col max-w-md">
+      <DialogContent className="flex flex-col max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Record New Sale</DialogTitle>
           <DialogDescription>
-            Enter the amount paid and optionally the customer details to send a WhatsApp receipt.
+            Enter product details and optionally the customer info to send a WhatsApp receipt.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <Card className="p-4 space-y-4">
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold">Amount Paid *</label>
-              <div className="flex items-center gap-2">
-                <span className="text-gray-600">$</span>
-                <Input
-                  type="number"
-                  name="revenue" // ✅ was "amount"
-                  placeholder="0.00"
-                  value={formData.revenue}
-                  onChange={handleChange}
+            {/* Products Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-semibold">Products *</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddProduct}
                   disabled={createSaleMutation.isPending}
-                  step="0.01"
-                  min="0"
-                />
+                  className="gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Product
+                </Button>
+              </div>
+
+              {formData.products.map((product, index) => (
+                <div key={index} className="flex gap-2 items-end p-3 bg-gray-50 rounded border">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs text-gray-600">Product Name</label>
+                    <Input
+                      type="text"
+                      value={product.name}
+                      onChange={(e) => handleProductChange(index, 'name', e.target.value)}
+                      placeholder="e.g. Phone Case"
+                      disabled={createSaleMutation.isPending}
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <label className="text-xs text-gray-600">Price</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">$</span>
+                      <Input
+                        type="number"
+                        value={product.price}
+                        onChange={(e) => handleProductChange(index, 'price', e.target.value)}
+                        placeholder="0.00"
+                        disabled={createSaleMutation.isPending}
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveProduct(index)}
+                    disabled={createSaleMutation.isPending || formData.products.length === 1}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+
+              {/* Total */}
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded border border-blue-200">
+                <span className="text-sm font-semibold text-gray-700">Total Amount:</span>
+                <span className="text-lg font-bold text-blue-600">${total.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="space-y-2">
+            {/* Customer Details */}
+            <div className="space-y-2 border-t pt-4">
               <label className="block text-sm font-semibold">Customer Name</label>
               <Input
                 type="text"
