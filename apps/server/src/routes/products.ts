@@ -99,7 +99,6 @@ products.get("/trending", async (c) => {
       sku: true,
       retailPrice: true,
       retailDiscount: true,
-      stock: true,
       featured: true,
       category: { select: { id: true, name: true, slug: true } },
       images: {
@@ -184,7 +183,6 @@ products.get("/trending/popular", async (c) => {
       sku: true,
       retailPrice: true,
       retailDiscount: true,
-      stock: true,
       featured: true,
       category: { select: { id: true, name: true, slug: true } },
       images: {
