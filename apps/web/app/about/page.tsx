@@ -30,14 +30,12 @@ export default function AboutPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Founder Image Placeholder */}
-            <div className="flex items-center justify-center">
-              <div className="w-full aspect-square max-w-sm rounded-lg bg-gradient-to-br from-red-100 to-red-50 border border-gray-200 flex items-center justify-center">
-                <div className="text-center">
-                  <Lightbulb className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                  <p className="text-gray-500 text-sm">Founder Photo</p>
-                </div>
-              </div>
-            </div>
+            <Image 
+              src="/team/kelvin.jpeg"
+              className="rounded-2xl"
+              width={400}
+              height={800}
+            />
 
             {/* Vision Content */}
             <div>
@@ -73,16 +71,34 @@ export default function AboutPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             {/* Sir Kelbin */}
+            <Card className="border border-gray-200 bg-white p-6">
+              <div className="flex flex-col items-center text-center">
+                <img
+                  alt="Takudzwa Jiri"
+                  src="/team/kelvin.jpeg"
+                  className="rounded-full w-48 h-48 object-cover"
+                />
+                <h3 className="text-lg font-bold text-black mb-1">Kelvin Mutsambi</h3>
+                <p className="text-red-500 font-medium mb-3">Founder and Visionary</p>
+                <p className="text-gray-600 text-sm">
+                  Founder of Accessories World and the architect of the company’s long-term vision. Kelvin leads strategic development, digital transformation, and sustainable business growth initiatives aimed at building a modern customer-centered retail ecosystem in the cellphone accessories industry. 
+                </p>
+              </div>
+            </Card>
+
             {/* Team Member 1 */}
             <Card className="border border-gray-200 bg-white p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-100 to-red-50 border border-gray-200 flex items-center justify-center mb-4">
-                  <Users className="h-12 w-12 text-red-500" />
-                </div>
-                <h3 className="text-lg font-bold text-black mb-1">Sarah Mwanzi</h3>
-                <p className="text-red-500 font-medium mb-3">Operations Manager</p>
+                <img
+                  alt="Takudzwa Jiri"
+                  src="/team/shantel-korera.jpeg"
+                  className="rounded-full w-48 h-48 object-cover"
+                />
+                <h3 className="text-lg font-bold text-black mb-1">Shantel Korera</h3>
+                <p className="text-red-500 font-medium mb-3">Customer Experience Specialist</p>
                 <p className="text-gray-600 text-sm">
-                  With over 5 years of experience in retail operations, Sarah ensures every customer experience is seamless and memorable. She leads our team with passion and attention to detail.
+                  Dedicated to delivering exceptional customer service by assisting clients in product selection, responding to enquiries, and ensuring a smooth and professional shopping experience that reflects the brand’s commitment to customer satisfaction.
                 </p>
               </div>
             </Card>
@@ -90,13 +106,31 @@ export default function AboutPage() {
             {/* Team Member 2 */}
             <Card className="border border-gray-200 bg-white p-6">
               <div className="flex flex-col items-center text-center">
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-100 to-red-50 border border-gray-200 flex items-center justify-center mb-4">
-                  <Users className="h-12 w-12 text-red-500" />
-                </div>
-                <h3 className="text-lg font-bold text-black mb-1">James Ndlovu</h3>
-                <p className="text-red-500 font-medium mb-3">Procurement Lead</p>
+                <img
+                  alt="Takudzwa Jiri"
+                  src="/team/takudzwa-jiri.jpeg"
+                  className="rounded-full w-48 h-48 object-cover"
+                />
+                <h3 className="text-lg font-bold text-black mb-1">Takudzwa Jiri</h3>
+                <p className="text-red-500 font-medium mb-3">Retail Support Specialist</p>
                 <p className="text-gray-600 text-sm">
-                  James is responsible for sourcing our best products. His keen eye for quality and strong supplier relationships ensure we bring only the best to our customers.
+                 Supports daily retail operations by providing product guidance, customer assistance, and maintaining high service standards that strengthen customer relationships and brand loyalty
+                 </p>
+              </div>
+            </Card>
+
+             {/* Team Member 3 */}
+            <Card className="border border-gray-200 bg-white p-6">
+              <div className="flex flex-col items-center text-center">
+                <img
+                  alt="Takudzwa Jiri"
+                  src="/team/tanaka-mugomba.jpeg"
+                  className="rounded-full w-48 h-48 object-cover"
+                />
+                <h3 className="text-lg font-bold text-black mb-1">Tanaka Mugomba</h3>
+                <p className="text-red-500 font-medium mb-3">Marketing Director & Branch Operations Manager</p>
+                <p className="text-gray-600 text-sm">
+                  Responsible for marketing strategy, digital advertising execution, and branch management operations. Tanaka oversees customer acquisition campaigns, product promotion systems, and service quality standards to ensure consistent retail excellence and business expansion.
                 </p>
               </div>
             </Card>
