@@ -6,26 +6,26 @@ import { Button } from "@/components/ui/button";
 const TESTIMONIALS = [
   {
     id: "1",
-    name: "Tatenda Moyo",
+    name: "Blessings",
     location: "Mutare",
     message:
-      "Amazing quality products! I bought a phone case and a charger, both have lasted over a year. Highly recommend Accessories World!",
+      "The earbuds I bought from Accessories World worked absolutely well. They had great sound quality and long-lasting battery life",
     rating: 5,
   },
   {
     id: "2",
-    name: "Chiedza Nhamo",
-    location: "Mutare CBD",
+    name: "Tatenda",
+    location: "Mutare",
     message:
-      "Best accessory shop in Mutare. The staff are friendly and the prices are very fair. My whole family now shops here.",
+      "I bought a charging cable from Accessories World, it worked perfectly and was of a superior build quality compared to another C to C cable I bought from another shop",
     rating: 5,
   },
   {
     id: "3",
-    name: "Blessing Mutasa",
-    location: "Sakubva",
+    name: "Staline",
+    location: "Mutare",
     message:
-      "I was worried about quality but these are genuine products. My earphones are still going strong after 8 months!",
+      "Accessories World's range of products are all high quality and afforable, highly recommended !",
     rating: 5,
   },
   {
