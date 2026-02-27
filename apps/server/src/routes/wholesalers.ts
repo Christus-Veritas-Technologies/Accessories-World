@@ -38,7 +38,6 @@ wholesalers.get("/products", async (c) => {
         wholesalePrice: true,   // wholesale price only
         wholesaleDiscount: true, // wholesale discount percentage
         retailPrice: true,       // included for margin reference
-        stock: true,
         featured: true,
         category: { select: { id: true, name: true, slug: true } },
         images: {
@@ -117,12 +116,6 @@ wholesalers.post("/orders", async (c) => {
     if (!product) {
       return c.json({ error: `Product ${item.productId} not found` }, 400);
     }
-    if (product.stock < item.quantity) {
-      return c.json(
-        { error: `Insufficient stock for "${product.name}" (available: ${product.stock})` },
-        400
-      );
-    }
   }
 
   // Calculate total using wholesale prices
@@ -159,19 +152,13 @@ wholesalers.post("/orders", async (c) => {
       },
     });
 
-    // Decrement stock
-    for (const item of items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
-
     return newOrder;
   });
 
   return c.json(order, 201);
 });
+
+
 
 /**
  * GET /api/wholesalers/orders/:id

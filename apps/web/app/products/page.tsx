@@ -1,11 +1,12 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { Heart, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { ProductFilters } from "@/components/products/product-filters";
+import { ProductCard } from "@/components/products/product-card";
 import {
   Pagination,
   PaginationContent,
@@ -18,111 +19,9 @@ import {
 import { useProducts } from "@/hooks/use-products";
 import { useCategories } from "@/hooks/use-categories";
 import Link from "next/link";
-import Image from "next/image";
 import { useSearchParams, useRouter } from "next/navigation";
 
 const LIMIT = 10;
-
-interface ProductCardProps {
-  product: any;
-  onFavorite?: () => void;
-  isFavorite?: boolean;
-}
-
-function ProductCard({ product, onFavorite, isFavorite }: ProductCardProps) {
-  return (
-    <div className="bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 transition-all hover:shadow-lg">
-      {/* Image Container */}
-      <div className="relative bg-gray-100 aspect-square overflow-hidden">
-        {product.images?.[0]?.url ? (
-          <Image
-            src={product.images[0].url}
-            alt={product.name}
-            fill
-            className="object-cover hover:scale-110 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gray-200">
-            <Search className="h-8 w-8 text-gray-400" />
-          </div>
-        )}
-
-        {/* Favorite Button */}
-        <button
-          onClick={onFavorite}
-          className="absolute top-3 right-3 bg-white rounded-full p-2 hover:bg-red-50 transition-colors shadow-sm"
-        >
-          <Heart
-            className={`h-5 w-5 ${
-              isFavorite ? "fill-red-500 text-red-500" : "text-gray-400"
-            }`}
-          />
-        </button>
-
-        {/* Stock Badge */}
-        {product.stock === 0 && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="text-white font-semibold">Out of Stock</span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1">
-          {product.name}
-        </h3>
-
-        {product.description && (
-          <p className="text-xs text-gray-500 line-clamp-1 mb-2">
-            {product.description}
-          </p>
-        )}
-
-        {/* Rating and Reviews */}
-        {product.views && (
-          <div className="flex items-center gap-1 mb-3">
-            <div className="flex">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i} className="text-yellow-400 text-xs">★</span>
-              ))}
-            </div>
-            <span className="text-xs text-gray-500">({product.views})</span>
-          </div>
-        )}
-
-        {/* Price */}
-        <div className="mb-3 flex items-baseline gap-2">
-          <span className="text-lg font-bold text-red-600">
-            ${typeof product.retailPrice === "string" ? product.retailPrice : product.retailPrice.toFixed(2)}
-          </span>
-          {product.originalPrice && (
-            <span className="text-xs text-gray-400 line-through">
-              ${product.originalPrice}
-            </span>
-          )}
-        </div>
-
-        {/* Stock Status */}
-        {product.stock > 0 ? (
-          <p className="text-xs text-green-600 font-medium mb-3">In Stock</p>
-        ) : (
-          <p className="text-xs text-orange-600 font-medium mb-3">Out of Stock</p>
-        )}
-
-        {/* Add to Cart Button */}
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={product.stock === 0}
-          className="w-full border-gray-300 text-gray-700 hover:bg-red-50 hover:border-red-300 hover:text-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          Add to Cart
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 function buildUrl(current: URLSearchParams, overrides: Record<string, string | null>) {
   const next = new URLSearchParams(current.toString());
@@ -209,7 +108,6 @@ function ProductsContent() {
 
   const category = searchParams.get("category");
   const price = searchParams.get("price");
-  const stock = searchParams.get("stock");
   const searchQuery = searchParams.get("search") ?? "";
   const page = parseInt(searchParams.get("page") || "1", 10);
 
@@ -224,25 +122,10 @@ function ProductsContent() {
   const { data: productsData, isLoading: isLoadingProducts, error: productsError } = useProducts({
     category: category || undefined,
     priceRange: price || undefined,
-    stockFilter: stock || undefined,
     search: searchQuery || undefined,
     page,
     limit: LIMIT,
   });
-
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  const handleFavorite = (productId: string) => {
-    setFavorites((prev) => {
-      const newFavs = new Set(prev);
-      if (newFavs.has(productId)) {
-        newFavs.delete(productId);
-      } else {
-        newFavs.add(productId);
-      }
-      return newFavs;
-    });
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -344,7 +227,6 @@ function ProductsContent() {
               categories={categories || []}
               currentCategory={category}
               currentPriceRange={price}
-              currentStockFilter={stock}
             />
           </div>
 
@@ -376,8 +258,6 @@ function ProductsContent() {
                   <ProductCard
                     key={product.id}
                     product={product}
-                    isFavorite={favorites.has(product.id)}
-                    onFavorite={() => handleFavorite(product.id)}
                   />
                 ))}
               </div>
