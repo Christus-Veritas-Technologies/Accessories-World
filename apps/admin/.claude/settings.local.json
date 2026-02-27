@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"C:/Users/kinzi/Desktop/projects/accessories-world/packages/db\" && bunx prisma db push 2>&1)",
+      "Bash(cd \"C:/Users/kinzi/Desktop/projects/accessories-world/packages/db\" && bunx prisma generate 2>&1)"
+    ]
+  }
+}
