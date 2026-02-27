@@ -578,6 +578,7 @@ admin.post("/sales", async (c) => {
     revenue: number;
     customerName?: string | null;
     customerWhatsapp?: string | null;
+    products?: { name: string; price: string }[]; // MinifiedProduct[]
   }>();
 
   // Validate revenue
@@ -590,6 +591,12 @@ admin.post("/sales", async (c) => {
     return c.json({ error: "revenue must be a valid number > 0" }, 400);
   }
 
+  // Validate products if provided
+  const products = body.products ?? [];
+  if (Array.isArray(products) && products.length === 0) {
+    return c.json({ error: "products array must contain at least one item" }, 400);
+  }
+
   // Generate unique sale number
   const saleCount = await prisma.sale.count();
   const saleNumber = `SAL-${String(saleCount + 1).padStart(6, "0")}`;
@@ -600,6 +607,7 @@ admin.post("/sales", async (c) => {
       amount: parseFloat(revenueNumber.toString()),
       customerName: body.customerName || null,
       customerWhatsapp: body.customerWhatsapp || null,
+      products: products, // store as JSON
     },
   });
 
@@ -612,8 +620,8 @@ admin.post("/sales", async (c) => {
       body: JSON.stringify({
         customerName: sale.customerName,
         customerWhatsapp: sale.customerWhatsapp,
+        products: products, // pass products array to agent
         revenue: Number(sale.amount),
-        quantity: 1,
       }),
     }).catch((err) => console.error("Failed to send receipt:", err));
   }

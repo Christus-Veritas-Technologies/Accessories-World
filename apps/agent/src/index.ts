@@ -269,13 +269,17 @@ app.post("/send-message", async (c) => {
 
 // ─── PDF Receipt Generation ───────────────────────────────────────────────────
 
+interface MinifiedProduct {
+  name: string;
+  price: string; // stored as string for precision
+}
+
 interface ReceiptData {
   saleNumber: string; // generated server-side
   customerName: string;
   customerWhatsapp: string;
-  productName?: string;
-  revenue: number;
-  quantity: number;
+  products: MinifiedProduct[]; // array of {name, price}
+  revenue: number; // total
   notes?: string;
 }
 
@@ -348,15 +352,17 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
     doc.rect(L, 215, W, 28).fill("#F3F4F6");
     doc.fontSize(9).font("Helvetica-Bold").fillColor(GRAY);
     doc.text("ITEM", L + 8, 226);
-    doc.text("QTY", L + 340, 226);
-    doc.text("AMOUNT", R - 65, 226);
+    doc.text("PRICE", R - 65, 226, { align: "right" });
 
-    // ── Table row ──
-    const item = data.productName ?? "Accessories";
+    // ── Table rows (products) ──
     doc.fontSize(11).font("Helvetica").fillColor(DARK);
-    doc.text(item, L + 8, 260, { width: 295 });
-    doc.text(String(data.quantity), L + 340, 260);
-    doc.text(`$${Number(data.revenue).toFixed(2)}`, R - 65, 260);
+    let rowY = 250;
+    for (const product of data.products) {
+      doc.text(product.name, L + 8, rowY, { width: 295 });
+      doc.text(`$${Number(product.price).toFixed(2)}`, R - 65, rowY, { align: "right" });
+      rowY += 30;
+    }
+    rowY -= 10; // adjust for last row
 
     // ── Notes (if any) ──
     let noteY = 290;
@@ -441,9 +447,8 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
  * Body: {
  *   customerName?: string,
  *   customerWhatsapp: string,
- *   productName?: string,
+ *   products: {name: string, price: string}[],
  *   revenue: number,
- *   quantity?: number,
  *   notes?: string
  * }
  *
@@ -453,25 +458,23 @@ app.post("/api/receipt/send", async (c) => {
   const requestId = randomUUID().split("-")[0].toUpperCase();
   console.log(`\n📨 [${requestId}] ============ RECEIPT REQUEST START ============`);
   
-  let body: any; // Declare outside try block so it's available in catch
+  let body: any;
   
   try {
     console.log(`📨 [${requestId}] Parsing request body...`);
     body = await c.req.json<{
       customerName?: string | null;
       customerWhatsapp: string;
-      productName?: string;
+      products: MinifiedProduct[];
       revenue: number;
-      quantity?: number | null;
       notes?: string;
     }>();
 
     console.log(`📨 [${requestId}] ✓ Request body parsed:`, {
       customerName: body.customerName,
       customerWhatsapp: body.customerWhatsapp?.substring(0, 5) + "***",
-      productName: body.productName,
+      productCount: body.products?.length ?? 0,
       revenue: body.revenue,
-      quantity: body.quantity,
       notes: body.notes ? `"${body.notes.substring(0, 20)}..."` : undefined,
     });
 
@@ -481,6 +484,13 @@ app.post("/api/receipt/send", async (c) => {
       return c.json({ error: "customerWhatsapp is required" }, 400);
     }
     console.log(`✓ [${requestId}] customerWhatsapp: ${body.customerWhatsapp}`);
+
+    // Validate products array
+    if (!Array.isArray(body.products) || body.products.length === 0) {
+      console.error(`❌ [${requestId}] Validation failed: products must be a non-empty array`);
+      return c.json({ error: "products must be a non-empty array" }, 400);
+    }
+    console.log(`✓ [${requestId}] products array valid: ${body.products.length} item(s)`);
 
     // Validate revenue
     if (body.revenue == null) {
@@ -497,16 +507,6 @@ app.post("/api/receipt/send", async (c) => {
       return c.json({ error: "revenue must be a valid number > 0" }, 400);
     }
     console.log(`✓ [${requestId}] revenue is valid: $${revenueNumber.toFixed(2)}`);
-
-    // Validate quantity
-    const quantityNumber = body.quantity == null ? 1 : Number(body.quantity);
-    console.log(`📦 [${requestId}] quantity: ${quantityNumber}`);
-    
-    if (!Number.isFinite(quantityNumber) || quantityNumber <= 0) {
-      console.error(`❌ [${requestId}] Validation failed: Invalid quantity value (${quantityNumber})`);
-      return c.json({ error: "quantity must be a valid number > 0" }, 400);
-    }
-    console.log(`✓ [${requestId}] quantity is valid: ${quantityNumber}`);
 
     // Check WhatsApp status
     console.log(`🔗 [${requestId}] Checking WhatsApp client status... (ready: ${whatsappReady})`);
@@ -525,9 +525,8 @@ app.post("/api/receipt/send", async (c) => {
       saleNumber,
       customerName: (body.customerName ?? "").trim() || "Customer",
       customerWhatsapp: body.customerWhatsapp,
-      productName: body.productName,
+      products: body.products,
       revenue: revenueNumber,
-      quantity: quantityNumber,
       notes: body.notes,
     };
 
@@ -535,9 +534,8 @@ app.post("/api/receipt/send", async (c) => {
       saleNumber: receiptData.saleNumber,
       customerName: receiptData.customerName,
       customerWhatsapp: receiptData.customerWhatsapp?.substring(0, 5) + "***",
-      productName: receiptData.productName,
+      productCount: receiptData.products.length,
       revenue: receiptData.revenue,
-      quantity: receiptData.quantity,
     });
 
     // Step 1: Generate PDF — must succeed before any WhatsApp sends
