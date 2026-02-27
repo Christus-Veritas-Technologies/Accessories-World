@@ -5,7 +5,6 @@ import {
   getCategories,
   getProducts,
   submitContact,
-  getTestimonials,
   getTrendingProducts,
   type ContactPayload,
   type ProductFilters,
@@ -43,13 +42,6 @@ export function useProductsQuery(filters: ProductFilters) {
 export function useContactMutation() {
   return useMutation({
     mutationFn: (payload: ContactPayload) => submitContact(payload),
-  });
-}
-
-export function useTestimonialsQuery(limit = 10) {
-  return useQuery({
-    queryKey: ["testimonials", limit],
-    queryFn: () => getTestimonials(limit),
   });
 }
 
