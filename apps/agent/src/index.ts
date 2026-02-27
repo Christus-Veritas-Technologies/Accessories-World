@@ -285,7 +285,7 @@ interface ReceiptData {
 
 function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 50, size: "A4" });
+    const doc = new PDFDocument({ margin: 30, size: "A4" });
     const chunks: Buffer[] = [];
 
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
@@ -295,88 +295,88 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
     const RED = "#DC2626";
     const DARK = "#111827";
     const GRAY = "#6B7280";
-    const L = 50;
-    const R = doc.page.width - 50;
+    const L = 30;
+    const R = doc.page.width - 30;
     const W = R - L;
 
     // ── Red header ──
-    doc.rect(0, 0, doc.page.width, 105).fill(RED);
+    doc.rect(0, 0, doc.page.width, 75).fill(RED);
 
     doc
-      .fontSize(26)
+      .fontSize(20)
       .fillColor("#FFFFFF")
       .font("Helvetica-Bold")
-      .text("ACCESSORIES WORLD", L, 22);
+      .text("ACCESSORIES WORLD", L, 15);
 
     doc
-      .fontSize(11)
+      .fontSize(9)
       .font("Helvetica")
       .fillColor("#FFFFFF")
-      .text("Your Accessories Destination in Mutare", L, 58)
-      .text("info@accessoriesworldmutare.co.zw", L, 74);
+      .text("Your Accessories Destination in Mutare", L, 42)
+      .text("info@accessoriesworldmutare.co.zw", L, 54);
 
     // ── Receipt heading ──
     doc
-      .fontSize(20)
+      .fontSize(16)
       .fillColor(DARK)
       .font("Helvetica-Bold")
-      .text("RECEIPT", L, 125);
+      .text("RECEIPT", L, 90);
 
     // ── Info row labels ──
     const date = new Date().toLocaleDateString("en-GB", {
       day: "2-digit",
-      month: "long",
+      month: "short",
       year: "numeric",
     });
 
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(GRAY);
-    doc.text("RECEIPT NO.", L, 163);
-    doc.text("DATE", L + 185, 163);
-    doc.text("CUSTOMER", L + 350, 163);
+    doc.fontSize(8).font("Helvetica-Bold").fillColor(GRAY);
+    doc.text("RECEIPT NO.", L, 112);
+    doc.text("DATE", L + 140, 112);
+    doc.text("CUSTOMER", L + 220, 112);
 
     // ── Info row values ──
-    doc.fontSize(11).font("Helvetica").fillColor(DARK);
-    doc.text(data.saleNumber, L, 177);
-    doc.text(date, L + 185, 177);
-    doc.text(data.customerName, L + 350, 177, { width: 145, ellipsis: true });
+    doc.fontSize(10).font("Helvetica").fillColor(DARK);
+    doc.text(data.saleNumber, L, 124);
+    doc.text(date, L + 140, 124);
+    doc.text(data.customerName, L + 220, 124, { width: 110, ellipsis: true });
 
     // ── Divider ──
     doc
-      .moveTo(L, 205)
-      .lineTo(R, 205)
+      .moveTo(L, 148)
+      .lineTo(R, 148)
       .strokeColor("#E5E7EB")
       .lineWidth(1)
       .stroke();
 
     // ── Table header ──
-    doc.rect(L, 215, W, 28).fill("#F3F4F6");
-    doc.fontSize(9).font("Helvetica-Bold").fillColor(GRAY);
-    doc.text("ITEM", L + 8, 226);
-    doc.text("PRICE", R - 65, 226, { align: "right" });
+    doc.rect(L, 155, W, 20).fill("#F3F4F6");
+    doc.fontSize(8).font("Helvetica-Bold").fillColor(GRAY);
+    doc.text("ITEM", L + 5, 161);
+    doc.text("PRICE", R - 50, 161, { align: "right" });
 
     // ── Table rows (products) ──
-    doc.fontSize(11).font("Helvetica").fillColor(DARK);
-    let rowY = 250;
+    doc.fontSize(9).font("Helvetica").fillColor(DARK);
+    let rowY = 180;
     for (const product of data.products) {
-      doc.text(product.name, L + 8, rowY, { width: 295 });
-      doc.text(`$${Number(product.price).toFixed(2)}`, R - 65, rowY, { align: "right" });
-      rowY += 30;
+      doc.text(product.name, L + 5, rowY, { width: 235 });
+      doc.text(`$${Number(product.price).toFixed(2)}`, R - 50, rowY, { align: "right" });
+      rowY += 18;
     }
-    rowY -= 10; // adjust for last row
+    rowY -= 3; // adjust for last row
 
     // ── Notes (if any) ──
-    let noteY = 290;
+    let noteY = rowY + 8;
     if (data.notes) {
       doc
-        .fontSize(9)
+        .fontSize(8)
         .font("Helvetica")
         .fillColor(GRAY)
-        .text(`Note: ${data.notes}`, L + 8, noteY, { width: W - 8 });
-      noteY += 20;
+        .text(`Note: ${data.notes}`, L + 5, noteY, { width: W - 10 });
+      noteY += 12;
     }
 
     // ── Total ──
-    const totalY = noteY + 15;
+    const totalY = noteY + 5;
     doc
       .moveTo(L, totalY)
       .lineTo(R, totalY)
@@ -384,16 +384,16 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
       .lineWidth(1)
       .stroke();
 
-    doc.rect(R - 175, totalY + 12, 175, 34).fill("#FEF2F2");
+    doc.rect(R - 140, totalY + 8, 140, 24).fill("#FEF2F2");
     doc
-      .fontSize(12)
+      .fontSize(11)
       .font("Helvetica-Bold")
       .fillColor(RED)
-      .text("TOTAL:", R - 165, totalY + 22)
-      .text(`$${Number(data.revenue).toFixed(2)}`, R - 65, totalY + 22);
+      .text("TOTAL:", R - 135, totalY + 14)
+      .text(`$${Number(data.revenue).toFixed(2)}`, R - 50, totalY + 14, { align: "right" });
 
     // ── Red accent ──
-    const accentY = totalY + 65;
+    const accentY = totalY + 45;
     doc
       .moveTo(L, accentY)
       .lineTo(R, accentY)
@@ -403,36 +403,36 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
 
     // ── Thank you ──
     doc
-      .fontSize(14)
+      .fontSize(11)
       .font("Helvetica-Bold")
       .fillColor(RED)
-      .text("Thank you for shopping at Accessories World!", L, accentY + 20, {
+      .text("Thank you for shopping at Accessories World!", L, accentY + 12, {
         align: "center",
         width: W,
       });
 
     doc
-      .fontSize(10)
+      .fontSize(8)
       .font("Helvetica")
       .fillColor(GRAY)
       .text(
-        "We truly appreciate your support. If you have any questions about your purchase,\nplease reach out — we are always happy to help.",
+        "We appreciate your support. For any questions, reach out to us anytime.",
         L,
-        accentY + 48,
+        accentY + 30,
         { align: "center", width: W }
       );
 
     // ── Footer ──
-    const footerY = doc.page.height - 55;
-    doc.rect(0, footerY, doc.page.width, 55).fill("#F9FAFB");
+    const footerY = doc.page.height - 40;
+    doc.rect(0, footerY, doc.page.width, 40).fill("#F9FAFB");
     doc
-      .fontSize(9)
+      .fontSize(7)
       .font("Helvetica")
       .fillColor(GRAY)
       .text(
         "Accessories World  ·  Mutare, Zimbabwe  ·  info@accessoriesworldmutare.co.zw",
         L,
-        footerY + 20,
+        footerY + 12,
         { align: "center", width: W }
       );
 
@@ -551,7 +551,7 @@ app.post("/api/receipt/send", async (c) => {
     try {
       pdfUrl = await uploadPdfToR2(
         pdfBuffer,
-        `receipt-${receiptData.saleNumber}.pdf`,
+        `ACCESSORIES-WORLD-${receiptData.saleNumber}.pdf`,
         requestId
       );
     } catch (uploadErr: any) {
@@ -573,15 +573,20 @@ app.post("/api/receipt/send", async (c) => {
     
     console.log(`💬 [${requestId}] Chat ID: ${chatId}`);
     
-    const productLine = receiptData.productName
-      ? `\nProduct: ${receiptData.productName}`
-      : "";
+    const date = new Date().toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+    
     const greeting =
-      `Hope you enjoyed your purchase! 🎉${productLine}\n\n` +
-      `Sale #: ${receiptData.saleNumber}\n` +
-      `Total: $${Number(receiptData.revenue).toFixed(2)}\n` +
-      `Qty: ${receiptData.quantity}\n\n` +
-      `Thank you for supporting Accessories World — it means the world to us! 💜`;
+      `🧾 Accessories World Receipt\n\n` +
+      `Sale No: ${receiptData.saleNumber}\n` +
+      `Date: ${date}\n` +
+      `Items: ${receiptData.products.length}\n` +
+      `Total Paid: $${Number(receiptData.revenue).toFixed(2)}\n\n` +
+      `Your receipt is attached as a PDF for your records.\n\n` +
+      `Thank you for shopping with Accessories World.`;
 
     console.log(`📝 [${requestId}] Greeting message prepared:\n${greeting}`);
 
@@ -629,12 +634,12 @@ app.post("/api/receipt/send", async (c) => {
 
             console.log(`📤 [${requestId}] Sending PDF receipt to ${chatId}...`);
             console.log(`📤 [${requestId}] PDF URL: ${pdfUrl}`);
-            console.log(`📤 [${requestId}] Media caption: "Your receipt is attached 📄"`);
+            console.log(`📤 [${requestId}] Media caption: "Here's your receipt"`);
             
             const sendTime2 = Date.now();
             await retryWithBackoff(
               () => client.sendMessage(chatId, media, {
-                caption: "Your receipt is attached 📄",
+                caption: "Here's your receipt",
               }),
               2,
               600
