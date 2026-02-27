@@ -49,11 +49,9 @@ admin.get("/kpis", async (c) => {
     mostViewedProducts,
     recentOrders,
     topSellingProducts,
-    totalSalesRevenue,
-    monthlySalesRevenue,
-    totalSalesProfit,
-    monthlySalesProfit,
-    recentSales,
+    totalSalesAmount,
+    monthlySalesAmount,
+    salesCount,
   ] = await Promise.all([
     // Total revenue
     prisma.order.aggregate({
@@ -98,29 +96,17 @@ admin.get("/kpis", async (c) => {
       orderBy: { _sum: { quantity: "desc" } },
       take: 10,
     }),
-    // Total sales revenue
+    // Total sales amount
     prisma.sale.aggregate({
-      _sum: { revenue: true },
+      _sum: { amount: true },
     }),
-    // Monthly sales revenue
+    // Monthly sales amount
     prisma.sale.aggregate({
-      _sum: { revenue: true },
+      _sum: { amount: true },
       where: { createdAt: { gte: thirtyDaysAgo } },
     }),
-    // Total sales profit
-    prisma.sale.aggregate({
-      _sum: { profit: true },
-    }),
-    // Monthly sales profit
-    prisma.sale.aggregate({
-      _sum: { profit: true },
-      where: { createdAt: { gte: thirtyDaysAgo } },
-    }),
-    // Recent sales
-    prisma.sale.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-    }),
+    // Total sales count
+    prisma.sale.count(),
   ]);
 
   // Resolve product names for most viewed
@@ -145,15 +131,12 @@ admin.get("/kpis", async (c) => {
       monthly: monthlyRevenue._sum.totalAmount ?? 0,
     },
     sales: {
-      revenue: {
-        total: totalSalesRevenue._sum.revenue ?? 0,
-        monthly: monthlySalesRevenue._sum.revenue ?? 0,
-      },
-      profit: {
-        total: totalSalesProfit._sum.profit ?? 0,
-        monthly: monthlySalesProfit._sum.profit ?? 0,
+      amount: {
+        total: totalSalesAmount._sum.amount ?? 0,
+        monthly: monthlySalesAmount._sum.amount ?? 0,
       },
     },
+    salesCount,
     views: {
       weekly: weeklyViews,
       monthly: monthlyViews,
@@ -173,14 +156,6 @@ admin.get("/kpis", async (c) => {
       status: o.status,
       wholesaler: o.wholesaler.name,
       createdAt: o.createdAt,
-    })),
-    recentSales: recentSales.map((s) => ({
-      id: s.id,
-      saleNumber: s.saleNumber,
-      revenue: s.revenue,
-      profit: s.profit,
-      quantity: s.quantity,
-      createdAt: s.createdAt,
     })),
   });
 });
@@ -592,9 +567,6 @@ admin.delete("/categories/:id", async (c) => {
 /** GET /api/admin/sales */
 admin.get("/sales", async (c) => {
   const sales = await prisma.sale.findMany({
-    include: {
-      customer: { select: { id: true, fullName: true } },
-    },
     orderBy: { createdAt: "desc" },
   });
   return c.json(sales);
@@ -604,12 +576,19 @@ admin.get("/sales", async (c) => {
 admin.post("/sales", async (c) => {
   const body = await c.req.json<{
     revenue: number;
-    profit: number;
-    quantity: number;
-    productName?: string;
-    customerId?: string;
-    notes?: string;
+    customerName?: string | null;
+    customerWhatsapp?: string | null;
   }>();
+
+  // Validate revenue
+  if (!body.revenue) {
+    return c.json({ error: "revenue is required" }, 400);
+  }
+
+  const revenueNumber = Number(body.revenue);
+  if (!Number.isFinite(revenueNumber) || revenueNumber <= 0) {
+    return c.json({ error: "revenue must be a valid number > 0" }, 400);
+  }
 
   // Generate unique sale number
   const saleCount = await prisma.sale.count();
@@ -618,69 +597,25 @@ admin.post("/sales", async (c) => {
   const sale = await prisma.sale.create({
     data: {
       saleNumber,
-      customerId: body.customerId || null,
-      productName: body.productName || null,
-      revenue: parseFloat(body.revenue.toString()),
-      profit: parseFloat(body.profit.toString()),
-      quantity: body.quantity,
-      notes: body.notes || null,
-    },
-    include: {
-      customer: true,
+      amount: parseFloat(revenueNumber.toString()),
+      customerName: body.customerName || null,
+      customerWhatsapp: body.customerWhatsapp || null,
     },
   });
 
-  // Send WhatsApp receipt (PDF) if customer exists
-  if (sale.customer) {
+  // Send WhatsApp receipt if customer number provided
+  if (sale.customerWhatsapp) {
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-
-    // Send receipt via agent — generates PDF and sends via WhatsApp
     fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        saleNumber: sale.saleNumber,
-        customerName: sale.customer.fullName,
-        customerWhatsapp: sale.customer.whatsapp,
-        productName: sale.productName ?? undefined,
-        revenue: Number(sale.revenue),
-        quantity: sale.quantity,
+        customerName: sale.customerName,
+        customerWhatsapp: sale.customerWhatsapp,
+        revenue: Number(sale.amount),
+        quantity: 1,
       }),
-    })
-      .then((res) => {
-        if (res.ok) {
-          return prisma.sale.update({ where: { id: sale.id }, data: { invoiceSent: true } });
-        }
-        return res.json().then((err: any) => console.error("Receipt send failed:", err));
-      })
-      .catch((err) => console.error("Failed to send receipt:", err));
-
-    // Schedule follow-up message (3 days later)
-    const firstName = sale.customer.fullName.split(" ")[0];
-    const productRef = sale.productName
-      ? sale.quantity > 1
-        ? "a few products"
-        : sale.productName
-      : "your recent purchase";
-
-    setTimeout(() => {
-      const followUpMessage = `Hi ${firstName},
-
-We hope you're doing well. We wanted to follow up on your recent purchase of ${productRef} from Accessories World to check that everything is meeting your expectations.
-
-If you have any questions or need assistance, please don't hesitate to reach out — we're happy to help.
-
-Thank you for your support. 🙏`.trim();
-
-      fetch(`${agentUrl}/api/whatsapp/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: sale.customer!.whatsapp,
-          message: followUpMessage,
-        }),
-      }).catch((err) => console.error("Failed to send follow-up message:", err));
-    }, 3 * 24 * 60 * 60 * 1000); // 3 days
+    }).catch((err) => console.error("Failed to send receipt:", err));
   }
 
   return c.json(sale, 201);
@@ -693,10 +628,9 @@ admin.patch("/sales/:id", async (c) => {
   const sale = await prisma.sale.update({
     where: { id },
     data: {
-      revenue: body.revenue ? parseFloat(body.revenue.toString()) : undefined,
-      profit: body.profit ? parseFloat(body.profit.toString()) : undefined,
-      quantity: body.quantity,
-      notes: body.notes,
+      amount: body.amount ? parseFloat(body.amount.toString()) : undefined,
+      customerName: body.customerName,
+      customerWhatsapp: body.customerWhatsapp,
     },
   });
   return c.json(sale);
@@ -706,127 +640,6 @@ admin.patch("/sales/:id", async (c) => {
 admin.delete("/sales/:id", async (c) => {
   const { id } = c.req.param();
   await prisma.sale.delete({ where: { id } });
-  return c.json({ success: true });
-});
-
-// ─── Customer Management ─────────────────────────────────────────────────────
-
-/** GET /api/admin/customers — all customers with sales stats */
-admin.get("/customers", async (c) => {
-  const customers = await prisma.customer.findMany({
-    include: {
-      sales: {
-        select: { revenue: true, productName: true },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const customersWithStats = customers.map((customer) => ({
-    id: customer.id,
-    fullName: customer.fullName,
-    whatsapp: customer.whatsapp,
-    email: customer.email,
-    createdAt: customer.createdAt,
-    updatedAt: customer.updatedAt,
-    totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
-    salesCount: customer.sales.length,
-    productNames: [...new Set(customer.sales.map((s) => s.productName).filter(Boolean))] as string[],
-  }));
-
-  return c.json(customersWithStats);
-});
-
-/** GET /api/admin/customers/top-buyers — top customers by total spent */
-admin.get("/customers/top-buyers", async (c) => {
-  const limit = parseInt(c.req.query("limit") ?? "10");
-  
-  const topCustomers = await prisma.customer.findMany({
-    include: {
-      sales: {
-        select: { revenue: true },
-      },
-    },
-  });
-
-  const sorted = topCustomers
-    .map((customer) => ({
-      ...customer,
-      totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
-      salesCount: customer.sales.length,
-    }))
-    .sort((a, b) => b.totalSpent - a.totalSpent)
-    .slice(0, limit);
-
-  return c.json(sorted);
-});
-
-/** GET /api/admin/customers/:id — single customer with full sales history */
-admin.get("/customers/:id", async (c) => {
-  const { id } = c.req.param();
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-    include: {
-      sales: {
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
-  if (!customer) return c.json({ error: "Customer not found" }, 404);
-  return c.json(customer);
-});
-
-/** POST /api/admin/customers — create new customer */
-admin.post("/customers", async (c) => {
-  const body = await c.req.json<{
-    fullName: string;
-    whatsapp: string;
-    email?: string;
-  }>();
-
-  if (!body.fullName || !body.whatsapp) {
-    return c.json(
-      { error: "fullName and whatsapp are required" },
-      400
-    );
-  }
-
-  const customer = await prisma.customer.create({
-    data: {
-      fullName: body.fullName,
-      whatsapp: body.whatsapp,
-      email: body.email || null,
-    },
-  });
-
-  return c.json(customer, 201);
-});
-
-/** PATCH /api/admin/customers/:id — update customer */
-admin.patch("/customers/:id", async (c) => {
-  const { id } = c.req.param();
-  const body = await c.req.json();
-
-  const customer = await prisma.customer.update({
-    where: { id },
-    data: {
-      fullName: body.fullName,
-      whatsapp: body.whatsapp,
-      email: body.email,
-    },
-  });
-
-  return c.json(customer);
-});
-
-/** DELETE /api/admin/customers/:id */
-admin.delete("/customers/:id", async (c) => {
-  const { id } = c.req.param();
-  await prisma.sale.updateMany({
-    where: { customerId: id },
-    data: { customerId: null },
-  });
-  await prisma.customer.delete({ where: { id } });
   return c.json({ success: true });
 });
 
