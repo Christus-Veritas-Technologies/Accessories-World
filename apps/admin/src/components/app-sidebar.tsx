@@ -8,6 +8,7 @@ import Image from "next/image"
 import {
   Sheet,
   SheetContent,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
@@ -100,6 +101,7 @@ export function AppSidebar() {
               </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-64 bg-red-700 p-0">
+              <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
               <SidebarContent />
             </SheetContent>
           </Sheet>
