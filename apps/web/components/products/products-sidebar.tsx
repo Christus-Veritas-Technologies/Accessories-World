@@ -86,11 +86,6 @@ export function ProductsSidebar() {
                   <p className="text-sm font-semibold text-red-600 mt-1">
                     ${typeof product.retailPrice === "string" ? product.retailPrice : product.retailPrice.toFixed(2)}
                   </p>
-                  {product.stock > 0 ? (
-                    <p className="text-xs text-green-600 mt-1">In Stock</p>
-                  ) : (
-                    <p className="text-xs text-orange-600 mt-1">Out of Stock</p>
-                  )}
                 </div>
               </Link>
             ))

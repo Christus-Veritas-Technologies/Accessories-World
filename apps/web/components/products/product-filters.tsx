@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Filter, X } from "lucide-react";
 
@@ -14,16 +14,14 @@ interface Category {
 
 interface ProductFiltersProps {
   categories: Category[];
-  currentCategory?: string;
-  currentPriceRange?: string;
-  currentStockFilter?: string;
+  currentCategory?: string | null;
+  currentPriceRange?: string | null;
 }
 
 export function ProductFilters({
   categories,
   currentCategory,
   currentPriceRange = "all",
-  currentStockFilter = "all",
 }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,12 +33,6 @@ export function ProductFilters({
     { label: "$50 - $100", value: "50-100" },
     { label: "$100 - $500", value: "100-500" },
     { label: "Over $500", value: "500+" },
-  ];
-
-  const stockFilters = [
-    { label: "All Products", value: "all" },
-    { label: "In Stock Only", value: "in-stock" },
-    { label: "Out of Stock", value: "out-of-stock" },
   ];
 
   const handleFilterChange = (filterType: string, value: string) => {
@@ -64,7 +56,7 @@ export function ProductFilters({
   };
 
   const hasActiveFilters =
-    currentCategory || currentPriceRange !== "all" || currentStockFilter !== "all";
+    currentCategory || (currentPriceRange && currentPriceRange !== "all");
 
   return (
     <div className="space-y-6">
@@ -118,7 +110,7 @@ export function ProductFilters({
         <div>
           <h3 className="text-sm font-semibold text-black mb-4">Price Range</h3>
           <Tabs
-            value={currentPriceRange}
+            value={currentPriceRange || "all"}
             onValueChange={(value) => handleFilterChange("price", value)}
             className="w-fit"
           >
@@ -130,28 +122,6 @@ export function ProductFilters({
                   className="justify-start rounded-none border-b border-gray-200 last:border-b-0 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 px-4 py-2"
                 >
                   {range.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        </div>
-
-        {/* Stock Filter */}
-        <div>
-          <h3 className="text-sm font-semibold text-black mb-4">Availability</h3>
-          <Tabs
-            value={currentStockFilter}
-            onValueChange={(value) => handleFilterChange("stock", value)}
-            className="w-fit"
-          >
-            <TabsList className="flex flex-col h-auto bg-gray-50 p-0 border border-gray-200 rounded-lg overflow-hidden max-w-xs justify-start">
-              {stockFilters.map((filter) => (
-                <TabsTrigger
-                  key={filter.value}
-                  value={filter.value}
-                  className="justify-start rounded-none border-b border-gray-200 last:border-b-0 data-[state=active]:bg-red-50 data-[state=active]:text-red-500 px-4 py-2"
-                >
-                  {filter.label}
                 </TabsTrigger>
               ))}
             </TabsList>

@@ -5,7 +5,15 @@
       "Bash(bunx prisma generate)",
       "Bash(git add packages/db/prisma/schema.prisma)",
       "Bash(git commit:*)",
-      "Bash(git add apps/admin/src/components/new-sale-dialog.tsx)"
+      "Bash(git add apps/admin/src/components/new-sale-dialog.tsx)",
+      "Bash(cd \"C:\\\\Users\\\\kinzi\\\\Desktop\\\\projects\\\\accessories-world\\\\packages\\\\db\" && bunx prisma migrate dev --name remove_email_from_contact_submission 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\kinzi\\\\Desktop\\\\projects\\\\accessories-world\\\\packages\\\\db\" && bunx prisma migrate dev --name remove_email_from_contact_submission --create-only 2>&1)",
+      "Bash(cd \"C:\\\\Users\\\\kinzi\\\\Desktop\\\\projects\\\\accessories-world\\\\packages\\\\db\" && bunx prisma db push --accept-data-loss 2>&1)",
+      "Bash(cd C:\\\\Users\\\\kinzi\\\\Desktop\\\\projects\\\\accessories-world\\\\apps\\\\admin:*)",
+      "Bash(cd:*)",
+      "Bash(cd /c/Users/kinzi/Desktop/projects/accessories-world/apps/admin && bun add @aws-sdk/client-s3 2>&1)",
+      "Bash(cd /c/Users/kinzi/Desktop/projects/accessories-world/packages/db && bunx prisma migrate dev --name remove-wholesaler-email-add-phone-unique 2>&1)",
+      "Bash(cd /c/Users/kinzi/Desktop/projects/accessories-world/packages/db && bunx prisma db push --accept-data-loss 2>&1)"
     ]
   }
 }

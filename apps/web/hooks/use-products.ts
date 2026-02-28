@@ -7,7 +7,6 @@ export interface Product {
   slug: string;
   description?: string;
   retailPrice: string | number;
-  stock: number;
   featured: boolean;
   images: Array<{
     id: string;
@@ -32,22 +31,22 @@ interface ProductsResponse {
 interface UseProductsOptions {
   category?: string;
   priceRange?: string;
-  stockFilter?: string;
+  search?: string;
   page?: number;
   limit?: number;
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const { category, priceRange = "all", stockFilter = "all", page = 1, limit = 10 } = options;
+  const { category, priceRange = "all", search, page = 1, limit = 10 } = options;
 
   return useQuery({
-    queryKey: ["products", { category, priceRange, stockFilter, page, limit }],
+    queryKey: ["products", { category, priceRange, search, page, limit }],
     queryFn: async () => {
       const params = new URLSearchParams();
 
       if (category) params.append("category", category);
       if (priceRange && priceRange !== "all") params.append("price", priceRange);
-      if (stockFilter && stockFilter !== "all") params.append("stock", stockFilter);
+      if (search) params.append("search", search);
 
       params.append("page", String(page));
       params.append("limit", String(limit));

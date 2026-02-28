@@ -48,13 +48,10 @@ admin.get("/kpis", async (c) => {
     monthlyViews,
     mostViewedProducts,
     recentOrders,
-    lowStockProducts,
     topSellingProducts,
-    totalSalesRevenue,
-    monthlySalesRevenue,
-    totalSalesProfit,
-    monthlySalesProfit,
-    recentSales,
+    totalSalesAmount,
+    monthlySalesAmount,
+    salesCount,
   ] = await Promise.all([
     // Total revenue
     prisma.order.aggregate({
@@ -89,15 +86,8 @@ admin.get("/kpis", async (c) => {
       take: 5,
       orderBy: { createdAt: "desc" },
       include: {
-        wholesaler: { select: { businessName: true } },
+        wholesaler: { select: { name: true } },
       },
-    }),
-    // Low stock products (< 10)
-    prisma.product.findMany({
-      where: { active: true, stock: { lt: 10 } },
-      select: { id: true, name: true, stock: true, sku: true },
-      orderBy: { stock: "asc" },
-      take: 10,
     }),
     // Top selling products
     prisma.orderItem.groupBy({
@@ -106,29 +96,17 @@ admin.get("/kpis", async (c) => {
       orderBy: { _sum: { quantity: "desc" } },
       take: 10,
     }),
-    // Total sales revenue
+    // Total sales amount
     prisma.sale.aggregate({
-      _sum: { revenue: true },
+      _sum: { amount: true },
     }),
-    // Monthly sales revenue
+    // Monthly sales amount
     prisma.sale.aggregate({
-      _sum: { revenue: true },
+      _sum: { amount: true },
       where: { createdAt: { gte: thirtyDaysAgo } },
     }),
-    // Total sales profit
-    prisma.sale.aggregate({
-      _sum: { profit: true },
-    }),
-    // Monthly sales profit
-    prisma.sale.aggregate({
-      _sum: { profit: true },
-      where: { createdAt: { gte: thirtyDaysAgo } },
-    }),
-    // Recent sales
-    prisma.sale.findMany({
-      take: 5,
-      orderBy: { createdAt: "desc" },
-    }),
+    // Total sales count
+    prisma.sale.count(),
   ]);
 
   // Resolve product names for most viewed
@@ -153,15 +131,12 @@ admin.get("/kpis", async (c) => {
       monthly: monthlyRevenue._sum.totalAmount ?? 0,
     },
     sales: {
-      revenue: {
-        total: totalSalesRevenue._sum.revenue ?? 0,
-        monthly: monthlySalesRevenue._sum.revenue ?? 0,
-      },
-      profit: {
-        total: totalSalesProfit._sum.profit ?? 0,
-        monthly: monthlySalesProfit._sum.profit ?? 0,
+      amount: {
+        total: totalSalesAmount._sum.amount ?? 0,
+        monthly: monthlySalesAmount._sum.amount ?? 0,
       },
     },
+    salesCount,
     views: {
       weekly: weeklyViews,
       monthly: monthlyViews,
@@ -179,18 +154,9 @@ admin.get("/kpis", async (c) => {
       orderNumber: o.orderNumber,
       totalAmount: o.totalAmount,
       status: o.status,
-      wholesaler: o.wholesaler.businessName,
+      wholesaler: o.wholesaler.name,
       createdAt: o.createdAt,
     })),
-    recentSales: recentSales.map((s) => ({
-      id: s.id,
-      saleNumber: s.saleNumber,
-      revenue: s.revenue,
-      profit: s.profit,
-      quantity: s.quantity,
-      createdAt: s.createdAt,
-    })),
-    lowStockProducts,
   });
 });
 
@@ -310,12 +276,8 @@ admin.get("/wholesalers", async (c) => {
   const wholesalers = await prisma.wholesaler.findMany({
     select: {
       id: true,
-      email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
     },
     orderBy: { createdAt: "desc" },
@@ -330,12 +292,8 @@ admin.get("/wholesalers/:id", async (c) => {
     where: { id },
     select: {
       id: true,
-      email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
       orders: {
         include: {
@@ -353,32 +311,24 @@ admin.get("/wholesalers/:id", async (c) => {
 
 /** POST /api/admin/wholesalers — create a new wholesaler */
 admin.post("/wholesalers", async (c) => {
-  const {
-    name,
-    email,
-    phone,
-  } = await c.req.json<{
+  const { name, phone } = await c.req.json<{
     name: string;
-    email: string;
     phone: string;
   }>();
 
-  if (!name || !email || !phone) {
-    return c.json(
-      { error: "name, email and phone are required" },
-      400
-    );
+  if (!name || !phone) {
+    return c.json({ error: "name and phone are required" }, 400);
   }
 
   try {
-    // Check if email already exists
+    // Check if phone already exists
     const existing = await prisma.wholesaler.findUnique({
-      where: { email },
+      where: { phone },
     });
 
     if (existing) {
       return c.json(
-        { error: "A wholesaler with this email already exists" },
+        { error: "A wholesaler with this phone number already exists" },
         409
       );
     }
@@ -390,26 +340,21 @@ admin.post("/wholesalers", async (c) => {
     // Create wholesaler
     const wholesaler = await prisma.wholesaler.create({
       data: {
-        email,
         name,
         phone,
         passwordHash,
       },
     });
 
-    // Send email and WhatsApp notifications (non-blocking)
-    sendNewAccountEmail(email, name, password, false).catch((err) =>
-      console.error("Failed to send wholesaler welcome email:", err)
-    );
-
-    // Send WhatsApp notification via agent (non-blocking)
+    // Send WhatsApp credentials via agent (non-blocking)
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-    const whatsappMessage = `🎉 *Welcome to Accessories World!*\n\n👋 Hello ${name}!\n\nYour Wholesaler account has been created and is ready to use.\n\n📧 *Email:* ${email}\n🔑 *Password:* ${password}\n\n⚠️ Please change your password after first login.\n\n🚀 Start placing orders now!`;
+    const whatsappMessage = `🎉 *Welcome to Accessories World!*\n\n👋 Hello ${name}!\n\nYour Wholesaler account has been created.\n\n📱 *Phone:* ${phone}\n🔑 *Password:* ${password}\n\n🚀 Use these credentials to log in to the Wholesaler Portal!`;
 
-    fetch(`${agentUrl}/api/whatsapp/send`, {
+    fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        type: "message",
         phone,
         message: whatsappMessage,
       }),
@@ -420,7 +365,6 @@ admin.post("/wholesalers", async (c) => {
     return c.json(
       {
         id: wholesaler.id,
-        email: wholesaler.email,
         name: wholesaler.name,
         phone: wholesaler.phone,
         createdAt: wholesaler.createdAt,
@@ -436,17 +380,15 @@ admin.post("/wholesalers", async (c) => {
 /** PATCH /api/admin/wholesalers/:id */
 admin.patch("/wholesalers/:id", async (c) => {
   const { id } = c.req.param();
-  const { approved } = await c.req.json<{ approved: boolean }>();
-  
-  // If revoking, kill any active sessions
-  if (approved === false) {
-    await prisma.session.deleteMany({ where: { wholesalerId: id } });
-  }
+  const { name, phone } = await c.req.json<{ name?: string; phone?: string }>();
   
   const wholesaler = await prisma.wholesaler.update({
     where: { id },
-    data: { approved },
-    select: { id: true, email: true, businessName: true, approved: true },
+    data: {
+      ...(name && { name }),
+      ...(phone && { phone }),
+    },
+    select: { id: true, name: true, phone: true },
   });
   return c.json(wholesaler);
 });
@@ -489,7 +431,7 @@ admin.get("/products/:id", async (c) => {
               orderNumber: true,
               status: true,
               createdAt: true,
-              wholesaler: { select: { id: true, businessName: true } },
+              wholesaler: { select: { id: true, name: true } },
             },
           },
         },
@@ -511,19 +453,22 @@ admin.post("/products", async (c) => {
     wholesalePrice: number;
     retailDiscount?: number;
     wholesaleDiscount?: number;
-    stock: number;
     featured?: boolean;
     active?: boolean;
     categoryId?: string;
+    imageUrl?: string;
   }>();
+
+  const { imageUrl, ...productData } = body;
 
   const product = await prisma.product.create({
     data: {
-      ...body,
-      retailPrice: body.retailPrice,
-      wholesalePrice: body.wholesalePrice,
-      retailDiscount: body.retailDiscount ?? 0,
-      wholesaleDiscount: body.wholesaleDiscount ?? 0,
+      ...productData,
+      retailDiscount: productData.retailDiscount ?? 0,
+      wholesaleDiscount: productData.wholesaleDiscount ?? 0,
+      ...(imageUrl && {
+        images: { create: { url: imageUrl, alt: productData.name, order: 0 } },
+      }),
     },
     include: {
       category: true,
@@ -537,11 +482,19 @@ admin.post("/products", async (c) => {
 /** PATCH /api/admin/products/:id — update product */
 admin.patch("/products/:id", async (c) => {
   const { id } = c.req.param();
-  const body = await c.req.json();
+  const body = await c.req.json<{ imageUrl?: string; [key: string]: unknown }>();
+  const { imageUrl, ...productData } = body;
+
+  if (imageUrl) {
+    await prisma.productImage.deleteMany({ where: { productId: id } });
+    await prisma.productImage.create({
+      data: { url: imageUrl, alt: String(productData.name ?? "Product image"), productId: id, order: 0 },
+    });
+  }
 
   const product = await prisma.product.update({
     where: { id },
-    data: body,
+    data: productData,
     include: {
       category: true,
       images: true,
@@ -567,7 +520,7 @@ admin.get("/orders", async (c) => {
   const orders = await prisma.order.findMany({
     include: {
       wholesaler: {
-        select: { id: true, businessName: true, email: true },
+        select: { id: true, name: true, email: true },
       },
       items: {
         include: { product: { select: { id: true, name: true, sku: true } } },
@@ -618,9 +571,6 @@ admin.delete("/categories/:id", async (c) => {
 /** GET /api/admin/sales */
 admin.get("/sales", async (c) => {
   const sales = await prisma.sale.findMany({
-    include: {
-      customer: { select: { id: true, fullName: true } },
-    },
     orderBy: { createdAt: "desc" },
   });
   return c.json(sales);
@@ -630,12 +580,26 @@ admin.get("/sales", async (c) => {
 admin.post("/sales", async (c) => {
   const body = await c.req.json<{
     revenue: number;
-    profit: number;
-    quantity: number;
-    productName?: string;
-    customerId?: string;
-    notes?: string;
+    customerName?: string | null;
+    customerWhatsapp?: string | null;
+    products?: { name: string; price: string }[]; // MinifiedProduct[]
   }>();
+
+  // Validate revenue
+  if (!body.revenue) {
+    return c.json({ error: "revenue is required" }, 400);
+  }
+
+  const revenueNumber = Number(body.revenue);
+  if (!Number.isFinite(revenueNumber) || revenueNumber <= 0) {
+    return c.json({ error: "revenue must be a valid number > 0" }, 400);
+  }
+
+  // Validate products if provided
+  const products = body.products ?? [];
+  if (Array.isArray(products) && products.length === 0) {
+    return c.json({ error: "products array must contain at least one item" }, 400);
+  }
 
   // Generate unique sale number
   const saleCount = await prisma.sale.count();
@@ -644,71 +608,29 @@ admin.post("/sales", async (c) => {
   const sale = await prisma.sale.create({
     data: {
       saleNumber,
-      customerId: body.customerId || null,
-      productName: body.productName || null,
-      revenue: parseFloat(body.revenue.toString()),
-      profit: parseFloat(body.profit.toString()),
-      quantity: body.quantity,
-      notes: body.notes || null,
-    },
-    include: {
-      customer: true,
+      amount: parseFloat(revenueNumber.toString()),
+      customerName: body.customerName || null,
+      customerWhatsapp: body.customerWhatsapp || null,
+      products: products, // store as JSON
     },
   });
 
-  // Send WhatsApp invoice if customer exists
-  if (sale.customer) {
+  // Send WhatsApp receipt if customer number provided
+  if (sale.customerWhatsapp) {
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-    const productLine = sale.productName ? `\nProduct: ${sale.productName}` : "";
-
-    // Invoice message — starts with "Hope you enjoyed"
-    const invoiceMessage = `Hope you enjoyed your purchase! 🎉${productLine}
-
-Sale #: ${sale.saleNumber}
-Total: $${Number(sale.revenue).toFixed(2)}
-Qty: ${sale.quantity}
-
-Thank you for supporting Accessories World — it means the world to us! 💜`.trim();
-
-    fetch(`${agentUrl}/api/whatsapp/send`, {
+    fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        phone: sale.customer.whatsapp,
-        message: invoiceMessage,
+        type: "receipt",
+        phone: sale.customerWhatsapp,
+        receipt: {
+          customerName: sale.customerName,
+          products: products, // pass products array to agent
+          revenue: Number(sale.amount),
+        },
       }),
-    })
-      .then(() =>
-        prisma.sale.update({ where: { id: sale.id }, data: { invoiceSent: true } })
-      )
-      .catch((err) => console.error("Failed to send invoice message:", err));
-
-    // Schedule follow-up message (15 seconds later)
-    const firstName = sale.customer.fullName.split(" ")[0];
-    const productRef = sale.productName
-      ? sale.quantity > 1
-        ? "a few products"
-        : sale.productName
-      : "your recent purchase";
-
-    setTimeout(() => {
-      const followUpMessage = `Hi ${firstName},
-
-We hope you're doing well. We wanted to follow up on your recent purchase of ${productRef} from Accessories World to check that everything is meeting your expectations.
-
-If you have any questions or need assistance, please don't hesitate to reach out — we're happy to help.
-
-Thank you for your support. 🙏`.trim();
-
-      fetch(`${agentUrl}/api/whatsapp/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: sale.customer!.whatsapp,
-          message: followUpMessage,
-        }),
-      }).catch((err) => console.error("Failed to send follow-up message:", err));
-    }, 15000); // 15 seconds
+    }).catch((err) => console.error("Failed to send receipt:", err));
   }
 
   return c.json(sale, 201);
@@ -721,10 +643,9 @@ admin.patch("/sales/:id", async (c) => {
   const sale = await prisma.sale.update({
     where: { id },
     data: {
-      revenue: body.revenue ? parseFloat(body.revenue.toString()) : undefined,
-      profit: body.profit ? parseFloat(body.profit.toString()) : undefined,
-      quantity: body.quantity,
-      notes: body.notes,
+      amount: body.amount ? parseFloat(body.amount.toString()) : undefined,
+      customerName: body.customerName,
+      customerWhatsapp: body.customerWhatsapp,
     },
   });
   return c.json(sale);
@@ -734,127 +655,6 @@ admin.patch("/sales/:id", async (c) => {
 admin.delete("/sales/:id", async (c) => {
   const { id } = c.req.param();
   await prisma.sale.delete({ where: { id } });
-  return c.json({ success: true });
-});
-
-// ─── Customer Management ─────────────────────────────────────────────────────
-
-/** GET /api/admin/customers — all customers with sales stats */
-admin.get("/customers", async (c) => {
-  const customers = await prisma.customer.findMany({
-    include: {
-      sales: {
-        select: { revenue: true, productName: true },
-      },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const customersWithStats = customers.map((customer) => ({
-    id: customer.id,
-    fullName: customer.fullName,
-    whatsapp: customer.whatsapp,
-    email: customer.email,
-    createdAt: customer.createdAt,
-    updatedAt: customer.updatedAt,
-    totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
-    salesCount: customer.sales.length,
-    productNames: [...new Set(customer.sales.map((s) => s.productName).filter(Boolean))] as string[],
-  }));
-
-  return c.json(customersWithStats);
-});
-
-/** GET /api/admin/customers/top-buyers — top customers by total spent */
-admin.get("/customers/top-buyers", async (c) => {
-  const limit = parseInt(c.req.query("limit") ?? "10");
-  
-  const topCustomers = await prisma.customer.findMany({
-    include: {
-      sales: {
-        select: { revenue: true },
-      },
-    },
-  });
-
-  const sorted = topCustomers
-    .map((customer) => ({
-      ...customer,
-      totalSpent: customer.sales.reduce((sum, sale) => sum + Number(sale.revenue), 0),
-      salesCount: customer.sales.length,
-    }))
-    .sort((a, b) => b.totalSpent - a.totalSpent)
-    .slice(0, limit);
-
-  return c.json(sorted);
-});
-
-/** GET /api/admin/customers/:id — single customer with full sales history */
-admin.get("/customers/:id", async (c) => {
-  const { id } = c.req.param();
-  const customer = await prisma.customer.findUnique({
-    where: { id },
-    include: {
-      sales: {
-        orderBy: { createdAt: "desc" },
-      },
-    },
-  });
-  if (!customer) return c.json({ error: "Customer not found" }, 404);
-  return c.json(customer);
-});
-
-/** POST /api/admin/customers — create new customer */
-admin.post("/customers", async (c) => {
-  const body = await c.req.json<{
-    fullName: string;
-    whatsapp: string;
-    email?: string;
-  }>();
-
-  if (!body.fullName || !body.whatsapp) {
-    return c.json(
-      { error: "fullName and whatsapp are required" },
-      400
-    );
-  }
-
-  const customer = await prisma.customer.create({
-    data: {
-      fullName: body.fullName,
-      whatsapp: body.whatsapp,
-      email: body.email || null,
-    },
-  });
-
-  return c.json(customer, 201);
-});
-
-/** PATCH /api/admin/customers/:id — update customer */
-admin.patch("/customers/:id", async (c) => {
-  const { id } = c.req.param();
-  const body = await c.req.json();
-
-  const customer = await prisma.customer.update({
-    where: { id },
-    data: {
-      fullName: body.fullName,
-      whatsapp: body.whatsapp,
-      email: body.email,
-    },
-  });
-
-  return c.json(customer);
-});
-
-/** DELETE /api/admin/customers/:id */
-admin.delete("/customers/:id", async (c) => {
-  const { id } = c.req.param();
-  await prisma.sale.updateMany({
-    where: { customerId: id },
-    data: { customerId: null },
-  });
-  await prisma.customer.delete({ where: { id } });
   return c.json({ success: true });
 });
 

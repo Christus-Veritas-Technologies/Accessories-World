@@ -51,7 +51,7 @@ export async function requireAdmin(c: Context, next: Next) {
   await next();
 }
 
-/** Require the session to belong to an approved Wholesaler */
+/** Require the session to belong to a Wholesaler */
 export async function requireWholesaler(c: Context, next: Next) {
   const token = getToken(c);
   if (!token) {
@@ -61,10 +61,6 @@ export async function requireWholesaler(c: Context, next: Next) {
   const session = await validateSession(token);
   if (!session || session.userType !== "WHOLESALER") {
     return c.json({ error: "Wholesaler access required" }, 403);
-  }
-
-  if (!session.wholesaler?.approved) {
-    return c.json({ error: "Your wholesaler account is pending approval" }, 403);
   }
 
   c.set("session", session);

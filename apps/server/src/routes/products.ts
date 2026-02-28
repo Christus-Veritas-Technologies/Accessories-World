@@ -9,7 +9,7 @@ const products = new Hono();
  * Query params: category (slug), featured, search, page, limit, price (0-50, 50-100, 100-500, 500+), stock (in-stock, out-of-stock)
  */
 products.get("/", async (c) => {
-  const { category, featured, search, page = "1", limit = "20", price, stock } = c.req.query();
+  const { category, featured, search, page = "1", limit = "20", price } = c.req.query();
 
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -47,15 +47,6 @@ products.get("/", async (c) => {
     }
   }
 
-  // Stock filtering
-  if (stock) {
-    if (stock === "in-stock") {
-      where.stock = { gt: 0 };
-    } else if (stock === "out-of-stock") {
-      where.stock = { equals: 0 };
-    }
-  }
-
   const [items, total] = await Promise.all([
     prisma.product.findMany({
       where,
@@ -67,7 +58,6 @@ products.get("/", async (c) => {
         sku: true,
         retailPrice: true,
         retailDiscount: true,
-        stock: true,
         featured: true,
         category: { select: { id: true, name: true, slug: true } },
         images: {
@@ -109,7 +99,6 @@ products.get("/trending", async (c) => {
       sku: true,
       retailPrice: true,
       retailDiscount: true,
-      stock: true,
       featured: true,
       category: { select: { id: true, name: true, slug: true } },
       images: {
@@ -156,7 +145,6 @@ products.get("/:slug", async (c) => {
       sku: true,
       retailPrice: true,
       retailDiscount: true,
-      stock: true,
       featured: true,
       category: { select: { id: true, name: true, slug: true } },
       images: { orderBy: { order: "asc" }, select: { url: true, alt: true, order: true } },
@@ -195,7 +183,6 @@ products.get("/trending/popular", async (c) => {
       sku: true,
       retailPrice: true,
       retailDiscount: true,
-      stock: true,
       featured: true,
       category: { select: { id: true, name: true, slug: true } },
       images: {

@@ -12,17 +12,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { useCreateSale, useCustomers } from '@/hooks/queries';
-import { Loader2, Plus } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { NewCustomerDialog } from '@/components/new-customer-dialog';
+import { useCreateSale } from '@/hooks/queries';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+
+interface MinifiedProduct {
+  name: string;
+  price: string;
+}
 
 interface NewSaleDialogProps {
   open: boolean;
@@ -31,229 +27,237 @@ interface NewSaleDialogProps {
 
 export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
   const [formData, setFormData] = useState({
-    customerId: '',
-    productName: '',
-    revenue: '',
-    profit: '',
-    quantity: '',
-    notes: '',
+    products: [{ name: '', price: '' }] as MinifiedProduct[],
+    customerName: '',
+    customerWhatsapp: '',
   });
-  const [newCustomerOpen, setNewCustomerOpen] = useState(false);
 
-  const { data: customers = [] } = useCustomers() as any;
   const createSaleMutation = useCreateSale();
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
+  const handleProductChange = (index: number, field: keyof MinifiedProduct, value: string) => {
+    const newProducts = [...formData.products];
+    newProducts[index][field] = value;
+    setFormData((prev) => ({ ...prev, products: newProducts }));
+  };
+
+  const handleAddProduct = () => {
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      products: [...prev.products, { name: '', price: '' }],
     }));
+  };
+
+  const handleRemoveProduct = (index: number) => {
+    if (formData.products.length > 1) {
+      setFormData((prev) => ({
+        ...prev,
+        products: prev.products.filter((_, i) => i !== index),
+      }));
+    } else {
+      toast.error('At least one product is required');
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const calculateTotal = () => {
+    return formData.products.reduce((sum, product) => {
+      const price = parseFloat(product.price) || 0;
+      return sum + price;
+    }, 0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.revenue.trim()) {
-      toast.error('Revenue is required');
+    // Validate products
+    if (formData.products.length === 0) {
+      toast.error('At least one product is required');
       return;
     }
 
-    if (!formData.profit.trim()) {
-      toast.error('Profit is required');
-      return;
+    for (const product of formData.products) {
+      if (!product.name.trim()) {
+        toast.error('Product name is required for all items');
+        return;
+      }
+      if (!product.price.trim()) {
+        toast.error('Product price is required for all items');
+        return;
+      }
+      const price = parseFloat(product.price);
+      if (!Number.isFinite(price) || price <= 0) {
+        toast.error('Each product price must be a valid number greater than 0');
+        return;
+      }
     }
 
-    if (!formData.quantity.trim()) {
-      toast.error('Quantity is required');
+    const total = calculateTotal();
+    if (total <= 0) {
+      toast.error('Total amount must be greater than 0');
       return;
     }
 
     try {
       await createSaleMutation.mutateAsync({
-        customerId: formData.customerId || null,
-        productName: formData.productName || null,
-        revenue: parseFloat(formData.revenue),
-        profit: parseFloat(formData.profit),
-        quantity: parseInt(formData.quantity, 10),
-        notes: formData.notes || null,
+        revenue: total,
+        customerName: formData.customerName || null,
+        customerWhatsapp: formData.customerWhatsapp || null,
+        products: formData.products,
       });
 
       toast.success('Sale recorded successfully');
       setFormData({
-        customerId: '',
-        productName: '',
-        revenue: '',
-        profit: '',
-        quantity: '',
-        notes: '',
+        products: [{ name: '', price: '' }],
+        customerName: '',
+        customerWhatsapp: '',
       });
       onOpenChange(false);
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to record sale'
-      );
+      toast.error(error instanceof Error ? error.message : 'Failed to record sale');
     }
   };
 
-  return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Record New Sale</DialogTitle>
-            <DialogDescription>
-              Add a new sale with revenue, profit, and quantity information.
-            </DialogDescription>
-          </DialogHeader>
+  const total = calculateTotal();
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Card className="p-4 space-y-4">
-              {/* Customer Selection */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">Customer (Optional)</label>
-                <div className="flex gap-2">
-                  <Select value={formData.customerId} onValueChange={(value) => setFormData(prev => ({ ...prev, customerId: value }))}>
-                    <SelectTrigger className="flex-1">
-                      <SelectValue placeholder="Select a customer..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="">No customer</SelectItem>
-                      {customers.map((customer: any) => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                          {customer.fullName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="flex flex-col max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Record New Sale</DialogTitle>
+          <DialogDescription>
+            Enter product details and optionally the customer info to send a WhatsApp receipt.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <Card className="p-4 space-y-4">
+            {/* Products Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-semibold">Products *</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddProduct}
+                  disabled={createSaleMutation.isPending}
+                  className="gap-1"
+                >
+                  <Plus className="h-3 w-3" />
+                  Add Product
+                </Button>
+              </div>
+
+              {formData.products.map((product, index) => (
+                <div key={index} className="flex gap-2 items-end p-3 bg-gray-50 rounded border">
+                  <div className="flex-1 space-y-1">
+                    <label className="text-xs text-gray-600">Product Name</label>
+                    <Input
+                      type="text"
+                      value={product.name}
+                      onChange={(e) => handleProductChange(index, 'name', e.target.value)}
+                      placeholder="e.g. Phone Case"
+                      disabled={createSaleMutation.isPending}
+                    />
+                  </div>
+                  <div className="w-24 space-y-1">
+                    <label className="text-xs text-gray-600">Price</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">$</span>
+                      <Input
+                        type="number"
+                        value={product.price}
+                        onChange={(e) => handleProductChange(index, 'price', e.target.value)}
+                        placeholder="0.00"
+                        disabled={createSaleMutation.isPending}
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  </div>
                   <Button
                     type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setNewCustomerOpen(true)}
-                    disabled={createSaleMutation.isPending}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleRemoveProduct(index)}
+                    disabled={createSaleMutation.isPending || formData.products.length === 1}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+              ))}
+
+              {/* Total */}
+              <div className="flex justify-between items-center p-3 bg-blue-50 rounded border border-blue-200">
+                <span className="text-sm font-semibold text-gray-700">Total Amount:</span>
+                <span className="text-lg font-bold text-blue-600">${total.toFixed(2)}</span>
               </div>
-
-              {/* Product Name */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">Product(s) Purchased</label>
-                <Input
-                  type="text"
-                  name="productName"
-                  placeholder="e.g. Silver Necklace, Gold Ring..."
-                  value={formData.productName}
-                  onChange={handleChange}
-                  disabled={createSaleMutation.isPending}
-                />
-              </div>
-
-              {/* Revenue */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">Revenue *</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">$</span>
-                  <Input
-                    type="number"
-                    name="revenue"
-                    placeholder="0.00"
-                    value={formData.revenue}
-                    onChange={handleChange}
-                    disabled={createSaleMutation.isPending}
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              {/* Profit */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">Profit *</label>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-600">$</span>
-                  <Input
-                    type="number"
-                    name="profit"
-                    placeholder="0.00"
-                    value={formData.profit}
-                    onChange={handleChange}
-                    disabled={createSaleMutation.isPending}
-                    step="0.01"
-                    min="0"
-                  />
-                </div>
-              </div>
-
-              {/* Quantity */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">Quantity *</label>
-                <Input
-                  type="number"
-                  name="quantity"
-                  placeholder="0"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  disabled={createSaleMutation.isPending}
-                  min="1"
-                  step="1"
-                />
-              </div>
-
-              {/* Notes */}
-              <div className="space-y-2">
-                <label className="block text-sm font-semibold">Notes</label>
-                <Textarea
-                  name="notes"
-                  placeholder="Add any additional notes about this sale..."
-                  value={formData.notes}
-                  onChange={handleChange}
-                  disabled={createSaleMutation.isPending}
-                  rows={3}
-                  className="resize-none"
-                />
-              </div>
-
-              {createSaleMutation.error && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-red-600 text-sm">
-                  {createSaleMutation.error.message}
-                </div>
-              )}
-            </Card>
-
-            <div className="flex justify-end gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={createSaleMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                className="bg-red-600 hover:bg-red-700"
-                disabled={createSaleMutation.isPending}
-              >
-                {createSaleMutation.isPending ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Recording...
-                  </>
-                ) : (
-                  'Record Sale'
-                )}
-              </Button>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
-      <NewCustomerDialog open={newCustomerOpen} onOpenChange={setNewCustomerOpen} />
-    </>
+            {/* Customer Details */}
+            <div className="space-y-2 border-t pt-4">
+              <label className="block text-sm font-semibold">Customer Name</label>
+              <Input
+                type="text"
+                name="customerName"
+                placeholder="e.g. Jane Doe"
+                value={formData.customerName}
+                onChange={handleChange}
+                disabled={createSaleMutation.isPending}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold">WhatsApp Number</label>
+              <Input
+                type="tel"
+                name="customerWhatsapp"
+                placeholder="e.g. +263771234567"
+                value={formData.customerWhatsapp}
+                onChange={handleChange}
+                disabled={createSaleMutation.isPending}
+              />
+              <p className="text-xs text-gray-500">A receipt will be sent via WhatsApp if provided.</p>
+            </div>
+
+            {createSaleMutation.error && (
+              <div className="rounded-lg bg-red-50 border border-red-200 p-3 text-red-600 text-sm">
+                {createSaleMutation.error.message}
+              </div>
+            )}
+          </Card>
+
+          <div className="flex justify-end gap-3 pt-1 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={createSaleMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="bg-red-600 hover:bg-red-700"
+              disabled={createSaleMutation.isPending}
+            >
+              {createSaleMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Recording...
+                </>
+              ) : (
+                'Record Sale'
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

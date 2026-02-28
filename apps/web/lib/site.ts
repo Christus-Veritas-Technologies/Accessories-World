@@ -3,7 +3,7 @@ export const siteConfig = {
   tagline: "Every Accessory at an Affordable Price",
   description:
     "Accessories World gives Zimbabwean families quality phone and gadget accessories at fair prices.",
-  location: "49-51 Second Street, Mutare, Zimbabwe",
+  location: "43 Second Street, Mutare, Zimbabwe",
   phone: "+263 78 492 3973",
   email: "info@accessoriesworld.co.zw",
   whatsappNumber: "+263784923973",

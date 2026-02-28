@@ -38,7 +38,6 @@ wholesalers.get("/products", async (c) => {
         wholesalePrice: true,   // wholesale price only
         wholesaleDiscount: true, // wholesale discount percentage
         retailPrice: true,       // included for margin reference
-        stock: true,
         featured: true,
         category: { select: { id: true, name: true, slug: true } },
         images: {
@@ -117,12 +116,6 @@ wholesalers.post("/orders", async (c) => {
     if (!product) {
       return c.json({ error: `Product ${item.productId} not found` }, 400);
     }
-    if (product.stock < item.quantity) {
-      return c.json(
-        { error: `Insufficient stock for "${product.name}" (available: ${product.stock})` },
-        400
-      );
-    }
   }
 
   // Calculate total using wholesale prices
@@ -159,19 +152,13 @@ wholesalers.post("/orders", async (c) => {
       },
     });
 
-    // Decrement stock
-    for (const item of items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
-      });
-    }
-
     return newOrder;
   });
 
   return c.json(order, 201);
 });
+
+
 
 /**
  * GET /api/wholesalers/orders/:id
@@ -219,12 +206,8 @@ wholesalers.get("/profile", async (c) => {
     where: { id: wholesalerId },
     select: {
       id: true,
-      email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
     },
   });
@@ -244,29 +227,21 @@ wholesalers.patch("/profile", async (c) => {
   const session = c.get("session") as any;
   const wholesalerId = session.wholesalerId!;
 
-  const { businessName, contactPerson, phone, address } = await c.req.json<{
-    businessName?: string;
-    contactPerson?: string;
+  const { name, phone } = await c.req.json<{
+    name?: string;
     phone?: string;
-    address?: string;
   }>();
 
   const wholesaler = await prisma.wholesaler.update({
     where: { id: wholesalerId },
     data: {
-      ...(businessName && { businessName }),
-      ...(contactPerson && { contactPerson }),
+      ...(name && { name }),
       ...(phone && { phone }),
-      ...(address && { address }),
     },
     select: {
       id: true,
-      email: true,
-      businessName: true,
-      contactPerson: true,
+      name: true,
       phone: true,
-      address: true,
-      approved: true,
       createdAt: true,
     },
   });
