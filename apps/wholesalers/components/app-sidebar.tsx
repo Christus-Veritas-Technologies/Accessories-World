@@ -19,11 +19,7 @@ const navItems = [
   { href: "/dashboard/account", label: "My Account", icon: User },
 ]
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [open, setOpen] = useState(false)
@@ -153,7 +149,7 @@ export default function DashboardLayout({
 
         {/* Content */}
         <main className="flex-1 overflow-auto p-6">
-          {children}
+          {/* Content will be injected here */}
         </main>
       </div>
     </div>

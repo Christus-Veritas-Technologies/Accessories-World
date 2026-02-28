@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Package, Users, LogOut, LayoutDashboard, DollarSign } from "lucide-react"
+import { Home, Package, Users, LogOut, LayoutDashboard, DollarSign, Menu } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -17,6 +17,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@/components/ui/sidebar"
 
 const menuItems = [
@@ -68,7 +70,7 @@ export function AppSidebar() {
                 className="object-contain"
               />
             </div>
-            <div className="hidden md:block">
+            <div className="hidden sm:block">
               <p className="text-xs font-bold text-gray-900">ACCESSORIES</p>
               <p className="text-xs font-bold text-gray-900">WORLD</p>
             </div>
@@ -94,7 +96,7 @@ export function AppSidebar() {
                     >
                       <Link href={item.href} className="flex items-center gap-2">
                         <Icon className="h-4 w-4" />
-                        <span className="hidden md:inline">{item.title}</span>
+                        <span className="hidden sm:inline">{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -114,7 +116,7 @@ export function AppSidebar() {
               className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden md:inline">{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
+              <span className="hidden sm:inline">{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
