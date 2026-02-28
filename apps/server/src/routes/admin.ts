@@ -350,10 +350,14 @@ admin.post("/wholesalers", async (c) => {
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
     const whatsappMessage = `🎉 *Welcome to Accessories World!*\n\n👋 Hello ${name}!\n\nYour Wholesaler account has been created.\n\n📱 *Phone:* ${phone}\n🔑 *Password:* ${password}\n\n🚀 Use these credentials to log in to the Wholesaler Portal!`;
 
-    fetch(`${agentUrl}/api/whatsapp/send`, {
+    fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, message: whatsappMessage }),
+      body: JSON.stringify({
+        type: "message",
+        phone,
+        message: whatsappMessage,
+      }),
     }).catch((err) =>
       console.error("Failed to send wholesaler WhatsApp notification:", err)
     );
@@ -618,10 +622,13 @@ admin.post("/sales", async (c) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        customerName: sale.customerName,
-        customerWhatsapp: sale.customerWhatsapp,
-        products: products, // pass products array to agent
-        revenue: Number(sale.amount),
+        type: "receipt",
+        phone: sale.customerWhatsapp,
+        receipt: {
+          customerName: sale.customerName,
+          products: products, // pass products array to agent
+          revenue: Number(sale.amount),
+        },
       }),
     }).catch((err) => console.error("Failed to send receipt:", err));
   }

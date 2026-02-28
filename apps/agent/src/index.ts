@@ -283,6 +283,210 @@ interface ReceiptData {
   notes?: string;
 }
 
+type NotifyMode = "message" | "receipt";
+
+interface ReceiptPayload {
+  saleNumber?: string;
+  customerName?: string | null;
+  customerWhatsapp?: string;
+  products?: MinifiedProduct[];
+  revenue?: number | string;
+  notes?: string;
+  message?: string;
+  sendPdf?: boolean;
+  pdfCaption?: string;
+  pdfFileName?: string;
+}
+
+interface NotifyRequestBody {
+  type?: NotifyMode;
+  phone?: string;
+  customerWhatsapp?: string;
+  message?: string;
+  text?: string;
+  sendPdf?: boolean;
+  pdfCaption?: string;
+  receipt?: ReceiptPayload;
+  // Legacy receipt payload fields (kept for backward compatibility)
+  customerName?: string | null;
+  products?: MinifiedProduct[];
+  revenue?: number | string;
+  notes?: string;
+}
+
+interface NormalizedMessageRequest {
+  phone: string;
+  message: string;
+}
+
+interface NormalizedReceiptRequest {
+  phone: string;
+  message: string;
+  receiptData: ReceiptData;
+  sendPdf: boolean;
+  pdfCaption: string;
+  pdfFileName: string;
+}
+
+function badRequest(message: string): never {
+  const err = new Error(message) as Error & { status?: number };
+  err.status = 400;
+  throw err;
+}
+
+function resolvePhone(body: NotifyRequestBody): string {
+  const candidate =
+    body.phone ?? body.customerWhatsapp ?? body.receipt?.customerWhatsapp ?? "";
+  const phone = String(candidate).trim();
+  if (!phone) {
+    badRequest("phone (or customerWhatsapp) is required");
+  }
+  return phone;
+}
+
+function resolveMode(body: NotifyRequestBody): NotifyMode {
+  if (body.type === "message") return "message";
+  if (body.type === "receipt") return "receipt";
+  if (
+    body.receipt ||
+    body.revenue != null ||
+    Array.isArray(body.products) ||
+    body.notes != null
+  ) {
+    return "receipt";
+  }
+  return "message";
+}
+
+function buildReceiptMessage(receiptData: ReceiptData): string {
+  const date = new Date().toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+  return (
+    `Receipt from Accessories World\n\n` +
+    `Sale No: ${receiptData.saleNumber}\n` +
+    `Date: ${date}\n` +
+    `Items: ${receiptData.products.length}\n` +
+    `Total Paid: $${Number(receiptData.revenue).toFixed(2)}\n\n` +
+    `Your receipt is attached as a PDF for your records.\n\n` +
+    `Thank you for shopping with Accessories World.`
+  );
+}
+
+function normalizeMessageRequest(body: NotifyRequestBody): NormalizedMessageRequest {
+  const phone = resolvePhone(body);
+  const message = String(body.message ?? body.text ?? "").trim();
+  if (!message) {
+    badRequest("message is required for message mode");
+  }
+  return { phone, message };
+}
+
+function normalizeReceiptRequest(body: NotifyRequestBody): NormalizedReceiptRequest {
+  const phone = resolvePhone(body);
+  const receipt = body.receipt ?? {};
+
+  const rawProducts = receipt.products ?? body.products;
+  if (!Array.isArray(rawProducts) || rawProducts.length === 0) {
+    badRequest("products must be a non-empty array for receipt mode");
+  }
+
+  const products = rawProducts.map((product, index) => {
+    const name = String(product?.name ?? "").trim();
+    const price = String(product?.price ?? "").trim();
+    if (!name) {
+      badRequest(`products[${index}].name is required`);
+    }
+    const priceNumber = Number(price);
+    if (!Number.isFinite(priceNumber) || priceNumber <= 0) {
+      badRequest(`products[${index}].price must be a valid number > 0`);
+    }
+    return { name, price: priceNumber.toFixed(2) };
+  });
+
+  const rawRevenue = receipt.revenue ?? body.revenue;
+  if (rawRevenue == null) {
+    badRequest("revenue is required for receipt mode");
+  }
+  const revenue = Number(rawRevenue);
+  if (!Number.isFinite(revenue) || revenue <= 0) {
+    badRequest("revenue must be a valid number > 0");
+  }
+
+  const saleNumber = String(receipt.saleNumber ?? "").trim() || generateSaleNumber();
+  const customerName =
+    String(receipt.customerName ?? body.customerName ?? "").trim() || "Customer";
+  const notes = String(receipt.notes ?? body.notes ?? "").trim() || undefined;
+
+  const receiptData: ReceiptData = {
+    saleNumber,
+    customerName,
+    customerWhatsapp: phone,
+    products,
+    revenue,
+    notes,
+  };
+
+  const message = String(
+    receipt.message ?? body.message ?? body.text ?? buildReceiptMessage(receiptData)
+  ).trim();
+  if (!message) {
+    badRequest("message must not be empty");
+  }
+
+  const sendPdf = (receipt.sendPdf ?? body.sendPdf) !== false;
+  const pdfCaption = String(receipt.pdfCaption ?? body.pdfCaption ?? "Here's your receipt");
+  const pdfFileName =
+    String(receipt.pdfFileName ?? "").trim() ||
+    `ACCESSORIES-WORLD-${receiptData.saleNumber}.pdf`;
+
+  return {
+    phone,
+    message,
+    receiptData,
+    sendPdf,
+    pdfCaption,
+    pdfFileName,
+  };
+}
+
+async function enqueueSend(
+  requestId: string,
+  chatId: string,
+  message: string,
+  media?: MessageMedia,
+  mediaCaption?: string
+): Promise<void> {
+  await new Promise<void>((resolve, reject) => {
+    sendQueue = sendQueue
+      .catch((queueErr) => {
+        console.warn(`[${requestId}] Previous queue item failed, continuing...`, queueErr);
+      })
+      .then(async () => {
+        try {
+          await new Promise((r) => setTimeout(r, 200));
+          await retryWithBackoff(() => client.sendMessage(chatId, message), 2, 600);
+
+          if (media) {
+            await new Promise((r) => setTimeout(r, 300));
+            await retryWithBackoff(
+              () => client.sendMessage(chatId, media, { caption: mediaCaption }),
+              2,
+              600
+            );
+          }
+
+          resolve();
+        } catch (err) {
+          reject(err);
+        }
+      });
+  });
+}
+
 function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 30, size: "A4" });
@@ -441,289 +645,109 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
 }
 
 /**
- * POST /api/receipt/send
- * Generates a PDF receipt and sends it to the customer via WhatsApp.
+ * POST /api/receipt/send (legacy path)
+ * POST /api/notify/send (general path)
  *
- * Body: {
- *   customerName?: string,
- *   customerWhatsapp: string,
- *   products: {name: string, price: string}[],
- *   revenue: number,
- *   notes?: string
- * }
+ * Supported payloads:
+ * 1) Message mode:
+ *    { "type": "message", "phone": "+2637...", "message": "text..." }
  *
- * NOTE: saleNumber is generated server-side using UUID.
+ * 2) Receipt mode (new):
+ *    {
+ *      "type": "receipt",
+ *      "phone": "+2637...",
+ *      "receipt": {
+ *        "customerName": "Jane",
+ *        "products": [{ "name": "Case", "price": "10" }],
+ *        "revenue": 10,
+ *        "sendPdf": true
+ *      }
+ *    }
+ *
+ * 3) Receipt mode (legacy, still supported):
+ *    {
+ *      "customerWhatsapp": "+2637...",
+ *      "products": [{ "name": "Case", "price": "10" }],
+ *      "revenue": 10
+ *    }
  */
-app.post("/api/receipt/send", async (c) => {
+const sendFlexibleNotification = async (c: any) => {
   const requestId = randomUUID().split("-")[0].toUpperCase();
-  console.log(`\n📨 [${requestId}] ============ RECEIPT REQUEST START ============`);
-  
-  let body: any;
-  
+
   try {
-    console.log(`📨 [${requestId}] Parsing request body...`);
-    body = await c.req.json<{
-      customerName?: string | null;
-      customerWhatsapp: string;
-      products: MinifiedProduct[];
-      revenue: number;
-      notes?: string;
-    }>();
+    const body = (await c.req.json()) as NotifyRequestBody;
 
-    console.log(`📨 [${requestId}] ✓ Request body parsed:`, {
-      customerName: body.customerName,
-      customerWhatsapp: body.customerWhatsapp?.substring(0, 5) + "***",
-      productCount: body.products?.length ?? 0,
-      revenue: body.revenue,
-      notes: body.notes ? `"${body.notes.substring(0, 20)}..."` : undefined,
-    });
-
-    // Validate customerWhatsapp
-    if (!body.customerWhatsapp) {
-      console.error(`❌ [${requestId}] Validation failed: Missing customerWhatsapp`);
-      return c.json({ error: "customerWhatsapp is required" }, 400);
-    }
-    console.log(`✓ [${requestId}] customerWhatsapp: ${body.customerWhatsapp}`);
-
-    // Validate products array
-    if (!Array.isArray(body.products) || body.products.length === 0) {
-      console.error(`❌ [${requestId}] Validation failed: products must be a non-empty array`);
-      return c.json({ error: "products must be a non-empty array" }, 400);
-    }
-    console.log(`✓ [${requestId}] products array valid: ${body.products.length} item(s)`);
-
-    // Validate revenue
-    if (body.revenue == null) {
-      console.error(`❌ [${requestId}] Validation failed: Missing revenue`);
-      return c.json({ error: "revenue is required" }, 400);
-    }
-    console.log(`✓ [${requestId}] revenue field present: ${body.revenue}`);
-
-    const revenueNumber = Number(body.revenue);
-    console.log(`📊 [${requestId}] revenue converted to number: ${revenueNumber}`);
-    
-    if (!Number.isFinite(revenueNumber) || revenueNumber <= 0) {
-      console.error(`❌ [${requestId}] Validation failed: Invalid revenue value (${revenueNumber})`);
-      return c.json({ error: "revenue must be a valid number > 0" }, 400);
-    }
-    console.log(`✓ [${requestId}] revenue is valid: $${revenueNumber.toFixed(2)}`);
-
-    // Check WhatsApp status
-    console.log(`🔗 [${requestId}] Checking WhatsApp client status... (ready: ${whatsappReady})`);
     if (!whatsappReady) {
-      console.error(`❌ [${requestId}] WhatsApp client not connected`);
       return c.json({ error: "WhatsApp client is not connected" }, 503);
     }
-    console.log(`✓ [${requestId}] WhatsApp client is ready`);
 
-    // ✅ Generate sale number server-side
-    console.log(`🎫 [${requestId}] Generating sale number...`);
-    const saleNumber = generateSaleNumber();
-    console.log(`✓ [${requestId}] Sale number generated: ${saleNumber}`);
+    const mode = resolveMode(body);
 
-    const receiptData: ReceiptData = {
-      saleNumber,
-      customerName: (body.customerName ?? "").trim() || "Customer",
-      customerWhatsapp: body.customerWhatsapp,
-      products: body.products,
-      revenue: revenueNumber,
-      notes: body.notes,
-    };
-
-    console.log(`📄 [${requestId}] Receipt data prepared:`, {
-      saleNumber: receiptData.saleNumber,
-      customerName: receiptData.customerName,
-      customerWhatsapp: receiptData.customerWhatsapp?.substring(0, 5) + "***",
-      productCount: receiptData.products.length,
-      revenue: receiptData.revenue,
-    });
-
-    // Step 1: Generate PDF — must succeed before any WhatsApp sends
-    console.log(`📝 [${requestId}] Step 1: Starting PDF generation...`);
-    const startPdfTime = Date.now();
-    const pdfBuffer = await generateReceiptPDF(receiptData);
-    const pdfGenerationTime = Date.now() - startPdfTime;
-    console.log(`✓ [${requestId}] PDF generated successfully in ${pdfGenerationTime}ms (${pdfBuffer.length} bytes)`);
-
-    // Step 1b: Upload PDF to R2
-    console.log(`📝 [${requestId}] Step 1b: Uploading PDF to R2...`);
-    let pdfUrl: string;
-    try {
-      pdfUrl = await uploadPdfToR2(
-        pdfBuffer,
-        `ACCESSORIES-WORLD-${receiptData.saleNumber}.pdf`,
-        requestId
-      );
-    } catch (uploadErr: any) {
-      console.error(`❌ [${requestId}] PDF upload failed:`, uploadErr.message);
-      return c.json({ error: uploadErr.message }, 500);
+    if (mode === "message") {
+      const normalized = normalizeMessageRequest(body);
+      const chatId = await toChatId(normalized.phone, requestId);
+      await enqueueSend(requestId, chatId, normalized.message);
+      return c.json({
+        success: true,
+        mode,
+        recipient: chatId,
+      });
     }
 
-    // Step 2: Prepare WhatsApp message + media
-    console.log(`📲 [${requestId}] Step 2: Preparing WhatsApp message...`);
-    
-    // Convert and validate phone number
-    let chatId: string;
-    try {
-      chatId = await toChatId(receiptData.customerWhatsapp, requestId);
-    } catch (validationErr: any) {
-      console.error(`❌ [${requestId}] Phone number validation failed:`, validationErr.message);
-      return c.json({ error: validationErr.message }, 400);
-    }
-    
-    console.log(`💬 [${requestId}] Chat ID: ${chatId}`);
-    
-    const date = new Date().toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-    
-    const greeting =
-      `🧾 Accessories World Receipt\n\n` +
-      `Sale No: ${receiptData.saleNumber}\n` +
-      `Date: ${date}\n` +
-      `Items: ${receiptData.products.length}\n` +
-      `Total Paid: $${Number(receiptData.revenue).toFixed(2)}\n\n` +
-      `Your receipt is attached as a PDF for your records.\n\n` +
-      `Thank you for shopping with Accessories World.`;
+    const normalized = normalizeReceiptRequest(body);
+    const chatId = await toChatId(normalized.phone, requestId);
 
-    console.log(`📝 [${requestId}] Greeting message prepared:\n${greeting}`);
+    let pdfUrl: string | undefined;
+    let media: MessageMedia | undefined;
 
-    // Load PDF from R2 URL as MessageMedia
-    console.log(`📄 [${requestId}] Loading PDF from R2: ${pdfUrl}`);
-    let media: MessageMedia;
-    try {
+    if (normalized.sendPdf) {
+      const pdfBuffer = await generateReceiptPDF(normalized.receiptData);
+      pdfUrl = await uploadPdfToR2(pdfBuffer, normalized.pdfFileName, requestId);
       media = await MessageMedia.fromUrl(pdfUrl);
-      console.log(`✓ [${requestId}] PDF loaded from R2 as MessageMedia`);
-    } catch (mediaErr: any) {
-      console.error(`❌ [${requestId}] Failed to load PDF from R2:`, mediaErr.message);
-      return c.json({ error: `Failed to load PDF: ${mediaErr.message}` }, 500);
     }
 
-    // Step 3: Send via serialized queue
-    console.log(`⏳ [${requestId}] Step 3: Adding to WhatsApp send queue...`);
-    console.log(`📊 [${requestId}] Current send queue status: pending`);
-    
-    await new Promise<void>((resolve, reject) => {
-      sendQueue = sendQueue
-        .catch((queueErr) => {
-          console.warn(`⚠️  [${requestId}] Previous queue item failed, continuing...`, queueErr);
-        })
-        .then(async () => {
-          try {
-            console.log(`📤 [${requestId}] Sending greeting message to ${chatId}...`);
-            console.log(`📤 [${requestId}] Message content:\n${greeting}`);
-            console.log(`📤 [${requestId}] Chat ID: ${chatId}`);
-            console.log(`📤 [${requestId}] WhatsApp client ready: ${whatsappReady}`);
-            
-            const sendTime1 = Date.now();
-            // Add small delay before sending to allow frame stability
-            await new Promise(r => setTimeout(r, 200));
-            
-            await retryWithBackoff(
-              () => client.sendMessage(chatId, greeting),
-              2,
-              600
-            );
-            const time1 = Date.now() - sendTime1;
-            console.log(`✓ [${requestId}] Greeting sent successfully in ${time1}ms`);
+    await enqueueSend(
+      requestId,
+      chatId,
+      normalized.message,
+      media,
+      normalized.pdfCaption
+    );
 
-            // Add delay between messages for stability
-            await new Promise(r => setTimeout(r, 300));
-
-            console.log(`📤 [${requestId}] Sending PDF receipt to ${chatId}...`);
-            console.log(`📤 [${requestId}] PDF URL: ${pdfUrl}`);
-            console.log(`📤 [${requestId}] Media caption: "Here's your receipt"`);
-            
-            const sendTime2 = Date.now();
-            await retryWithBackoff(
-              () => client.sendMessage(chatId, media, {
-                caption: "Here's your receipt",
-              }),
-              2,
-              600
-            );
-            const time2 = Date.now() - sendTime2;
-            console.log(`✓ [${requestId}] PDF receipt sent successfully in ${time2}ms`);
-
-            console.log(`✅ [${requestId}] Both messages sent successfully to ${chatId}`);
-            resolve();
-          } catch (err) {
-            console.error(`❌ [${requestId}] Error sending messages`);
-            console.error(`❌ [${requestId}] Error constructor:`, err?.constructor?.name);
-            console.error(`❌ [${requestId}] Error keys:`, Object.keys(err || {}));
-            console.error(`❌ [${requestId}] Error toString():`, err?.toString?.());
-            console.error(`❌ [${requestId}] Error message:`, err?.message);
-            console.error(`❌ [${requestId}] Error code:`, err?.code);
-            console.error(`❌ [${requestId}] Error response:`, err?.response);
-            console.error(`❌ [${requestId}] Full error object:`, JSON.stringify(err, null, 2).substring(0, 500));
-            console.error(`❌ [${requestId}] Stack trace:`, err?.stack?.split('\n').slice(0, 5).join('\n'));
-            console.error(`❌ [${requestId}] WhatsApp client state after error - ready: ${whatsappReady}`);
-            reject(err);
-          }
-        });
+    return c.json({
+      success: true,
+      mode,
+      recipient: chatId,
+      saleNumber: normalized.receiptData.saleNumber,
+      pdfUrl: pdfUrl ?? null,
     });
-
-    console.log(`🎉 [${requestId}] ============ RECEIPT SUCCESS ============\n`);
-    return c.json({ success: true, saleNumber: receiptData.saleNumber });
   } catch (err: any) {
-    console.error(`\n🚨 [${requestId}] ============ RECEIPT ERROR ============`);
-    console.error(`❌ [${requestId}] Error occurred at: ${new Date().toISOString()}`);
-    console.error(`❌ [${requestId}] Error constructor name:`, err?.constructor?.name || "Unknown");
-    console.error(`❌ [${requestId}] Error message:`, err?.message || "No message");
-    console.error(`❌ [${requestId}] Error code:`, err?.code || "No code");
-    console.error(`❌ [${requestId}] Error name:`, err?.name || "No name");
-    
-    // Log all enumerable properties
-    if (err && typeof err === "object") {
-      const props = Object.getOwnPropertyNames(err);
-      console.error(`❌ [${requestId}] Error properties:`, props);
-      props.forEach(prop => {
-        try {
-          console.error(`    - ${prop}:`, err[prop]);
-        } catch (e) {
-          console.error(`    - ${prop}: [unable to read]`);
-        }
-      });
+    const statusFromError = Number(err?.status);
+    let status = Number.isFinite(statusFromError) && statusFromError >= 400
+      ? statusFromError
+      : 500;
+
+    if (status === 500) {
+      const message = String(err?.message ?? "").toLowerCase();
+      if (message.includes("required") || message.includes("must")) {
+        status = 400;
+      } else if (message.includes("not connected")) {
+        status = 503;
+      }
     }
-    
-    console.error(`❌ [${requestId}] Stack (first 10 lines):`);
-    if (err?.stack) {
-      err.stack.split('\n').slice(0, 10).forEach((line: string) => {
-        console.error(`    ${line}`);
-      });
-    } else {
-      console.error(`    [No stack trace available]`);
-    }
-    
-    // Log error as string representations
-    try {
-      console.error(`❌ [${requestId}] Error.toString():`, err?.toString?.());
-    } catch (e) {
-      console.error(`❌ [${requestId}] Error.toString(): [failed to stringify]`);
-    }
-    
-    try {
-      console.error(`❌ [${requestId}] Error JSON:`, JSON.stringify(err, null, 2).substring(0, 800));
-    } catch (e) {
-      console.error(`❌ [${requestId}] Error JSON: [failed to stringify]`);
-    }
-    
-    console.error(`❌ [${requestId}] WhatsApp client state: ready=${whatsappReady}`);
-    console.error(`❌ [${requestId}] Request details: phone=${body?.customerWhatsapp}, customer=${body?.customerName}`);
-    
-    const status = err?.message?.includes("not connected") || !whatsappReady ? 503 : 500;
-    const errorResponse = { error: err?.message || "Failed to send receipt" };
-    console.error(`❌ [${requestId}] Returning HTTP ${status}:`, errorResponse);
-    console.error(`❌ [${requestId}] ============ REQUEST FAILED ============\n`);
-    
-    return c.json(errorResponse, status);
+
+    console.error(`[${requestId}] Notification send failed:`, err);
+    return c.json(
+      { error: err?.message || "Failed to send WhatsApp notification" },
+      status
+    );
   }
-});
+};
 
-// ─── Start ────────────────────────────────────────────────────────────────────
+app.post("/api/receipt/send", sendFlexibleNotification);
+app.post("/api/notify/send", sendFlexibleNotification);
 
+// Start
 const port = Number(process.env.PORT ?? 3004);
 console.log(`🤖 Accessories World Agent running on http://localhost:${port}`);
 
