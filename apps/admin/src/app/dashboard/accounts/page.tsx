@@ -81,7 +81,7 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flexmd:flex-row flex-col items-center justify-between">
         <div className="flex items-center gap-4">
           <img
             src="/logo-aw.jpg"
@@ -90,14 +90,10 @@ export default function AccountsPage() {
           />
           <h1 className="text-3xl font-bold">Admin Accounts</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={exportPDF} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export PDF
-          </Button>
+        <div className="flex items-center gap-3 mt-4 md:mt-0">
           <Button
             onClick={() => setShowForm(!showForm)}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 w-full md:w-fit"
           >
             <Plus className="h-5 w-5 mr-2" />
             Add Account

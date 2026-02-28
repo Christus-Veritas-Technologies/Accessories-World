@@ -100,7 +100,7 @@ export default function ProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-center md:justify-between">
         <div className="flex items-center gap-4">
           <img
             src="/logo-aw.jpg"
@@ -109,22 +109,18 @@ export default function ProductsPage() {
           />
           <h1 className="text-3xl font-bold">Products</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <Button onClick={exportPDF} variant="outline" className="gap-2">
-            <Download className="h-4 w-4" />
-            Export PDF
-          </Button>
+        <div className="flex md:flex-row mt-4 md:mt-0 flex-col w-full md:w-fit items-center gap-2 md:gap-3">
           <Button
             onClick={() => setShowCategoryDialog(true)}
             variant="outline"
-            className="border-red-600 text-red-600 hover:bg-red-50"
+            className="border-red-600 text-red-600 hover:bg-red-50 w-full md:w-fit"
           >
             <Plus className="h-5 w-5 mr-2" />
             Create Category
           </Button>
           <Button
             onClick={() => setShowProductDialog(true)}
-            className="bg-red-600 hover:bg-red-700"
+            className="bg-red-600 hover:bg-red-700 w-full md:w-fit"
           >
             <Plus className="h-5 w-5 mr-2" />
             Add Product

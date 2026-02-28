@@ -34,11 +34,11 @@ export default function WholesaleUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between">
         <h1 className="text-3xl font-bold">Wholesale Users</h1>
         <Button
           onClick={() => setShowDialog(true)}
-          className="bg-red-600 hover:bg-red-700"
+          className="bg-red-600 hover:bg-red-700 w-full md:w-fit mt-4 md:mt-0"
         >
           <Plus className="h-5 w-5 mr-2" />
           Add New Wholesaler

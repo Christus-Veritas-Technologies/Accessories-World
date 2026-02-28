@@ -96,13 +96,13 @@ export default function SalesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex md:flex-row flex-col md:items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Sales</h1>
           <p className="text-gray-600 mt-1">Track and manage all sales records</p>
         </div>
         <Button
-          className="bg-red-600 hover:bg-red-700 gap-2"
+          className="bg-red-600 hover:bg-red-700 gap-2 w-full md:w-fit mt-4 md:mt-0"
           onClick={() => setNewSaleOpen(true)}
         >
           <Plus className="h-4 w-4" />

@@ -88,7 +88,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-center justify-between">
         <div className="flex items-center gap-4">
           <img
             src="/logo-aw.jpg"
@@ -104,7 +104,7 @@ export default function Dashboard() {
           variant="outline"
           size="sm"
           onClick={handleLogout}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 mt-4 md:mt-0 w-full md:w-fit"
         >
           <LogOut className="h-4 w-4" />
           Logout
