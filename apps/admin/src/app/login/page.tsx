@@ -120,13 +120,6 @@ export default function AdminLogin() {
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
-
-          {/* Demo Info */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-xs text-gray-500 mb-2">Demo Credentials:</p>
-            <p className="text-sm text-gray-700 font-mono">Name: Admin</p>
-            <p className="text-sm text-gray-700 font-mono">Password: 12345678</p>
-          </div>
         </div>
 
         {/* Footer */}
