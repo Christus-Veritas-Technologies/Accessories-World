@@ -30,7 +30,7 @@ export default function NotFound() {
           Sorry, the page you are looking for does not exist or has been moved.
         </p>
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-8 flex flex-col flex-wrap gap-3 sm:flex-row sm:justify-center">
           <Button className="gap-2" asChild>
             <Link href="/">
               <ArrowLeft className="h-4 w-4" />

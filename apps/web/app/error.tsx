@@ -34,7 +34,7 @@ export default function Error({
           </div>
         )}
 
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+        <div className="mt-8 flex flex-col flex-wrap gap-3 sm:flex-row sm:justify-center">
           <Button onClick={reset} className="gap-2">
             <RotateCw className="h-4 w-4" />
             Try Again

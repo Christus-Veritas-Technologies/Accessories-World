@@ -195,7 +195,7 @@ export default function ContactPage() {
       <section className="border-t border-gray-200 bg-gray-50 px-4 py-16 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-lg font-bold text-black mb-8">You can also Contact Us via</h2>
-          <div className="flex flex-col sm:flex-row gap-8 sm:gap-16">
+          <div className="flex flex-col flex-wrap sm:flex-row gap-8 sm:gap-16">
             {/* WhatsApp / Phone */}
             <div className="flex items-center gap-4">
               <div className="bg-red-100 p-3 rounded-lg">

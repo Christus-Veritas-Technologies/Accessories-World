@@ -168,7 +168,7 @@ export default function OrdersPage() {
 
                     {/* Action Buttons */}
                     {order.status === 'delivered' && (
-                      <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                      <div className="mt-6 flex flex-col flex-wrap sm:flex-row gap-3">
                         <Button variant="outline" className="flex-1">
                           Reorder
                         </Button>

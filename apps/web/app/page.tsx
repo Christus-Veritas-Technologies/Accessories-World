@@ -28,7 +28,7 @@ export default function HomePage() {
                 Find everything you need for your phone and gadgets at prices that work for your pocket. From chargers to speakers, we have it all in one place.
               </p>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+              <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:gap-4">
                 <Button
                   size="lg"
                   asChild
@@ -220,7 +220,7 @@ export default function HomePage() {
           <p className="mb-8 text-base text-red-100 sm:text-lg max-w-2xl mx-auto">
             Browse our full selection of quality accessories at prices you can afford. Shop online or visit us in Mutare today.
           </p>
-          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4 sm:justify-center">
+          <div className="flex flex-col flex-wrap gap-3 sm:flex-row sm:gap-4 sm:justify-center">
             <Button
               size="lg"
               asChild

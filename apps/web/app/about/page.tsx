@@ -268,7 +268,7 @@ export default function AboutPage() {
           <p className="text-gray-600 mb-8 max-w-2xl mx-auto">
             Whether you're looking for a specific product or browsing our collection, we're here to help you find exactly what you need.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col flex-wrap sm:flex-row gap-4 justify-center">
             <Button asChild>
               <Link href="/products">Shop Now</Link>
             </Button>
