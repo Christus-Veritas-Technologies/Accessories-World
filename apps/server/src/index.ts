@@ -15,19 +15,37 @@ const app = new Hono();
 
 // ─── Global Middleware ────────────────────────────────────────────────────────
 
+// Build allowed origins dynamically from environment
+const allowedOrigins = [
+  // Development origins
+  process.env.WEB_URL ?? "http://localhost:3000",
+  process.env.ADMIN_URL ?? "http://localhost:3001",
+  process.env.WHOLESALER_URL ?? "http://localhost:3002",
+  process.env.AGENT_URL ?? "http://localhost:3004",
+  // Blog (if different from main web)
+  "http://localhost:4321",
+];
+
+// Add production origins if they differ from dev origins
+const productionOrigins = [
+  "https://accessoriesworldmutare.co.zw",
+  "https://admin.accessoriesworldmutare.co.zw",
+  "https://wholesale.accessoriesworldmutare.co.zw",
+  "https://blog.accessoriesworldmutare.co.zw",
+  "https://agent.accessoriesworldmutare.co.zw",
+  "https://accessoriesworld.co.zw",
+  "https://admin.accessoriesworld.co.zw",
+  "https://wholesale.accessoriesworld.co.zw",
+  "https://blog.accessoriesworld.co.zw",
+  "https://api.accessoriesworld.co.zw",
+];
+
+allowedOrigins.push(...productionOrigins);
+
 app.use(
   "*",
   cors({
-    origin: [
-      process.env.WEB_URL ?? "http://localhost:3000",
-      process.env.ADMIN_URL ?? "http://localhost:3001",
-      process.env.WHOLESALER_URL ?? "http://localhost:3002",
-      process.env.AGENT_URL ?? "http://localhost:3004",
-      "https://accessoriesworldmutare.co.zw",
-      "https://blog.accessoriesworldmutare.co.zw",
-      "https://admin.accessoriesworldmutare.co.zw",
-      "https://wholesale.accessoriesworldmutare.co.zw",
-    ],
+    origin: allowedOrigins,
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization"],
     credentials: true,
