@@ -32,7 +32,7 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#DC2626" />
       </head>
-      <body className="min-h-screen antialiased bg-background text-foreground">
+      <body className="min-h-screen antialiased">
         <Providers>
           {children}
         </Providers>
