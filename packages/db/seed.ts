@@ -17,7 +17,7 @@ async function main() {
     });
 
     // Hash password using Bun's built-in password hashing
-    const passwordHash = await Bun.password.hash("12345678", {
+    const passwordHash = await Bun.password.hash("exyro45610y2627291", {
       algorithm: "bcrypt",
       cost: 4,
     });
