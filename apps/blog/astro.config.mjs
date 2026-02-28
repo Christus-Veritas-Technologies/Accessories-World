@@ -7,6 +7,6 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://blog.accessoriesworld.co.zw',
+	site: 'https://blog.accessoriesworldmutare.co.zw',
 	integrations: [mdx(), sitemap(), tailwind()],
 });
