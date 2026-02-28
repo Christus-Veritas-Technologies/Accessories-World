@@ -582,6 +582,7 @@ admin.post("/sales", async (c) => {
     revenue: number;
     customerName?: string | null;
     customerWhatsapp?: string | null;
+    customerPhone?: string | null;
     products?: { name: string; price: string }[]; // MinifiedProduct[]
   }>();
 
@@ -615,9 +616,10 @@ admin.post("/sales", async (c) => {
     },
   });
 
+  const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+
   // Send WhatsApp receipt if customer number provided
   if (sale.customerWhatsapp) {
-    const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
     fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -626,11 +628,45 @@ admin.post("/sales", async (c) => {
         phone: sale.customerWhatsapp,
         receipt: {
           customerName: sale.customerName,
-          products: products, // pass products array to agent
+          customerPhone: body.customerPhone || null,
+          products: products,
           revenue: Number(sale.amount),
         },
       }),
     }).catch((err) => console.error("Failed to send receipt:", err));
+  } else {
+    // If no customer WhatsApp, send manual follow-up to business number
+    const businessWhatsapp = process.env.BUSINESS_WHATSAPP;
+    if (businessWhatsapp) {
+      const productList = products
+        .map((p) => `• ${p.name}: $${p.price}`)
+        .join("\n");
+
+      const followUpMessage = `
+🔔 *Manual Follow-up Required*
+
+Sale: ${saleNumber}
+Customer: ${body.customerName || "Unknown"}
+Phone: ${body.customerPhone || "N/A"}
+Amount: $${sale.amount.toFixed(2)}
+
+*Products:*
+${productList}
+
+Please follow up with customer manually.
+      `.trim();
+
+      fetch(`${agentUrl}/api/message/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: businessWhatsapp,
+          message: followUpMessage,
+        }),
+      }).catch((err) =>
+        console.error("Failed to send manual follow-up message:", err)
+      );
+    }
   }
 
   return c.json(sale, 201);
