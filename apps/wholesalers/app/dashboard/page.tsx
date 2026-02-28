@@ -14,6 +14,8 @@ interface Product {
   sku: string | null;
   retailPrice: string;
   retailDiscount: string;
+  wholesalePrice: string;
+  wholesaleDiscount: string;
   stock?: number | null;
   category?: { id: string; name: string; slug: string } | null;
   images: Array<{ url: string; alt: string | null }>;
@@ -44,9 +46,9 @@ export default function ProductsPage() {
   };
 
   const effectivePrice = (p: Product) => {
-    const retailPrice = toNumber(p.retailPrice);
-    const retailDiscount = toNumber(p.retailDiscount);
-    return retailPrice * (1 - retailDiscount / 100);
+    const wholesalePrice = toNumber(p.wholesalePrice);
+    const wholesaleDiscount = toNumber(p.wholesaleDiscount);
+    return wholesalePrice * (1 - wholesaleDiscount / 100);
   };
 
   if (isLoading) {
@@ -90,8 +92,8 @@ export default function ProductsPage() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredProducts.map((product) => {
           const price = effectivePrice(product);
-          const basePrice = toNumber(product.retailPrice);
-          const discount = toNumber(product.retailDiscount);
+          const basePrice = toNumber(product.wholesalePrice);
+          const discount = toNumber(product.wholesaleDiscount);
           const savings = Math.max(0, basePrice - price);
           const hasStockInfo = typeof product.stock === 'number';
 
@@ -135,7 +137,7 @@ export default function ProductsPage() {
                     </span>
                     {savings > 0 && (
                       <span className="text-xs text-gray-400 line-through">
-                        ${basePrice.toFixed(2)}
+                        ${toNumber(product.wholesalePrice).toFixed(2)}
                       </span>
                     )}
                   </div>
