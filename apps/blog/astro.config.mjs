@@ -9,4 +9,9 @@ import { defineConfig } from 'astro/config';
 export default defineConfig({
 	site: 'https://blog.accessoriesworldmutare.co.zw',
 	integrations: [mdx(), sitemap(), tailwind()],
+	vite: {
+		preview: {
+			allowedHosts: ['blog.accessoriesworldmutare.co.zw'],
+		},
+	},
 });
