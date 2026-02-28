@@ -1,6 +1,6 @@
 "use client"
 
-import { Home, Package, Users, LogOut, LayoutDashboard, DollarSign, Menu } from "lucide-react"
+import { Home, Package, Users, LogOut, LayoutDashboard, DollarSign } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -17,8 +17,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar"
 
 const menuItems = [
@@ -60,22 +58,20 @@ export function AppSidebar() {
   return (
     <Sidebar className="border-r border-gray-200">
       <SidebarHeader className="border-b border-gray-200">
-        <div className="flex items-center justify-between py-2 px-2">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="relative w-12 h-12 flex-shrink-0">
-              <Image
-                src="/logo-aw.jpg"
-                alt="Accessories World"
-                fill
-                className="object-contain"
-              />
-            </div>
-            <div className="hidden sm:block">
-              <p className="text-xs font-bold text-gray-900">ACCESSORIES</p>
-              <p className="text-xs font-bold text-gray-900">WORLD</p>
-            </div>
-          </Link>
-        </div>
+        <Link href="/dashboard" className="flex items-center gap-2 px-1">
+          <div className="relative w-8 h-8 flex-shrink-0">
+            <Image
+              src="/logo-aw.jpg"
+              alt="Accessories World"
+              fill
+              className="object-contain"
+            />
+          </div>
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+            <p className="text-xs font-bold text-gray-900 leading-tight">ACCESSORIES</p>
+            <p className="text-xs font-bold text-gray-900 leading-tight">WORLD</p>
+          </div>
+        </Link>
       </SidebarHeader>
 
       <SidebarContent>
@@ -94,9 +90,9 @@ export function AppSidebar() {
                       isActive={isActive}
                       className={isActive ? "bg-red-500 text-white hover:bg-red-600" : ""}
                     >
-                      <Link href={item.href} className="flex items-center gap-2">
+                      <Link href={item.href}>
                         <Icon className="h-4 w-4" />
-                        <span className="hidden sm:inline">{item.title}</span>
+                        <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
@@ -116,7 +112,7 @@ export function AppSidebar() {
               className="text-red-600 hover:text-red-700 hover:bg-red-50 cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
+              <span>{logoutMutation.isPending ? "Logging out..." : "Logout"}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
