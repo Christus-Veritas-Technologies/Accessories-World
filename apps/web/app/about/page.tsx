@@ -1,14 +1,17 @@
+"use client";
+
 import Image from "next/image";
 import { Users, Award, MapPin, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
-import { StoreMap } from "@/components/store-map";
+import dynamic from "next/dynamic";
 
-export const metadata = {
-  title: "About Us | Accessories World",
-  description: "Learn about Accessories World's mission, team, and commitment to quality.",
-};
+// Dynamically import StoreMap with ssr: false
+const StoreMap = dynamic(() => import("@/components/store-map").then(mod => mod.StoreMap), {
+  ssr: false,
+  loading: () => <div className="w-full h-96 rounded-lg bg-gray-200 flex items-center justify-center"><p className="text-gray-600">Loading map...</p></div>
+});
 
 export default function AboutPage() {
   return (
