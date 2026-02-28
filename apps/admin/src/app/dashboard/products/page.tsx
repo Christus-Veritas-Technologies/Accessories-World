@@ -26,7 +26,7 @@ interface Product {
   wholesaleDiscount: number;
   featured: boolean;
   active: boolean;
-  category: { id: string; name: string; slug: string };
+  category?: { id: string; name: string; slug: string } | null;
 }
 
 export default function ProductsPage() {
@@ -52,9 +52,14 @@ export default function ProductsPage() {
       (selectedCategory === 'all' || p.category?.id === selectedCategory)
   );
 
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+    // Filter out products with null category if a specific category is selected
+    const displayProducts = selectedCategory === 'all' 
+      ? filteredProducts 
+      : filteredProducts.filter((p: Product) => p.category !== null && p.category !== undefined);
+
+  const totalPages = Math.ceil(displayProducts.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  const paginatedProducts = displayProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -76,12 +81,12 @@ export default function ProductsPage() {
     doc.text('Products Report', 14, 30);
     doc.setFontSize(10);
     doc.setTextColor(100, 100, 100);
-    doc.text(`Generated: ${new Date().toLocaleDateString()} — ${filteredProducts.length} products`, 14, 38);
+    doc.text(`Generated: ${new Date().toLocaleDateString()} — ${displayProducts.length} products`, 14, 38);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (doc as any).autoTable({
       startY: 46,
       head: [['Name', 'Category', 'Retail Price', 'Wholesale Price', 'Featured']],
-      body: filteredProducts.map((p: Product) => [
+      body: displayProducts.map((p: Product) => [
         p.name,
         p.category?.name ?? '—',
         `$${Number(p.retailPrice).toFixed(2)}`,
@@ -213,7 +218,7 @@ export default function ProductsPage() {
                     <td className="px-6 py-3">
                       <div>
                         <p className="font-medium">{product.name}</p>
-                        <p className="text-xs text-gray-500">{product.category.name}</p>
+                        <p className="text-xs text-gray-500">{product.category?.name ?? '—'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-3 text-right">
@@ -275,10 +280,10 @@ export default function ProductsPage() {
         </div>
 
         {/* Pagination */}
-        {filteredProducts.length > 0 && (
+        {displayProducts.length > 0 && (
           <div className="px-6 py-4 border-t flex items-center justify-between">
             <div className ="text-sm text-gray-500">
-              Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length} products
+              Showing {startIndex + 1} to {Math.min(startIndex + ITEMS_PER_PAGE, displayProducts.length)} of {displayProducts.length} products
             </div>
             <div className="flex items-center gap-2">
               <Button
