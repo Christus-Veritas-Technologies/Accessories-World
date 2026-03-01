@@ -208,7 +208,7 @@ export default function AboutPage() {
                 latitude={-18.865}
                 longitude={32.661}
                 storeName="Accessories World"
-                address="49-51 Second Street, Mutare, Zimbabwe"
+                address="42 Second Street, Mutare, Zimbabwe"
               />
             </div>
 
@@ -222,7 +222,7 @@ export default function AboutPage() {
                     <div>
                       <p className="font-semibold text-black text-sm">Address</p>
                       <p className="text-gray-600 text-sm mt-1">
-                        43 Second Street, Mutare<br />
+                        42 Second Street, Mutare<br />
                         Zimbabwe
                       </p>
                     </div>
@@ -245,7 +245,7 @@ export default function AboutPage() {
                   </p>
                   <Button variant="outline" asChild>
                     <a
-                      href="https://maps.google.com/?q=123+Main+Street+Harare+Zimbabwe"
+                      href="https://maps.app.goo.gl/vZ5wNEpBrCz765XR8"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
