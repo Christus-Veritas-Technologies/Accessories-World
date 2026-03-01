@@ -375,6 +375,23 @@ export function useUpdateAccount() {
 }
 
 // Auth & Session
+export function useChangePassword() {
+  return useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const res = await authenticatedFetch(`${API_URL}/auth/admin/change-password`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as any).error || 'Failed to change password');
+      }
+      return res.json();
+    },
+  });
+}
+
 export function useLogout() {
   const queryClient = useQueryClient();
 

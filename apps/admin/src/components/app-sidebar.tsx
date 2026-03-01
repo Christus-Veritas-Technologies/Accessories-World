@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Package, Users, LogOut, DollarSign, LayoutDashboard, Menu } from "lucide-react"
+import { Home, Package, Users, LogOut, DollarSign, LayoutDashboard, Menu, KeyRound } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 import {
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useLogout } from "@/hooks/queries"
 import { cn } from "@/lib/utils"
+import { ChangePasswordDialog } from "@/components/change-password-dialog"
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: Home },
@@ -26,6 +27,7 @@ const navItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
   const logoutMutation = useLogout()
 
   const handleLogout = () => {
@@ -69,7 +71,15 @@ export function AppSidebar() {
         })}
       </nav>
 
-      <div className="absolute bottom-6 left-3 right-3">
+      <div className="absolute bottom-6 left-3 right-3 space-y-1">
+        <Button
+          onClick={() => setShowChangePassword(true)}
+          variant="ghost"
+          className="w-full justify-start gap-3 rounded-lg px-3 text-white hover:bg-red-600/80"
+        >
+          <KeyRound className="h-5 w-5" />
+          Change Password
+        </Button>
         <Button
           onClick={handleLogout}
           disabled={logoutMutation.isPending}
@@ -85,6 +95,8 @@ export function AppSidebar() {
 
   return (
     <div className="flex h-screen bg-white">
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog open={showChangePassword} onOpenChange={setShowChangePassword} />
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 flex-col bg-red-700 text-white lg:flex">
         <SidebarContent />

@@ -29,6 +29,7 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
   const [formData, setFormData] = useState({
     products: [{ name: '', price: '' }] as MinifiedProduct[],
     customerName: '',
+    customerPhone: '',
     customerWhatsapp: '',
   });
 
@@ -105,6 +106,7 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
       await createSaleMutation.mutateAsync({
         revenue: total,
         customerName: formData.customerName || null,
+        customerPhone: formData.customerPhone || null,
         customerWhatsapp: formData.customerWhatsapp || null,
         products: formData.products,
       });
@@ -113,6 +115,7 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
       setFormData({
         products: [{ name: '', price: '' }],
         customerName: '',
+        customerPhone: '',
         customerWhatsapp: '',
       });
       onOpenChange(false);
@@ -210,6 +213,19 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
                 onChange={handleChange}
                 disabled={createSaleMutation.isPending}
               />
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold">Phone Number</label>
+              <Input
+                type="tel"
+                name="customerPhone"
+                placeholder="e.g. +263771234567"
+                value={formData.customerPhone}
+                onChange={handleChange}
+                disabled={createSaleMutation.isPending}
+              />
+              <p className="text-xs text-gray-500">Customer's phone number (printed on receipt).</p>
             </div>
 
             <div className="space-y-2">
