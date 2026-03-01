@@ -241,7 +241,7 @@ export default function AboutPage() {
                 <div className="pt-4">
                   <h4 className="font-semibold text-black mb-2">Get Directions</h4>
                   <p className="text-sm text-gray-600 mb-4">
-                    Located in the heart of Harare's shopping district, we're easy to find. Look for the red Accessories World sign.
+                    Located in the heart of Mutare's Central Business District, along Second street opposite Romeo's Chips, we're easy to spot....just look for the red and white Accessories World sign!
                   </p>
                   <Button variant="outline" asChild>
                     <a
