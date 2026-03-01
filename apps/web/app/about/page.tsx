@@ -205,8 +205,8 @@ export default function AboutPage() {
             {/* Map */}
             <div className="flex items-center justify-center">
               <StoreMap
-                latitude={-18.865}
-                longitude={32.661}
+                latitude={-18.97454153884116}
+                longitude={32.66817381397837}
                 storeName="Accessories World"
                 address="42 Second Street, Mutare, Zimbabwe"
               />
