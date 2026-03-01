@@ -346,8 +346,9 @@ admin.post("/wholesalers", async (c) => {
       },
     });
 
-    // Send WhatsApp credentials via agent (non-blocking)
+    // Send WhatsApp credentials to the wholesaler (non-blocking)
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+    const businessWhatsapp = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
     const whatsappMessage = `🎉 *Welcome to Accessories World!*\n\n👋 Hello ${name}!\n\nYour Wholesaler account has been created.\n\n📱 *Phone:* ${phone}\n🔑 *Password:* ${password}\n\n🚀 Use these credentials to log in to the Wholesaler Portal!`;
 
     fetch(`${agentUrl}/api/receipt/send`, {
@@ -360,6 +361,19 @@ admin.post("/wholesalers", async (c) => {
       }),
     }).catch((err) =>
       console.error("Failed to send wholesaler WhatsApp notification:", err)
+    );
+
+    // Notify Accessories World number about the new wholesaler account
+    const awMessage = `🏪 *New Wholesaler Account Created*\n\n👤 Name: ${name}\n📱 Phone: ${phone}\n📅 Created: ${new Date().toLocaleDateString("en-GB")}\n\n✅ Account is ready for use.`;
+    fetch(`${agentUrl}/api/whatsapp/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone: businessWhatsapp,
+        message: awMessage,
+      }),
+    }).catch((err) =>
+      console.error("Failed to send AW wholesaler account notification:", err)
     );
 
     return c.json(
@@ -617,6 +631,7 @@ admin.post("/sales", async (c) => {
   });
 
   const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+  const businessWhatsapp = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
 
   // Send WhatsApp receipt if customer number provided
   if (sale.customerWhatsapp) {
@@ -636,37 +651,35 @@ admin.post("/sales", async (c) => {
     }).catch((err) => console.error("Failed to send receipt:", err));
   } else {
     // If no customer WhatsApp, send manual follow-up to business number
-    const businessWhatsapp = process.env.BUSINESS_WHATSAPP;
-    if (businessWhatsapp) {
-      const productList = products
-        .map((p) => `• ${p.name}: $${p.price}`)
-        .join("\n");
+    const productList = products
+      .map((p) => `• ${p.name}: $${p.price}`)
+      .join("\n");
 
-      const followUpMessage = `
-🔔 *Manual Follow-up Required*
+    const followUpMessage = [
+      `🔔 *Manual Follow-up Required*`,
+      ``,
+      `Sale: ${saleNumber}`,
+      `Customer: ${body.customerName || "Unknown"}`,
+      `Phone: ${body.customerPhone || "N/A"}`,
+      `Amount: $${sale.amount.toFixed(2)}`,
+      ``,
+      `*Products:*`,
+      productList,
+      ``,
+      `⚠️ Customer is not on WhatsApp. Please follow up manually.`,
+      `📞 Accessories World: ${businessWhatsapp}`,
+    ].join("\n");
 
-Sale: ${saleNumber}
-Customer: ${body.customerName || "Unknown"}
-Phone: ${body.customerPhone || "N/A"}
-Amount: $${sale.amount.toFixed(2)}
-
-*Products:*
-${productList}
-
-Please follow up with customer manually.
-      `.trim();
-
-      fetch(`${agentUrl}/api/message/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          phone: businessWhatsapp,
-          message: followUpMessage,
-        }),
-      }).catch((err) =>
-        console.error("Failed to send manual follow-up message:", err)
-      );
-    }
+    fetch(`${agentUrl}/api/whatsapp/send`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone: businessWhatsapp,
+        message: followUpMessage,
+      }),
+    }).catch((err) =>
+      console.error("Failed to send manual follow-up message:", err)
+    );
   }
 
   return c.json(sale, 201);

@@ -109,6 +109,54 @@ auth.get("/validate", async (c) => {
 });
 
 /**
+ * PATCH /api/auth/admin/change-password
+ * Changes the current admin user's password
+ * Body: { currentPassword, newPassword }
+ */
+auth.patch("/admin/change-password", async (c) => {
+  const token = extractToken(c.req.header("Authorization"));
+  if (!token) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const session = await validateSession(token);
+  if (!session || session.userType !== "ADMIN" || !session.admin) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+
+  const { currentPassword, newPassword } = await c.req.json<{
+    currentPassword: string;
+    newPassword: string;
+  }>();
+
+  if (!currentPassword || !newPassword) {
+    return c.json({ error: "currentPassword and newPassword are required" }, 400);
+  }
+
+  if (newPassword.length < 6) {
+    return c.json({ error: "New password must be at least 6 characters" }, 400);
+  }
+
+  const admin = await prisma.admin.findUnique({ where: { id: session.admin.id } });
+  if (!admin) {
+    return c.json({ error: "Account not found" }, 404);
+  }
+
+  const valid = await Bun.password.verify(currentPassword, admin.passwordHash);
+  if (!valid) {
+    return c.json({ error: "Current password is incorrect" }, 400);
+  }
+
+  const newHash = await Bun.password.hash(newPassword);
+  await prisma.admin.update({
+    where: { id: admin.id },
+    data: { passwordHash: newHash },
+  });
+
+  return c.json({ success: true });
+});
+
+/**
  * GET /api/auth/me
  * Returns the current session user
  */
