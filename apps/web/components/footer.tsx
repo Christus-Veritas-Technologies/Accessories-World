@@ -98,7 +98,7 @@ export function Footer() {
               Working Hours
             </h3>
             <div className="mt-4 space-y-2">
-              <p className="text-sm text-gray-600">Mon - Fri: 8:00 AM - 5:30 PM</p>
+              <p className="text-sm text-gray-600">Mon - Fri: 7:30 AM - 6:00 PM</p>
               <p className="text-sm text-gray-600">Saturday: 8:00 AM - 3:00 PM</p>
               <p className="text-sm text-gray-600">Sunday: Closed</p>
             </div>
