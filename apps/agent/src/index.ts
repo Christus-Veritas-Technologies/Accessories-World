@@ -277,6 +277,7 @@ interface MinifiedProduct {
 interface ReceiptData {
   saleNumber: string; // generated server-side
   customerName: string;
+  customerPhone?: string;
   customerWhatsapp: string;
   products: MinifiedProduct[]; // array of {name, price}
   revenue: number; // total
@@ -288,6 +289,7 @@ type NotifyMode = "message" | "receipt";
 interface ReceiptPayload {
   saleNumber?: string;
   customerName?: string | null;
+  customerPhone?: string | null;
   customerWhatsapp?: string;
   products?: MinifiedProduct[];
   revenue?: number | string;
@@ -309,6 +311,7 @@ interface NotifyRequestBody {
   receipt?: ReceiptPayload;
   // Legacy receipt payload fields (kept for backward compatibility)
   customerName?: string | null;
+  customerPhone?: string | null;
   products?: MinifiedProduct[];
   revenue?: number | string;
   notes?: string;
@@ -424,6 +427,7 @@ function normalizeReceiptRequest(body: NotifyRequestBody): NormalizedReceiptRequ
   const receiptData: ReceiptData = {
     saleNumber,
     customerName,
+    customerPhone: String(receipt.customerPhone ?? body.customerPhone ?? "").trim() || undefined,
     customerWhatsapp: phone,
     products,
     revenue,
@@ -543,6 +547,10 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
     doc.text(data.saleNumber, L, 124);
     doc.text(date, L + 140, 124);
     doc.text(data.customerName, L + 220, 124, { width: 110, ellipsis: true });
+    if (data.customerPhone) {
+      doc.fontSize(8).font("Helvetica").fillColor(GRAY);
+      doc.text(data.customerPhone, L + 220, 136, { width: 110, ellipsis: true });
+    }
 
     // ── Divider ──
     doc
