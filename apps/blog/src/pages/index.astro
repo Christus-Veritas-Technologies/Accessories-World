@@ -53,20 +53,23 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 	.hero {
 		text-align: center;
 		margin-bottom: 3rem;
-		padding: 2rem 0;
-		border-bottom: 2px solid rgb(243, 244, 246);
+		padding: 3rem 1rem;
+		background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+		border-bottom: 1px solid rgb(229, 231, 235);
 	}
 
 	.hero h1 {
 		font-size: 3rem;
 		margin-bottom: 0.5rem;
-		color: var(--accent);
+		color: #DC2626;
+		font-weight: 700;
 	}
 
 	.tagline {
 		font-size: 1.25rem;
-		color: rgb(var(--gray));
+		color: rgb(107, 114, 128);
 		font-weight: 500;
+		margin: 0;
 	}
 
 	.content {
@@ -76,32 +79,26 @@ import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 	.content h2 {
 		margin-top: 0;
-		color: rgb(var(--gray-dark));
+		color: rgb(17, 24, 39);
+		font-size: 2rem;
+		font-weight: 700;
 	}
 
 	.content h3 {
-		color: var(--accent);
-		margin-top: 1.5rem;
+		color: rgb(17, 24, 39);
+		font-size: 1.5rem;
+		font-weight: 600;
+		margin-top: 1.5em;
 	}
 
 	.content ul {
-		list-style: none;
-		padding: 0;
+		list-style: disc;
+		padding-left: 1.5em;
 	}
 
 	.content li {
-		padding: 0.5rem 0;
-		padding-left: 1.5rem;
-		position: relative;
-		color: rgb(var(--gray-dark));
-	}
-
-	.content li:before {
-		content: "→";
-		position: absolute;
-		left: 0;
-		color: var(--accent);
-		font-weight: bold;
+		margin-bottom: 0.5em;
+		color: rgb(55, 65, 81);
 	}
 
 	@media (max-width: 720px) {

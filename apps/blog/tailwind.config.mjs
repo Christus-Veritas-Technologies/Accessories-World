@@ -5,18 +5,18 @@ export default {
     extend: {
       colors: {
         brand: {
-          primary: '#1E40AF',
-          'primary-light': '#3B82F6',
-          'primary-dark': '#1E3A5F',
-          secondary: '#F97316',
-          'secondary-light': '#FB923C',
-          'secondary-dark': '#EA580C',
-          accent: '#0EA5E9',
-          'accent-light': '#38BDF8',
+          primary: '#DC2626',
+          'primary-light': '#EF4444',
+          'primary-dark': '#991B1B',
+          secondary: '#111111',
+          'secondary-light': '#1F2937',
+          'secondary-dark': '#000000',
+          accent: '#DC2626',
+          'accent-light': '#EF4444',
         },
       },
       fontFamily: {
-        sans: ['Atkinson', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
     },
   },

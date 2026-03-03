@@ -7,90 +7,163 @@ import HeaderLink from './HeaderLink.astro';
 	<nav>
 		<div class="logo">
 			<img src="/logo-aw.jpg" alt="Accessories World" class="logo-img" />
-			<h2><a href="/">{SITE_TITLE}</a></h2>
+			<div class="logo-text">
+				<h2><a href="/">{SITE_TITLE}</a></h2>
+				<p class="logo-subtitle">Blog</p>
+			</div>
 		</div>
-		<div class="internal-links">
-			<HeaderLink href="/">Home</HeaderLink>
-			<HeaderLink href="/blog">Blog</HeaderLink>
-			<HeaderLink href="/about">About</HeaderLink>
-		</div>
-		<div class="external-links">
-			<a href="https://accessoriesworld.co.zw" class="main-site-link">
-				Main Site
-			</a>
+		<div class="nav-links">
+			<div class="internal-links">
+				<HeaderLink href="/">Home</HeaderLink>
+				<HeaderLink href="/blog">Articles</HeaderLink>
+				<HeaderLink href="/about">About</HeaderLink>
+			</div>
+			<div class="external-link">
+				<a href="https://accessoriesworld.co.zw" class="main-site-link">
+					Shop Now
+				</a>
+			</div>
 		</div>
 	</nav>
 </header>
 <style>
 	header {
 		margin: 0;
-		padding: 0 1em;
+		padding: 0 1rem;
 		background: white;
-		border-bottom: 2px solid rgb(var(--gray-light));
-		box-shadow: var(--box-shadow);
+		border-bottom: 1px solid rgb(229, 231, 235);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 		position: sticky;
 		top: 0;
 		z-index: 100;
+	}
+	
+	nav {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		max-width: 1280px;
+		margin: 0 auto;
+		height: 80px;
+		gap: 2rem;
 	}
 	
 	.logo {
 		display: flex;
 		align-items: center;
 		gap: 0.75rem;
+		flex-shrink: 0;
 	}
 	
 	.logo-img {
-		height: 32px;
-		width: 32px;
-		object-fit: contain;
+		height: 40px;
+		width: 40px;
+		object-fit: cover;
+		border-radius: 0.5rem;
+		border: 1px solid rgb(229, 231, 235);
 	}
 	
-	h2 {
-		margin: 0;
-		font-size: 1.25rem;
-		font-weight: 700;
+	.logo-text {
+		display: flex;
+		flex-direction: column;
+		gap: 0;
 	}
 
-	h2 a,
-	h2 a.active {
-		text-decoration: none;
-		color: var(--accent);
+	.logo h2 {
+		margin: 0;
+		font-size: 1rem;
 		font-weight: 700;
+		color: rgb(17, 24, 39);
 	}
-	nav {
+	
+	.logo-subtitle {
+		font-size: 0.75rem;
+		color: rgb(107, 114, 128);
+		margin: 0;
+		font-weight: 500;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+	}
+	
+	.logo a {
+		text-decoration: none;
+		color: inherit;
+		display: block;
+	}
+	
+	.logo a:hover {
+		color: #DC2626;
+	}
+	
+	.nav-links {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		max-width: 1200px;
-		margin: 0 auto;
-		padding: 1rem 0;
+		gap: 2rem;
+		flex: 1;
+		justify-content: flex-end;
 	}
-	nav a {
-		padding: 0.75em 1em;
-		color: rgb(var(--gray-dark));
-		border-bottom: 2px solid transparent;
-		text-decoration: none;
-		font-weight: 500;
-		transition: all 0.2s;
+
+	.internal-links {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
 	}
-	nav a:hover {
-		color: var(--accent);
+
+	.external-link {
+		margin-left: 1rem;
+		border-left: 1px solid rgb(229, 231, 235);
+		padding-left: 1rem;
 	}
-	nav a.active {
-		text-decoration: none;
-		border-bottom-color: var(--accent);
-	}
+	
 	.main-site-link {
-		font-size: 0.85em;
-		color: var(--accent) !important;
+		display: inline-block;
+		padding: 0.5rem 1rem;
+		background: #DC2626;
+		color: white;
+		border-radius: 0.375rem;
 		font-weight: 500;
+		font-size: 0.875rem;
+		text-decoration: none;
+		transition: background-color 0.2s;
 	}
+	
 	.main-site-link:hover {
-		text-decoration: underline !important;
+		background: #991B1B;
+		text-decoration: none;
 	}
-	@media (max-width: 720px) {
-		.external-links {
+
+	@media (max-width: 768px) {
+		nav {
+			height: 70px;
+			gap: 1rem;
+		}
+
+		.logo-text {
 			display: none;
+		}
+
+		.logo h2 {
+			font-size: 1.125rem;
+			margin: 0;
+		}
+
+		.nav-links {
+			gap: 0;
+		}
+
+		.internal-links {
+			gap: 0;
+		}
+
+		.external-link {
+			border: none;
+			padding: 0;
+			margin: 0;
+		}
+
+		.main-site-link {
+			padding: 0.375rem 0.75rem;
+			font-size: 0.8125rem;
 		}
 	}
 </style>
