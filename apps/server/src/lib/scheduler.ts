@@ -60,30 +60,38 @@ I just wanted to check in and make sure everything is working perfectly. Please 
 
   console.log(`[FOLLOW-UP] 📤 Attempting to send message to ${customerPhone}`);
   console.log(`[FOLLOW-UP] Agent URL: ${agentUrl}/api/whatsapp/send`);
+  console.log(`[FOLLOW-UP] Message length: ${followUpMessage.length} characters`);
   console.log(`[FOLLOW-UP] Message preview: ${followUpMessage.substring(0, 50)}...`);
 
   try {
+    const payload = {
+      phone: customerPhone,
+      message: followUpMessage,
+    };
+    
+    console.log(`[FOLLOW-UP] 📦 Payload being sent:`, JSON.stringify(payload, null, 2));
+
     const res = await fetch(`${agentUrl}/api/whatsapp/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone: customerPhone,
-        message: followUpMessage,
-      }),
+      body: JSON.stringify(payload),
     });
 
     console.log(`[FOLLOW-UP] Response status: ${res.status} ${res.statusText}`);
+    console.log(`[FOLLOW-UP] Response content-type: ${res.headers.get("content-type")}`);
+
+    const responseText = await res.text();
+    console.log(`[FOLLOW-UP] Raw response body: ${responseText}`);
 
     if (!res.ok) {
-      const errorBody = await res.text();
       // If number is not on WhatsApp, log but don't treat as critical error
-      if (res.status === 400 || errorBody.includes("not registered on WhatsApp")) {
+      if (res.status === 400 || responseText.includes("not registered on WhatsApp")) {
         console.warn(`[FOLLOW-UP] ⚠️  Customer number ${customerPhone} is not on WhatsApp — skipping follow-up`);
       } else if (res.status === 503) {
         console.warn(`[FOLLOW-UP] ⚠️  Agent not connected (${res.statusText}) — follow-up could not be sent`);
       } else {
         console.error(`[FOLLOW-UP] ❌ Failed to send to ${customerPhone}: ${res.statusText}`);
-        console.error(`[FOLLOW-UP] Response body:`, errorBody);
+        console.error(`[FOLLOW-UP] Response body:`, responseText);
       }
     } else {
       console.log(`[FOLLOW-UP] ✅ Message sent to ${customerPhone}`);
