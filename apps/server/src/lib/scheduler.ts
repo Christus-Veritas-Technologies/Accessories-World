@@ -13,6 +13,7 @@ export interface FollowUpData {
   productNames: string[];
   agentUrl: string;
   businessWhatsapp: string;
+  senderName: string;
 }
 
 /**
@@ -48,13 +49,13 @@ export function scheduleFollowUp(data: FollowUpData) {
  * Send the actual follow-up message via WhatsApp
  */
 async function sendFollowUpMessage(data: FollowUpData) {
-  const { customerName, customerPhone, productNames, agentUrl, businessWhatsapp } = data;
+  const { customerName, customerPhone, productNames, agentUrl, businessWhatsapp, senderName } = data;
   const firstName = customerName.split(" ")[0];
   const productList = productNames.join(", ");
 
   const followUpMessage = `Hello ${firstName}, how are you?
 
-This is Shantel from Accessories World 😊 You recently purchased ${productList} from us — thank you again for your support.
+This is ${senderName} from Accessories World 😊 You recently purchased ${productList} from us — thank you again for your support.
 
 I just wanted to check in and make sure everything is working perfectly. Please feel free to let us know if you need any assistance.`;
 

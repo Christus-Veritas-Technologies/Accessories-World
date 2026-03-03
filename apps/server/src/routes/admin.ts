@@ -711,12 +711,22 @@ admin.post("/sales", async (c) => {
         // Receipt sent successfully — schedule personalized follow-up message
         console.log(`[POST /api/admin/sales] Scheduling follow-up message...`);
         const productNames = products.map((p) => p.name);
+
+        // Get the logged-in admin's name for the follow-up message
+        const session = c.get("session") as any;
+        const rawName: string = session?.admin?.name ?? "admin";
+        const senderName =
+          rawName.toLowerCase() === "admin"
+            ? "Kelvin"
+            : rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+
         scheduleFollowUp({
           customerName: body.customerName,
           customerPhone,
           productNames,
           agentUrl,
           businessWhatsapp,
+          senderName,
         });
       } else if (!receiptSent) {
         console.log(`[POST /api/admin/sales] Receipt failed, sending fallback notification to business...`);
