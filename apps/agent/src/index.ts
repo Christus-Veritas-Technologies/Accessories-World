@@ -132,6 +132,8 @@ async function retryWithBackoff<T>(
 
 /** Send a WhatsApp message */
 async function sendWhatsAppMessage(phone: string, message: string) {
+  const requestId = randomUUID().split("-")[0].toUpperCase();
+  
   if (!whatsappReady) {
     throw new Error("WhatsApp client is not connected");
   }
@@ -140,18 +142,22 @@ async function sendWhatsAppMessage(phone: string, message: string) {
     throw new Error("Phone and message are required");
   }
 
-  // Normalize phone: remove +, spaces, dashes
-  const cleanPhone = phone.replace(/[\s\-\+]/g, "");
-  const chatId = `${cleanPhone}@c.us`;
+  console.log(`[${requestId}] 📱 sendWhatsAppMessage called for ${phone}`);
+
+  // Use proper WhatsApp validation
+  const chatId = await toChatId(phone, requestId);
 
   return new Promise<{ success: boolean; chatId: string }>((resolve, reject) => {
+    console.log(`[${requestId}] 📤 Adding message to send queue for ${chatId}`);
     sendQueue = sendQueue
       .catch(() => {}) // don't let a previous failure stall the queue
       .then(async () => {
         try {
           await retryWithBackoff(() => client.sendMessage(chatId, message), 2, 500);
+          console.log(`[${requestId}] ✅ Message sent via queue to ${chatId}`);
           resolve({ success: true, chatId });
         } catch (err) {
+          console.error(`[${requestId}] ❌ Queue send failed for ${chatId}:`, err);
           reject(err);
         }
       });
