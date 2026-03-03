@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { prisma } from "@repo/db";
 import { requireAdmin } from "../middleware/auth.js";
 import { generatePassword } from "../lib/email.js";
+import { scheduleFollowUp } from "../lib/scheduler.js";
 
 const admin = new Hono();
 
@@ -703,7 +704,17 @@ admin.post("/sales", async (c) => {
 
     const receiptSent = agentRes?.ok === true;
 
-    if (!receiptSent) {
+    if (receiptSent && body.customerName && products.length > 0) {
+      // Receipt sent successfully — schedule personalized follow-up message
+      const productNames = products.map((p) => p.name);
+      scheduleFollowUp({
+        customerName: body.customerName,
+        customerPhone,
+        productNames,
+        agentUrl,
+        businessWhatsapp,
+      });
+    } else if (!receiptSent) {
       // WhatsApp delivery failed — notify the business to follow up manually
       const productList = products
         .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
