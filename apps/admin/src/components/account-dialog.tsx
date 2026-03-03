@@ -21,20 +21,19 @@ interface AccountDialogProps {
   account?: {
     id: string;
     name: string;
-    email: string;
     isAdmin: boolean;
   };
 }
 
 export function AccountDialog({ open, onOpenChange, account }: AccountDialogProps) {
-  const [form, setForm] = useState({ name: '', email: '', isAdmin: false, password: '' });
+  const [form, setForm] = useState({ name: '', isAdmin: false, password: '' });
   const updateMutation = useUpdateAccount();
 
   useEffect(() => {
     if (account) {
-      setForm({ name: account.name || '', email: account.email || '', isAdmin: !!account.isAdmin, password: '' });
+      setForm({ name: account.name || '', isAdmin: !!account.isAdmin, password: '' });
     } else {
-      setForm({ name: '', email: '', isAdmin: false, password: '' });
+      setForm({ name: '', isAdmin: false, password: '' });
     }
   }, [account, open]);
 
@@ -42,15 +41,11 @@ export function AccountDialog({ open, onOpenChange, account }: AccountDialogProp
     e.preventDefault();
 
     if (!form.name.trim()) {
-      toast.error('Name is required');
-      return;
-    }
-    if (!form.email.trim()) {
-      toast.error('Email is required');
+      toast.error('Username is required');
       return;
     }
 
-    const data: any = { name: form.name, email: form.email, isAdmin: form.isAdmin };
+    const data: any = { name: form.name, isAdmin: form.isAdmin };
     if (form.password && form.password.trim().length > 0) {
       if (form.password.length < 6) {
         toast.error('Password should be at least 6 characters');
@@ -79,23 +74,14 @@ export function AccountDialog({ open, onOpenChange, account }: AccountDialogProp
         <form onSubmit={handleSubmit} className="space-y-6">
           <Card className="p-6 space-y-4">
             <div className="space-y-2">
-              <label className="block text-sm font-semibold">Name</label>
+              <label className="block text-sm font-semibold">Username</label>
               <Input
                 type="text"
                 value={form.name}
                 onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                 disabled={updateMutation.isPending}
               />
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold">Email</label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((p) => ({ ...p, email: e.target.value }))}
-                disabled={updateMutation.isPending}
-              />
+              <p className="text-xs text-gray-500">Single-word username used to log in, e.g. kelvin</p>
             </div>
 
             <div className="space-y-2">

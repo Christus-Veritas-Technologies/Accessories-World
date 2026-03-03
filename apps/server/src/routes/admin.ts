@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { prisma } from "@repo/db";
 import { requireAdmin } from "../middleware/auth.js";
-import { generatePassword, sendNewAccountEmail } from "../lib/email.js";
+import { generatePassword } from "../lib/email.js";
 
 const admin = new Hono();
 
@@ -190,20 +190,21 @@ admin.post("/accounts", async (c) => {
     return c.json({ error: "Only administrators can create accounts" }, 403);
   }
 
-  const { name, email, isAdmin: makeAdmin } = await c.req.json<{
+  const { name, isAdmin: makeAdmin } = await c.req.json<{
     name: string;
-    email: string;
     isAdmin?: boolean;
   }>();
 
-  if (!name || !email) {
-    return c.json({ error: "Name and email are required" }, 400);
+  if (!name || !name.trim()) {
+    return c.json({ error: "Username is required" }, 400);
   }
 
-  // Check if email is taken
-  const existing = await prisma.admin.findUnique({ where: { email } });
+  const username = name.trim().toLowerCase();
+
+  // Check if username is taken
+  const existing = await prisma.admin.findUnique({ where: { name: username } });
   if (existing) {
-    return c.json({ error: "An account with this email already exists" }, 409);
+    return c.json({ error: "An account with this username already exists" }, 409);
   }
 
   // Generate strong 8-character password
@@ -212,30 +213,23 @@ admin.post("/accounts", async (c) => {
 
   const account = await prisma.admin.create({
     data: {
-      name: name.toLowerCase(),
-      email,
+      name: username,
       passwordHash,
       isAdmin: makeAdmin ?? false,
     },
     select: {
       id: true,
-      email: true,
       name: true,
       isAdmin: true,
       createdAt: true,
     },
   });
 
-  // Send credentials email (non-blocking)
-  sendNewAccountEmail(email, name, password, makeAdmin ?? false).catch(
-    (err) => console.error("Failed to send new account email:", err)
-  );
-
-  // Send WhatsApp notification via agent (non-blocking)
+  // Send credentials to AW WhatsApp (non-blocking)
   const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
   const role = makeAdmin ? "Administrator" : "Staff Member";
-  const whatsappMessage = `🔐 *Your Accessories World Account*\n\n👋 Hello ${name}!\n\nYour ${role} account has been created.\n\n📧 *Email:* ${email}\n🔑 *Password:* ${password}\n\n⚠️ Please change your password after first login.\n\n🚀 Ready to get started!`;
-  
+  const whatsappMessage = `New ${role} account created for Accessories World.\n\nUsername: ${username}\nPassword: ${password}\n\nPlease ask the user to change their password after their first login.`;
+
   fetch(`${agentUrl}/api/whatsapp/send`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -244,10 +238,63 @@ admin.post("/accounts", async (c) => {
       message: whatsappMessage,
     }),
   }).catch((err) =>
-    console.error("Failed to send admin WhatsApp notification:", err)
+    console.error("Failed to send account credentials to WhatsApp:", err)
   );
 
   return c.json(account, 201);
+});
+
+/** PATCH /api/admin/accounts/:id — update an account */
+admin.patch("/accounts/:id", async (c) => {
+  const session = c.get("session") as any;
+  if (!session.admin?.isAdmin) {
+    return c.json({ error: "Only administrators can update accounts" }, 403);
+  }
+
+  const { id } = c.req.param();
+  const { name, isAdmin: makeAdmin, password } = await c.req.json<{
+    name?: string;
+    isAdmin?: boolean;
+    password?: string;
+  }>();
+
+  const updateData: any = {};
+
+  if (name !== undefined) {
+    const username = name.trim().toLowerCase();
+    // Check uniqueness (exclude self)
+    const existing = await prisma.admin.findFirst({
+      where: { name: username, NOT: { id } },
+    });
+    if (existing) {
+      return c.json({ error: "An account with this username already exists" }, 409);
+    }
+    updateData.name = username;
+  }
+
+  if (makeAdmin !== undefined) {
+    updateData.isAdmin = makeAdmin;
+  }
+
+  if (password && password.trim().length > 0) {
+    if (password.length < 6) {
+      return c.json({ error: "Password must be at least 6 characters" }, 400);
+    }
+    updateData.passwordHash = await Bun.password.hash(password);
+  }
+
+  const account = await prisma.admin.update({
+    where: { id },
+    data: updateData,
+    select: {
+      id: true,
+      name: true,
+      isAdmin: true,
+      createdAt: true,
+    },
+  });
+
+  return c.json(account);
 });
 
 /** DELETE /api/admin/accounts/:id */

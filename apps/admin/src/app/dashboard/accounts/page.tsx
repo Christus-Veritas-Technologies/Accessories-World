@@ -14,7 +14,6 @@ import 'jspdf-autotable';
 
 interface Account {
   id: string;
-  email: string;
   name: string;
   isAdmin: boolean;
   createdAt: string;
@@ -24,7 +23,7 @@ export default function AccountsPage() {
   const [showForm, setShowForm] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', isAdmin: false });
+  const [form, setForm] = useState({ name: '', isAdmin: false });
   const { data: accounts = [], isLoading, error } = useAccounts();
   const createMutation = useCreateAccount();
   const deleteMutation = useDeleteAccount();
@@ -35,8 +34,8 @@ export default function AccountsPage() {
       { ...form, name: form.name.toLowerCase() },
       {
         onSuccess: () => {
-          toast.success('✅ Account created! Credentials sent via email and WhatsApp');
-          setForm({ name: '', email: '', isAdmin: false });
+          toast.success('Account created. Credentials sent to Accessories World WhatsApp.');
+          setForm({ name: '', isAdmin: false });
           setShowForm(false);
         },
       }
@@ -57,10 +56,9 @@ export default function AccountsPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (doc as any).autoTable({
       startY: 46,
-      head: [['Name', 'Email', 'Role', 'Created']],
+      head: [['Name', 'Role', 'Created']],
       body: accounts.map((a: Account) => [
         a.name,
-        a.email,
         a.isAdmin ? 'Admin' : 'Staff',
         new Date(a.createdAt).toLocaleDateString(),
       ]),
@@ -118,20 +116,16 @@ export default function AccountsPage() {
         <Card className="border-2">
           <form onSubmit={handleCreateAccount} className="p-6 space-y-4">
             <h2 className="font-semibold text-lg">Create New Account</h2>
-            <Input
-              type="text"
-              placeholder="Full Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-            <Input
-              type="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
+            <div className="space-y-1">
+              <Input
+                type="text"
+                placeholder="Username (e.g. kelvin, shantel)"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+              <p className="text-xs text-gray-500">Use a single word to keep it simple. The username is used to log in.</p>
+            </div>
             <label className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -176,8 +170,7 @@ export default function AccountsPage() {
           <table className="w-full text-sm">
             <thead className="border-b bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold">Name</th>
-                <th className="px-6 py-3 text-left font-semibold">Email</th>
+                <th className="px-6 py-3 text-left font-semibold">Username</th>
                 <th className="px-6 py-3 font-semibold">Role</th>
                 <th className="px-6 py-3 text-left font-semibold">Created</th>
                 <th className="px-6 py-3 font-semibold">Actions</th>
@@ -188,7 +181,6 @@ export default function AccountsPage() {
                 accounts.map((account: Account) => (
                   <tr key={account.id} className="border-b hover:bg-gray-50">
                     <td className="px-6 py-3 font-medium">{account.name}</td>
-                    <td className="px-6 py-3">{account.email}</td>
                     <td className="px-6 py-3">
                       <div className="flex items-center justify-center">
                         {account.isAdmin ? (
@@ -233,7 +225,7 @@ export default function AccountsPage() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
                     No accounts found
                   </td>
                 </tr>
