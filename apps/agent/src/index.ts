@@ -232,15 +232,37 @@ app.get("/api/whatsapp/qr", (c) => {
  * Phone format: country code + number, e.g. "+263784923973" or "0784923973"
  */
 app.post("/api/whatsapp/send", async (c) => {
+  const requestId = randomUUID().split("-")[0].toUpperCase();
+  
   try {
+    if (!whatsappReady) {
+      console.warn(`[${requestId}] ⚠️  WhatsApp not ready (initializing). Returning 503.`);
+      return c.json(
+        { error: "WhatsApp client is initializing. Please try again in a few seconds." },
+        503
+      );
+    }
+
     const { phone, message } = await c.req.json<{
       phone: string;
       message: string;
     }>();
 
+    if (!phone || !message) {
+      return c.json(
+        { error: "phone and message are required" },
+        400
+      );
+    }
+
     const result = await sendWhatsAppMessage(phone, message);
+    console.log(`[${requestId}] ✓ Message sent successfully to ${phone}`);
     return c.json(result);
   } catch (err: any) {
+    console.error(`[${requestId}] ❌ Failed to send WhatsApp message:`, {
+      error: err?.message,
+      code: err?.code,
+    });
     const status = err?.message?.includes("not connected") ? 503 : 400;
     return c.json({ error: err?.message || "Failed to send message" }, status);
   }
@@ -252,16 +274,38 @@ app.post("/api/whatsapp/send", async (c) => {
  * Body: { phone: string, message: string, replyTo?: string }
  */
 app.post("/send-message", async (c) => {
+  const requestId = randomUUID().split("-")[0].toUpperCase();
+  
   try {
+    if (!whatsappReady) {
+      console.warn(`[${requestId}] ⚠️  WhatsApp not ready for /send-message. Returning 503.`);
+      return c.json(
+        { error: "WhatsApp client is initializing. Please try again in a few seconds." },
+        503
+      );
+    }
+
     const { phone, message } = await c.req.json<{
       phone: string;
       message: string;
       replyTo?: string;
     }>();
 
+    if (!phone || !message) {
+      return c.json(
+        { error: "phone and message are required" },
+        400
+      );
+    }
+
     const result = await sendWhatsAppMessage(phone, message);
+    console.log(`[${requestId}] ✓ Message sent via /send-message to ${phone}`);
     return c.json(result);
   } catch (err: any) {
+    console.error(`[${requestId}] ❌ /send-message failed:`, {
+      error: err?.message,
+      code: err?.code,
+    });
     const status = err?.message?.includes("not connected") ? 503 : 400;
     return c.json({ error: err?.message || "Failed to send message" }, status);
   }
@@ -700,15 +744,22 @@ const sendFlexibleNotification = async (c: any) => {
     const body = (await c.req.json()) as NotifyRequestBody;
 
     if (!whatsappReady) {
-      return c.json({ error: "WhatsApp client is not connected" }, 503);
+      console.warn(`[${requestId}] ⚠️  WhatsApp not ready. Returning 503.`);
+      console.log(`[${requestId}] WhatsApp initialization status: qrCode=${!!qrCode}, client state=${"ready"}`);
+      return c.json(
+        { error: "WhatsApp client is not yet initialized. Please scan the QR code on the agent dashboard." },
+        503
+      );
     }
 
     const mode = resolveMode(body);
+    console.log(`[${requestId}] Processing ${mode} request...`);
 
     if (mode === "message") {
       const normalized = normalizeMessageRequest(body);
       const chatId = await toChatId(normalized.phone, requestId);
       await enqueueSend(requestId, chatId, normalized.message);
+      console.log(`[${requestId}] ✓ Message queued for ${chatId}`);
       return c.json({
         success: true,
         mode,
@@ -723,6 +774,7 @@ const sendFlexibleNotification = async (c: any) => {
     let media: MessageMedia | undefined;
 
     if (normalized.sendPdf) {
+      console.log(`[${requestId}] Generating PDF for sale ${normalized.receiptData.saleNumber}...`);
       const pdfBuffer = await generateReceiptPDF(normalized.receiptData);
       pdfUrl = await uploadPdfToR2(pdfBuffer, normalized.pdfFileName, requestId);
       media = await MessageMedia.fromUrl(pdfUrl);
@@ -736,6 +788,7 @@ const sendFlexibleNotification = async (c: any) => {
       normalized.pdfCaption
     );
 
+    console.log(`[${requestId}] ✓ Receipt queued for ${chatId} (Sale: ${normalized.receiptData.saleNumber})`);
     return c.json({
       success: true,
       mode,
@@ -744,6 +797,7 @@ const sendFlexibleNotification = async (c: any) => {
       pdfUrl: pdfUrl ?? null,
     });
   } catch (err: any) {
+    const requestIdMsg = `[${requestId}]`;
     const statusFromError = Number(err?.status);
     let status = Number.isFinite(statusFromError) && statusFromError >= 400
       ? statusFromError
@@ -758,7 +812,12 @@ const sendFlexibleNotification = async (c: any) => {
       }
     }
 
-    console.error(`[${requestId}] Notification send failed:`, err);
+    console.error(`${requestIdMsg} ❌ Notification failed (${status}):`, {
+      error: err?.message,
+      code: err?.code,
+      stack: err?.stack?.split("\n").slice(0, 3).join("\n"),
+    });
+    
     return c.json(
       { error: err?.message || "Failed to send WhatsApp notification" },
       status

@@ -640,106 +640,142 @@ admin.get("/sales", async (c) => {
 
 /** POST /api/admin/sales */
 admin.post("/sales", async (c) => {
-  const body = await c.req.json<{
-    revenue: number;
-    customerName?: string | null;
-    customerPhone?: string | null;    // unified phone/WhatsApp field
-    customerWhatsapp?: string | null; // legacy – still accepted
-    products?: { name: string; price: string }[]; // MinifiedProduct[]
-  }>();
+  try {
+    const body = await c.req.json<{
+      revenue: number;
+      customerName?: string | null;
+      customerPhone?: string | null;    // unified phone/WhatsApp field
+      customerWhatsapp?: string | null; // legacy – still accepted
+      products?: { name: string; price: string }[]; // MinifiedProduct[]
+    }>();
 
-  // Validate revenue
-  if (!body.revenue) {
-    return c.json({ error: "revenue is required" }, 400);
-  }
+    // Validate revenue
+    if (!body.revenue) {
+      return c.json({ error: "revenue is required" }, 400);
+    }
 
-  const revenueNumber = Number(body.revenue);
-  if (!Number.isFinite(revenueNumber) || revenueNumber <= 0) {
-    return c.json({ error: "revenue must be a valid number > 0" }, 400);
-  }
+    const revenueNumber = Number(body.revenue);
+    if (!Number.isFinite(revenueNumber) || revenueNumber <= 0) {
+      return c.json({ error: "revenue must be a valid number > 0" }, 400);
+    }
 
-  // Validate products if provided
-  const products = body.products ?? [];
-  if (Array.isArray(products) && products.length === 0) {
-    return c.json({ error: "products array must contain at least one item" }, 400);
-  }
+    // Validate products if provided
+    const products = body.products ?? [];
+    if (Array.isArray(products) && products.length === 0) {
+      return c.json({ error: "products array must contain at least one item" }, 400);
+    }
 
-  // Resolve unified phone field (prefer customerPhone, fall back to legacy customerWhatsapp)
-  const customerPhone = body.customerPhone || body.customerWhatsapp || null;
+    // Resolve unified phone field (prefer customerPhone, fall back to legacy customerWhatsapp)
+    const customerPhone = body.customerPhone || body.customerWhatsapp || null;
 
-  // Generate unique sale number
-  const saleCount = await prisma.sale.count();
-  const saleNumber = `SAL-${String(saleCount + 1).padStart(6, "0")}`;
+    // Generate unique sale number
+    const saleCount = await prisma.sale.count();
+    const saleNumber = `SAL-${String(saleCount + 1).padStart(6, "0")}`;
 
-  const sale = await prisma.sale.create({
-    data: {
-      saleNumber,
-      amount: parseFloat(revenueNumber.toString()),
-      customerName: body.customerName || null,
-      customerPhone,                    // unified field
-      customerWhatsapp: customerPhone,  // keep in sync for legacy compatibility
-      products,
-    },
-  });
+    const sale = await prisma.sale.create({
+      data: {
+        saleNumber,
+        amount: parseFloat(revenueNumber.toString()),
+        customerName: body.customerName || null,
+        customerPhone,                    // unified field
+        customerWhatsapp: customerPhone,  // keep in sync for legacy compatibility
+        products,
+      },
+    });
 
-  const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
-  const businessWhatsapp = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
+    const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
+    const businessWhatsapp = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
 
-  if (customerPhone) {
-    // Try to send WhatsApp receipt — await so we can detect failure
-    const agentRes = await fetch(`${agentUrl}/api/receipt/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        type: "receipt",
-        phone: customerPhone,
-        receipt: {
-          customerName: sale.customerName,
-          customerPhone,
-          products,
-          revenue: Number(sale.amount),
-        },
-      }),
-    }).catch(() => null);
-
-    const receiptSent = agentRes?.ok === true;
-
-    if (receiptSent && body.customerName && products.length > 0) {
-      // Receipt sent successfully — schedule personalized follow-up message
-      const productNames = products.map((p) => p.name);
-      scheduleFollowUp({
-        customerName: body.customerName,
-        customerPhone,
-        productNames,
-        agentUrl,
-        businessWhatsapp,
-      });
-    } else if (!receiptSent) {
-      // WhatsApp delivery failed — notify the business to follow up manually
-      const productList = products
-        .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
-        .join("\n");
-
-      const followUpMessage = [
-        `Follow-up needed for sale ${saleNumber}.`,
-        ``,
-        `${body.customerName || "A customer"} bought the following:`,
-        productList,
-        `Total: $${revenueNumber.toFixed(2)}`,
-        ``,
-        `Their number is ${customerPhone} but the WhatsApp receipt could not be delivered.`,
-        `Please reach out to them directly at ${customerPhone}.`,
-      ].join("\n");
-
-      fetch(`${agentUrl}/api/whatsapp/send`, {
+    if (customerPhone) {
+      // Try to send WhatsApp receipt — await so we can detect failure
+      const agentRes = await fetch(`${agentUrl}/api/receipt/send`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: businessWhatsapp, message: followUpMessage }),
-      }).catch((err) => console.error("Failed to send follow-up:", err));
-    }
-  }
+        body: JSON.stringify({
+          type: "receipt",
+          phone: customerPhone,
+          receipt: {
+            customerName: sale.customerName,
+            customerPhone,
+            products,
+            revenue: Number(sale.amount),
+          },
+        }),
+      }).catch(() => null);
 
-  return c.json(sale, 201);
+      const receiptSent = agentRes?.ok === true;
+
+      if (receiptSent && body.customerName && products.length > 0) {
+        // Receipt sent successfully — schedule personalized follow-up message
+        const productNames = products.map((p) => p.name);
+        scheduleFollowUp({
+          customerName: body.customerName,
+          customerPhone,
+          productNames,
+          agentUrl,
+          businessWhatsapp,
+        });
+      } else if (!receiptSent) {
+        // WhatsApp delivery failed — notify the business to follow up manually
+        const productList = products
+          .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
+          .join("\n");
+
+        const followUpMessage = [
+          `Follow-up needed for sale ${saleNumber}.`,
+          ``,
+          `${body.customerName || "A customer"} bought the following:`,
+          productList,
+          `Total: $${revenueNumber.toFixed(2)}`,
+          ``,
+          `Their number is ${customerPhone} but the WhatsApp receipt could not be delivered.`,
+          `Please reach out to them directly at ${customerPhone}.`,
+        ].join("\n");
+
+        fetch(`${agentUrl}/api/whatsapp/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: businessWhatsapp, message: followUpMessage }),
+        }).catch((err) => console.error("Failed to send follow-up:", err));
+      }
+    }
+
+    return c.json(sale, 201);
+  } catch (err: any) {
+    const message = err?.message || "Unknown error";
+    const code = err?.code || "UNKNOWN_ERROR";
+    
+    console.error(`❌ [POST /api/admin/sales] Error: ${code} - ${message}`);
+    console.error(`📋 Error details:`, {
+      code,
+      message,
+      meta: err?.meta,
+      clientVersion: err?.clientVersion,
+    });
+
+    // Check for common database issues
+    if (message.includes("Unknown argument") || message.includes("clientVersion")) {
+      console.error(
+        "⚠️  IMPORTANT: Database schema is out of sync with Prisma client.\n" +
+        "   Run migrations on production: bun prisma migrate deploy"
+      );
+      return c.json(
+        {
+          error: "Database schema mismatch. Please contact support.",
+          code: "SCHEMA_MISMATCH",
+        },
+        500
+      );
+    }
+
+    return c.json(
+      {
+        error: message,
+        code,
+      },
+      500
+    );
+  }
 });
 
 /** PATCH /api/admin/sales/:id */
