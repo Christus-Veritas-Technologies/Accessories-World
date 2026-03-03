@@ -368,15 +368,29 @@ function buildReceiptMessage(receiptData: ReceiptData): string {
     year: "numeric",
   });
 
-  return (
-    `Receipt from Accessories World\n\n` +
-    `Sale No: ${receiptData.saleNumber}\n` +
-    `Date: ${date}\n` +
-    `Items: ${receiptData.products.length}\n` +
-    `Total Paid: $${Number(receiptData.revenue).toFixed(2)}\n\n` +
-    `Your receipt is attached as a PDF for your records.\n\n` +
-    `Thank you for shopping with Accessories World.`
-  );
+  const firstName = receiptData.customerName.split(" ")[0];
+  const greeting = firstName && firstName.toLowerCase() !== "customer"
+    ? `Hi ${firstName}, thanks for coming in today.`
+    : `Thanks for shopping with us today.`;
+
+  const itemLines = receiptData.products
+    .map((p) => `  ${p.name} - $${Number(p.price).toFixed(2)}`)
+    .join("\n");
+
+  return [
+    greeting,
+    "",
+    `Here is a summary of your purchase on ${date}:`,
+    "",
+    itemLines,
+    "",
+    `Total: $${Number(receiptData.revenue).toFixed(2)}`,
+    "",
+    "Your receipt is attached as a PDF. If you have any questions, feel free to",
+    "call or WhatsApp us at +263 78 492 3973.",
+    "",
+    "Accessories World",
+  ].join("\n");
 }
 
 function normalizeMessageRequest(body: NotifyRequestBody): NormalizedMessageRequest {
@@ -642,7 +656,7 @@ function generateReceiptPDF(data: ReceiptData): Promise<Buffer> {
       .font("Helvetica")
       .fillColor(GRAY)
       .text(
-        "Accessories World  ·  Mutare, Zimbabwe  ·  info@accessoriesworldmutare.co.zw",
+        "Accessories World  \u00b7  Mutare, Zimbabwe  \u00b7  +263 78 492 3973  \u00b7  info@accessoriesworldmutare.co.zw",
         L,
         footerY + 12,
         { align: "center", width: W }

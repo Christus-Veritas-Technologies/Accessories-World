@@ -30,7 +30,6 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
     products: [{ name: '', price: '' }] as MinifiedProduct[],
     customerName: '',
     customerPhone: '',
-    customerWhatsapp: '',
   });
 
   const createSaleMutation = useCreateSale();
@@ -107,7 +106,6 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
         revenue: total,
         customerName: formData.customerName || null,
         customerPhone: formData.customerPhone || null,
-        customerWhatsapp: formData.customerWhatsapp || null,
         products: formData.products,
       });
 
@@ -116,7 +114,6 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
         products: [{ name: '', price: '' }],
         customerName: '',
         customerPhone: '',
-        customerWhatsapp: '',
       });
       onOpenChange(false);
     } catch (error) {
@@ -216,7 +213,7 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-semibold">Phone Number</label>
+              <label className="block text-sm font-semibold">Phone / WhatsApp</label>
               <Input
                 type="tel"
                 name="customerPhone"
@@ -225,20 +222,9 @@ export function NewSaleDialog({ open, onOpenChange }: NewSaleDialogProps) {
                 onChange={handleChange}
                 disabled={createSaleMutation.isPending}
               />
-              <p className="text-xs text-gray-500">Customer's phone number (printed on receipt).</p>
-            </div>
-
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold">WhatsApp Number</label>
-              <Input
-                type="tel"
-                name="customerWhatsapp"
-                placeholder="e.g. +263771234567"
-                value={formData.customerWhatsapp}
-                onChange={handleChange}
-                disabled={createSaleMutation.isPending}
-              />
-              <p className="text-xs text-gray-500">A receipt will be sent via WhatsApp if provided.</p>
+              <p className="text-xs text-gray-500">
+                A WhatsApp receipt will be sent if the number is registered. If not, the team will be notified to follow up.
+              </p>
             </div>
 
             {createSaleMutation.error && (

@@ -595,8 +595,8 @@ admin.post("/sales", async (c) => {
   const body = await c.req.json<{
     revenue: number;
     customerName?: string | null;
-    customerWhatsapp?: string | null;
-    customerPhone?: string | null;
+    customerPhone?: string | null;    // unified phone/WhatsApp field
+    customerWhatsapp?: string | null; // legacy – still accepted
     products?: { name: string; price: string }[]; // MinifiedProduct[]
   }>();
 
@@ -616,6 +616,9 @@ admin.post("/sales", async (c) => {
     return c.json({ error: "products array must contain at least one item" }, 400);
   }
 
+  // Resolve unified phone field (prefer customerPhone, fall back to legacy customerWhatsapp)
+  const customerPhone = body.customerPhone || body.customerWhatsapp || null;
+
   // Generate unique sale number
   const saleCount = await prisma.sale.count();
   const saleNumber = `SAL-${String(saleCount + 1).padStart(6, "0")}`;
@@ -625,61 +628,57 @@ admin.post("/sales", async (c) => {
       saleNumber,
       amount: parseFloat(revenueNumber.toString()),
       customerName: body.customerName || null,
-      customerWhatsapp: body.customerWhatsapp || null,
-      products: products, // store as JSON
+      customerPhone,                    // unified field
+      customerWhatsapp: customerPhone,  // keep in sync for legacy compatibility
+      products,
     },
   });
 
   const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
   const businessWhatsapp = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
 
-  // Send WhatsApp receipt if customer number provided
-  if (sale.customerWhatsapp) {
-    fetch(`${agentUrl}/api/receipt/send`, {
+  if (customerPhone) {
+    // Try to send WhatsApp receipt — await so we can detect failure
+    const agentRes = await fetch(`${agentUrl}/api/receipt/send`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: "receipt",
-        phone: sale.customerWhatsapp,
+        phone: customerPhone,
         receipt: {
           customerName: sale.customerName,
-          customerPhone: body.customerPhone || null,
-          products: products,
+          customerPhone,
+          products,
           revenue: Number(sale.amount),
         },
       }),
-    }).catch((err) => console.error("Failed to send receipt:", err));
-  } else {
-    // If no customer WhatsApp, send manual follow-up to business number
-    const productList = products
-      .map((p) => `• ${p.name}: $${p.price}`)
-      .join("\n");
+    }).catch(() => null);
 
-    const followUpMessage = [
-      `🔔 *Manual Follow-up Required*`,
-      ``,
-      `Sale: ${saleNumber}`,
-      `Customer: ${body.customerName || "Unknown"}`,
-      `Phone: ${body.customerPhone || "N/A"}`,
-      `Amount: $${sale.amount.toFixed(2)}`,
-      ``,
-      `*Products:*`,
-      productList,
-      ``,
-      `⚠️ Customer is not on WhatsApp. Please follow up manually.`,
-      `📞 Accessories World: ${businessWhatsapp}`,
-    ].join("\n");
+    const receiptSent = agentRes?.ok === true;
 
-    fetch(`${agentUrl}/api/whatsapp/send`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        phone: businessWhatsapp,
-        message: followUpMessage,
-      }),
-    }).catch((err) =>
-      console.error("Failed to send manual follow-up message:", err)
-    );
+    if (!receiptSent) {
+      // WhatsApp delivery failed — notify the business to follow up manually
+      const productList = products
+        .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
+        .join("\n");
+
+      const followUpMessage = [
+        `Follow-up needed for sale ${saleNumber}.`,
+        ``,
+        `${body.customerName || "A customer"} bought the following:`,
+        productList,
+        `Total: $${revenueNumber.toFixed(2)}`,
+        ``,
+        `Their number is ${customerPhone} but the WhatsApp receipt could not be delivered.`,
+        `Please reach out to them directly at ${customerPhone}.`,
+      ].join("\n");
+
+      fetch(`${agentUrl}/api/whatsapp/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: businessWhatsapp, message: followUpMessage }),
+      }).catch((err) => console.error("Failed to send follow-up:", err));
+    }
   }
 
   return c.json(sale, 201);
@@ -689,12 +688,14 @@ admin.post("/sales", async (c) => {
 admin.patch("/sales/:id", async (c) => {
   const { id } = c.req.param();
   const body = await c.req.json();
+  const phone = body.customerPhone ?? body.customerWhatsapp ?? undefined;
   const sale = await prisma.sale.update({
     where: { id },
     data: {
       amount: body.amount ? parseFloat(body.amount.toString()) : undefined,
       customerName: body.customerName,
-      customerWhatsapp: body.customerWhatsapp,
+      customerPhone: phone,
+      customerWhatsapp: phone, // keep in sync with legacy field
     },
   });
   return c.json(sale);

@@ -21,7 +21,9 @@ interface Sale {
   saleNumber: string;
   amount: number;
   customerName?: string;
-  customerWhatsapp?: string;
+  customerPhone?: string;
+  customerWhatsapp?: string;  // legacy field
+  products?: { name: string; price: string }[];
   createdAt: string;
 }
 
@@ -46,6 +48,7 @@ export default function SalesPage() {
         !searchTerm ||
         sale.saleNumber.toLowerCase().includes(q) ||
         (sale.customerName && sale.customerName.toLowerCase().includes(q)) ||
+        (sale.customerPhone && sale.customerPhone.includes(q)) ||
         (sale.customerWhatsapp && sale.customerWhatsapp.includes(q));
 
       const matchesAmount =
@@ -237,7 +240,7 @@ export default function SalesPage() {
                     <TableRow>
                       <TableHead>Sale #</TableHead>
                       <TableHead>Customer</TableHead>
-                      <TableHead>WhatsApp</TableHead>
+                      <TableHead>Phone</TableHead>
                       <TableHead>Date</TableHead>
                       <TableHead className="text-right">Amount</TableHead>
                     </TableRow>
@@ -252,7 +255,7 @@ export default function SalesPage() {
                           {sale.customerName || <span className="text-gray-400">—</span>}
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
-                          {sale.customerWhatsapp || <span className="text-gray-400">—</span>}
+                          {sale.customerPhone || sale.customerWhatsapp || <span className="text-gray-400">—</span>}
                         </TableCell>
                         <TableCell className="text-sm text-gray-600">
                           {new Date(sale.createdAt).toLocaleDateString()}

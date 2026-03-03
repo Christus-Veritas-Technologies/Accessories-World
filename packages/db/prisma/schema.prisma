@@ -133,7 +133,8 @@ model Sale {
   saleNumber       String   @unique
   amount           Decimal  @db.Decimal(10, 2)
   customerName     String?
-  customerWhatsapp String?
+  customerPhone    String?          // unified phone/WhatsApp field
+  customerWhatsapp String?          // legacy – kept for existing data
   products         Json     @default("[]") // MinifiedProduct[] : {name: string, price: string}[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
