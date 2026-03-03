@@ -59,9 +59,15 @@ I just wanted to check in and make sure everything is working perfectly. Please 
     });
 
     if (!res.ok) {
-      console.error(`[FOLLOW-UP] Failed to send to ${customerPhone}: ${res.statusText}`);
+      const errorBody = await res.text();
+      // If number is not on WhatsApp, log but don't treat as critical error
+      if (res.status === 400 || errorBody.includes("not registered on WhatsApp")) {
+        console.warn(`[FOLLOW-UP] ⚠️  Customer number ${customerPhone} is not on WhatsApp — skipping follow-up`);
+      } else {
+        console.error(`[FOLLOW-UP] Failed to send to ${customerPhone}: ${res.statusText}`);
+      }
     } else {
-      console.log(`[FOLLOW-UP] Message sent to ${customerPhone}`);
+      console.log(`[FOLLOW-UP] ✓ Message sent to ${customerPhone}`);
     }
   } catch (err) {
     console.error(`[FOLLOW-UP] Error sending to ${customerPhone}:`, err);
