@@ -705,8 +705,11 @@ admin.post("/sales", async (c) => {
 
       const receiptSent = agentRes?.ok === true;
 
+      console.log(`[POST /api/admin/sales] Receipt delivery status: ${receiptSent ? "✅ SUCCESS" : "❌ FAILED"}`);
+
       if (receiptSent && body.customerName && products.length > 0) {
         // Receipt sent successfully — schedule personalized follow-up message
+        console.log(`[POST /api/admin/sales] Scheduling follow-up message...`);
         const productNames = products.map((p) => p.name);
         scheduleFollowUp({
           customerName: body.customerName,
@@ -716,7 +719,7 @@ admin.post("/sales", async (c) => {
           businessWhatsapp,
         });
       } else if (!receiptSent) {
-        // WhatsApp delivery failed — notify the business to follow up manually
+        console.log(`[POST /api/admin/sales] Receipt failed, sending fallback notification to business...`);
         const productList = products
           .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
           .join("\n");
