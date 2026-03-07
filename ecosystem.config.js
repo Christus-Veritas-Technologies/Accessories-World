@@ -82,8 +82,8 @@ module.exports = {
     },
     {
       name: "aw-blog",
-      script: "bunx",
-      args: "astro preview --host 0.0.0.0",
+      script: "bun",
+      args: "run start",
       cwd: "/var/www/accessories-world/apps/blog",
       env: {
         NODE_ENV: "production",
