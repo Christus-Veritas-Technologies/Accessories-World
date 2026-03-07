@@ -2,7 +2,7 @@
 title: 'How to Choose Quality Bags That Last'
 description: 'A comprehensive guide to selecting durable bags that combine style with functionality'
 pubDate: 'Feb 18 2026'
-heroImage: '../../assets/blog-placeholder-1.jpg'
+heroImage: '/blog-assets/blog-placeholder-1.jpg'
 ---
 
 ## Finding the Perfect Bag
@@ -14,9 +14,7 @@ Choosing the right bag is more than just about aesthetics. A quality bag is an i
 The material of your bag is the first indicator of its durability and longevity. Here are the most common options:
 
 - **Genuine Leather**: Premium leather bags develop character over time and can last for decades with proper care. Look for full-grain leather which is more durable than processed alternatives.
-
 - **Canvas**: A sturdy canvas bag is perfect for everyday use and travel. It's lightweight, affordable, and surprisingly durable.
-
 - **Synthetic Materials**: Modern synthetics are often water-resistant and easier to maintain than natural materials.
 
 > Quality materials are the foundation of a bag that will serve you well for years to come.

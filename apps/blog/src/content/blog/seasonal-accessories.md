@@ -2,7 +2,7 @@
 title: 'Accessorizing for Every Season'
 description: 'Learn how to adapt your accessory choices throughout the year for comfort and style'
 pubDate: 'Feb 22 2026'
-heroImage: '../../assets/blog-placeholder-3.jpg'
+heroImage: '/blog-assets/blog-placeholder-3.jpg'
 ---
 
 ## Seasonal Style Strategy

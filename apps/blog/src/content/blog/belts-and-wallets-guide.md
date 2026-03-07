@@ -2,7 +2,7 @@
 title: 'The Essential Guide to Belts & Wallets'
 description: 'Understand how to select belts and wallets that combine practicality with personal style'
 pubDate: 'Feb 20 2026'
-heroImage: '../../assets/blog-placeholder-2.jpg'
+heroImage: '/blog-assets/blog-placeholder-2.jpg'
 ---
 
 ## More Than Just Accessories

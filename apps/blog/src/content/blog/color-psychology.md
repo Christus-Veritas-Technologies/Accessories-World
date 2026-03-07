@@ -2,7 +2,7 @@
 title: 'The Psychology of Color in Accessories'
 description: 'Discover how color choices in your accessories can influence perception and confidence'
 pubDate: 'Feb 25 2026'
-heroImage: '../../assets/blog-placeholder-1.jpg'
+heroImage: '/blog-assets/blog-placeholder-1.jpg'
 ---
 
 ## Color: More Than Just Appearance
