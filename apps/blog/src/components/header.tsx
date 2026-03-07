@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { SITE_TITLE } from "@/lib/consts";
 
 const navLinks = [
   { href: "/", label: "Home" },
-  { href: "/blog", label: "Articles" },
+  { href: "/articles", label: "Articles" },
   { href: "/about", label: "About" },
 ];
 
@@ -20,6 +20,18 @@ function isActive(pathname: string, href: string): boolean {
 export function Header() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => {
+      setIsMobile(e.matches);
+      if (!e.matches) setIsOpen(false);
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
 
   const close = () => setIsOpen(false);
 
@@ -75,99 +87,102 @@ export function Header() {
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex" style={{ alignItems: "center", gap: "0.25rem" }}>
-            {navLinks.map(({ href, label }) => {
-              const active = isActive(pathname, href);
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  style={{
-                    display: "inline-block",
-                    textDecoration: "none",
-                    padding: "0.5rem 0.75rem",
-                    fontSize: "0.875rem",
-                    fontWeight: active ? 600 : 500,
-                    color: active ? "#DC2626" : "rgb(75,85,99)",
-                    backgroundColor: active ? "rgb(254,242,242)" : "transparent",
-                    borderRadius: "0.375rem",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {label}
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Desktop Navigation  only rendered when not mobile */}
+          {!isMobile && (
+            <nav style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}>
+              {navLinks.map(({ href, label }) => {
+                const active = isActive(pathname, href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    style={{
+                      display: "inline-block",
+                      textDecoration: "none",
+                      padding: "0.5rem 0.75rem",
+                      fontSize: "0.875rem",
+                      fontWeight: active ? 600 : 500,
+                      color: active ? "#DC2626" : "rgb(75,85,99)",
+                      backgroundColor: active ? "rgb(254,242,242)" : "transparent",
+                      borderRadius: "0.375rem",
+                      transition: "all 0.15s",
+                    }}
+                  >
+                    {label}
+                  </Link>
+                );
+              })}
+            </nav>
+          )}
 
-          {/* Desktop CTA */}
-          <div
-            className="hidden md:flex"
-            style={{ alignItems: "center", gap: "0.75rem", borderLeft: "1px solid rgb(229,231,235)", paddingLeft: "1.5rem" }}
-          >
-            <a
-              href="tel:+263784923973"
+          {/* Desktop CTA  only rendered when not mobile */}
+          {!isMobile && (
+            <div
+              style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderLeft: "1px solid rgb(229,231,235)", paddingLeft: "1.5rem" }}
+            >
+              <a
+                href="tel:+263784923973"
+                style={{
+                  display: "inline-block",
+                  padding: "0.5rem 1rem",
+                  border: "1px solid rgb(229,231,235)",
+                  color: "rgb(75,85,99)",
+                  borderRadius: "0.375rem",
+                  fontWeight: 500,
+                  fontSize: "0.875rem",
+                  textDecoration: "none",
+                }}
+              >
+                Call Us
+              </a>
+              <a
+                href="https://accessoriesworldmutare.co.zw"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-block",
+                  padding: "0.5rem 1rem",
+                  background: "#DC2626",
+                  color: "white",
+                  borderRadius: "0.375rem",
+                  fontWeight: 500,
+                  fontSize: "0.875rem",
+                  textDecoration: "none",
+                }}
+              >
+                Shop Now
+              </a>
+            </div>
+          )}
+
+          {/* Mobile Hamburger  only rendered when mobile */}
+          {isMobile && (
+            <button
+              onClick={() => setIsOpen((v) => !v)}
+              aria-label={isOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isOpen}
               style={{
-                display: "inline-block",
-                padding: "0.5rem 1rem",
+                background: "none",
                 border: "1px solid rgb(229,231,235)",
-                color: "rgb(75,85,99)",
                 borderRadius: "0.375rem",
-                fontWeight: 500,
-                fontSize: "0.875rem",
-                textDecoration: "none",
+                padding: "0.5rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "rgb(55,65,81)",
+                flexShrink: 0,
               }}
             >
-              Call Us
-            </a>
-            <a
-              href="https://accessoriesworld.co.zw"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: "inline-block",
-                padding: "0.5rem 1rem",
-                background: "#DC2626",
-                color: "white",
-                borderRadius: "0.375rem",
-                fontWeight: 500,
-                fontSize: "0.875rem",
-                textDecoration: "none",
-              }}
-            >
-              Shop Now
-            </a>
-          </div>
-
-          {/* Mobile Hamburger */}
-          <button
-            className="md:hidden"
-            onClick={() => setIsOpen((v) => !v)}
-            aria-label={isOpen ? "Close menu" : "Open menu"}
-            aria-expanded={isOpen}
-            style={{
-              background: "none",
-              border: "1px solid rgb(229,231,235)",
-              borderRadius: "0.375rem",
-              padding: "0.5rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "rgb(55,65,81)",
-              flexShrink: 0,
-            }}
-          >
-            {isOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
+              {isOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
+          )}
         </div>
       </header>
 
-      {/* Mobile Slide-in Panel */}
-      {isOpen && (
+      {/* Mobile Slide-in Panel  only rendered when mobile and open */}
+      {isMobile && isOpen && (
         <div
-          className="md:hidden"
           style={{
             position: "fixed",
             top: "80px",
@@ -227,7 +242,7 @@ export function Header() {
               Call Us
             </a>
             <a
-              href="https://accessoriesworld.co.zw"
+              href="https://accessoriesworldmutare.co.zw"
               target="_blank"
               rel="noopener noreferrer"
               onClick={close}

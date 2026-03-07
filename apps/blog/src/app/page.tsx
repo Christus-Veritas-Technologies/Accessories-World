@@ -11,12 +11,11 @@ export const metadata: Metadata = {
 
 export default function Home() {
   const posts = getSortedPostsData();
-  const featured = posts.slice(0, 2);
-  const rest = posts.slice(2, 8);
+  const recent = posts.slice(0, 5);
 
   return (
     <main style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 1.5rem" }}>
-      {/* Hero  title left, description right, matching screenshot layout */}
+      {/* Hero — title left, description right */}
       <section
         style={{
           padding: "4rem 0 3rem",
@@ -47,7 +46,7 @@ export default function Home() {
             {SITE_DESCRIPTION}
           </p>
           <Link
-            href="/blog"
+            href="/articles"
             style={{
               display: "inline-block",
               padding: "0.625rem 1.5rem",
@@ -79,44 +78,27 @@ export default function Home() {
         <div style={{ flex: 1, height: "1px", background: "rgb(229,231,235)" }} />
       </div>
 
-      {/* Featured 2-up grid */}
-      {featured.length > 0 && (
+      {/* Recent posts grid — up to 5 */}
+      {recent.length > 0 && (
         <section
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 460px), 1fr))",
-            gap: "2rem",
-            marginBottom: "2rem",
-          }}
-          className="posts-grid-featured"
-        >
-          {featured.map((post) => (
-            <PostCard key={post.slug} post={post} featured />
-          ))}
-        </section>
-      )}
-
-      {/* Rest  3-column on desktop, 2 on tablet, 1 on mobile */}
-      {rest.length > 0 && (
-        <section
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 300px), 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
             gap: "2rem",
             marginBottom: "3rem",
           }}
         >
-          {rest.map((post) => (
+          {recent.map((post) => (
             <PostCard key={post.slug} post={post} />
           ))}
         </section>
       )}
 
-      {/* View all CTA */}
-      {posts.length > 8 && (
+      {/* View all CTA — shown when there are more than 5 posts */}
+      {posts.length > 5 && (
         <div style={{ textAlign: "center", paddingBottom: "4rem" }}>
           <Link
-            href="/blog"
+            href="/articles"
             style={{
               display: "inline-block",
               padding: "0.75rem 2.5rem",
@@ -128,7 +110,7 @@ export default function Home() {
               fontSize: "0.9375rem",
             }}
           >
-            View all articles 
+            View all articles →
           </Link>
         </div>
       )}

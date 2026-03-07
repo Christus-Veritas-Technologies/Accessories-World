@@ -49,9 +49,9 @@ export function Footer() {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               {[
                 { href: '/', label: 'Home' },
-                { href: '/blog', label: 'Blog' },
+                { href: '/articles', label: 'Articles' },
                 { href: '/about', label: 'About' },
-                { href: 'https://accessoriesworld.co.zw', label: 'Main Shop', external: true },
+                { href: 'https://accessoriesworldmutare.co.zw', label: 'Main Shop', external: true },
               ].map(({ href, label, external }) => (
                 <li key={href} style={{ margin: 0 }}>
                   <a

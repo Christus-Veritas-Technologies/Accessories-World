@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import { FormattedDate } from "@/components/formatted-date";
+import { ComparisonTable } from "@/components/comparison-table";
 import { SITE_TITLE, SITE_URL } from "@/lib/consts";
 import { getAllPostSlugs, getPostData } from "@/lib/posts";
 
@@ -74,7 +75,7 @@ export default async function BlogPostPage({ params }: Props) {
         >
           <div style={{ flex: "1 1 400px" }}>
             <Link
-              href="/blog"
+              href="/articles"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -150,7 +151,7 @@ export default async function BlogPostPage({ params }: Props) {
           }}
         >
           <div className="prose">
-            <MDXRemote source={post.content} />
+            <MDXRemote source={post.content} components={{ ComparisonTable }} />
           </div>
 
           {/* Footer nav */}
@@ -166,7 +167,7 @@ export default async function BlogPostPage({ params }: Props) {
             }}
           >
             <Link
-              href="/blog"
+              href="/articles"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -180,7 +181,7 @@ export default async function BlogPostPage({ params }: Props) {
               ← All articles
             </Link>
             <a
-              href="https://accessoriesworld.co.zw"
+              href="https://accessoriesworldmutare.co.zw"
               target="_blank"
               rel="noopener noreferrer"
               style={{
