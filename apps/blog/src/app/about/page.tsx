@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Image from "next/image";
-import { FormattedDate } from "@/components/formatted-date";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "About",
@@ -15,65 +15,65 @@ export const metadata: Metadata = {
 
 export default function AboutPage() {
   return (
-    <main>
-      <div
+    <main style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 1.5rem" }}>
+      {/* Page header â€” matching blog hero design */}
+      <section
         style={{
-          width: "100%",
-          background: "linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)",
-          padding: "2rem 1rem",
+          padding: "4rem 0 3rem",
+          borderBottom: "1px solid rgb(229,231,235)",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "2rem",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
         }}
       >
-        <Image
-          src="/blog-assets/blog-placeholder-about.jpg"
-          alt="About Accessories World Blog"
-          width={1020}
-          height={510}
-          style={{
-            display: "block",
-            margin: "0 auto",
-            borderRadius: "0.75rem",
-            boxShadow:
-              "0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)",
-            maxWidth: "100%",
-            maxHeight: "400px",
-            objectFit: "cover",
-          }}
-          priority
-        />
+        <div style={{ flex: "1 1 360px" }}>
+          <h1
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontWeight: 700,
+              color: "rgb(17,24,39)",
+              margin: "0 0 0.5rem 0",
+              lineHeight: 1.1,
+            }}
+          >
+            About Us
+          </h1>
+        </div>
+        <div style={{ flex: "0 1 360px", paddingTop: "0.5rem" }}>
+          <p style={{ fontSize: "1.125rem", color: "rgb(107,114,128)", margin: 0, lineHeight: 1.7 }}>
+            Learn about our mission to inspire and guide you through the world of quality accessories.
+          </p>
+        </div>
+      </section>
+
+      {/* Hero image */}
+      <div style={{ padding: "2.5rem 0", borderBottom: "1px solid rgb(229,231,235)" }}>
+        <div style={{ position: "relative", borderRadius: "0.75rem", overflow: "hidden", aspectRatio: "21 / 9", maxHeight: "420px" }}>
+          <Image
+            src="/blog-assets/blog-placeholder-about.jpg"
+            alt="About Accessories World Blog"
+            fill
+            style={{ objectFit: "cover" }}
+            sizes="(max-width: 1280px) 100vw, 1280px"
+            priority
+          />
+        </div>
       </div>
 
+      {/* Content */}
       <div
         style={{
-          width: "720px",
-          maxWidth: "calc(100% - 2em)",
-          margin: "auto",
-          padding: "1.5em",
+          maxWidth: "720px",
+          margin: "3rem auto 4rem",
           color: "rgb(55, 65, 81)",
         }}
       >
-        <div
-          style={{
-            marginBottom: "2em",
-            padding: "2em 1em",
-            textAlign: "center",
-            lineHeight: 1.2,
-            background: "linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)",
-            borderBottom: "1px solid rgb(229, 231, 235)",
-          }}
-        >
-          <div style={{ marginBottom: "1em", color: "rgb(107,114,128)", fontSize: "0.9375rem" }}>
-            <FormattedDate date={new Date("February 2026")} />
-          </div>
-          <h1 style={{ margin: "0 0 0.75em 0", color: "rgb(17,24,39)", fontSize: "2.5rem", fontWeight: 700 }}>
-            About Accessories World Blog
-          </h1>
-          <hr />
-        </div>
-
         <div className="prose">
           <h2>About Us</h2>
           <p>
-            Welcome to the Accessories World Blog—your trusted resource for all
+            Welcome to the Accessories World Blogâ€”your trusted resource for all
             things accessories. We believe that accessories are more than just
             add-ons to an outfit; they&apos;re expressions of your personality,
             statements of your values, and investments in quality craftsmanship.
@@ -140,6 +140,24 @@ export default function AboutPage() {
             these values. Every item in our store has been selected with care and
             an understanding of what makes an accessory truly excellent.
           </p>
+        </div>
+
+        <div style={{ marginTop: "2.5rem", paddingTop: "2rem", borderTop: "1px solid rgb(229,231,235)" }}>
+          <Link
+            href="/blog"
+            style={{
+              display: "inline-block",
+              padding: "0.625rem 1.5rem",
+              background: "#DC2626",
+              color: "white",
+              borderRadius: "0.5rem",
+              fontWeight: 600,
+              fontSize: "0.9375rem",
+              textDecoration: "none",
+            }}
+          >
+            Browse our articles →
+          </Link>
         </div>
       </div>
     </main>

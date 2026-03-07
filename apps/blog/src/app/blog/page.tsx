@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
-import Image from "next/image";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
-import { FormattedDate } from "@/components/formatted-date";
+import { PostCard } from "@/components/post-card";
 import { SITE_DESCRIPTION, SITE_TITLE } from "@/lib/consts";
 import { getSortedPostsData } from "@/lib/posts";
 
@@ -21,109 +20,62 @@ export default function BlogIndexPage() {
   const posts = getSortedPostsData();
 
   return (
-    <main
-      style={{
-        width: "960px",
-        maxWidth: "calc(100% - 2em)",
-        margin: "auto",
-        padding: "2rem 1rem",
-      }}
-    >
-      <div
+    <main style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 1.5rem" }}>
+      {/* Page header */}
+      <section
         style={{
-          textAlign: "center",
-          marginBottom: "3rem",
-          padding: "2rem 0",
-          borderBottom: "1px solid rgb(229, 231, 235)",
+          padding: "4rem 0 3rem",
+          borderBottom: "1px solid rgb(229,231,235)",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "2rem",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
         }}
       >
-        <h1
-          style={{
-            color: "#DC2626",
-            fontSize: "2.5rem",
-            fontWeight: 700,
-            marginBottom: "0.5rem",
-          }}
-        >
-          Blog
-        </h1>
-        <p
-          style={{
-            color: "rgb(107, 114, 128)",
-            fontSize: "1.125rem",
-            margin: "0.5rem 0 0 0",
-          }}
-        >
-          Insights and tips for accessories lovers
-        </p>
+        <div style={{ flex: "1 1 360px" }}>
+          <h1
+            style={{
+              fontSize: "clamp(2rem, 5vw, 3.25rem)",
+              fontWeight: 700,
+              color: "rgb(17,24,39)",
+              margin: "0 0 0.5rem 0",
+              lineHeight: 1.1,
+            }}
+          >
+            All Articles
+          </h1>
+        </div>
+        <div style={{ flex: "0 1 360px", paddingTop: "0.5rem" }}>
+          <p style={{ fontSize: "1.125rem", color: "rgb(107,114,128)", margin: 0, lineHeight: 1.7 }}>
+            Insights and tips for accessories lovers  bags, belts, wallets, and more.
+          </p>
+        </div>
+      </section>
+
+      {/* Divider label */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "2.5rem 0 1.5rem" }}>
+        <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "rgb(107,114,128)", whiteSpace: "nowrap" }}>
+          {posts.length} article{posts.length !== 1 ? "s" : ""}
+        </span>
+        <div style={{ flex: 1, height: "1px", background: "rgb(229,231,235)" }} />
+        <Link href="/" style={{ fontSize: "0.875rem", color: "rgb(107,114,128)", textDecoration: "none", fontWeight: 500, whiteSpace: "nowrap" }}>
+           Back to home
+        </Link>
       </div>
 
-      <section>
-        <ul
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
-            gap: "2rem",
-            listStyleType: "none",
-            margin: 0,
-            padding: 0,
-          }}
-        >
-          {posts.map((post) => (
-            <li
-              key={post.slug}
-              style={{ display: "flex", flexDirection: "column" }}
-            >
-              <Link
-                href={`/blog/${post.slug}`}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  flex: 1,
-                  textDecoration: "none",
-                }}
-              >
-                {post.heroImage && (
-                  <Image
-                    src={post.heroImage}
-                    alt={post.title}
-                    width={320}
-                    height={200}
-                    style={{
-                      marginBottom: "1rem",
-                      borderRadius: "0.75rem",
-                      objectFit: "cover",
-                      height: "200px",
-                      width: "100%",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
-                    }}
-                  />
-                )}
-                <h4
-                  style={{
-                    margin: "0 0 0.5rem 0",
-                    color: "rgb(17,24,39)",
-                    lineHeight: 1.3,
-                    fontSize: "1.125rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {post.title}
-                </h4>
-                <p
-                  style={{
-                    margin: 0,
-                    color: "rgb(107,114,128)",
-                    fontSize: "0.875rem",
-                    marginTop: "auto",
-                  }}
-                >
-                  <FormattedDate date={post.pubDate} />
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {/* Post grid */}
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 320px), 1fr))",
+          gap: "2rem",
+          paddingBottom: "4rem",
+        }}
+      >
+        {posts.map((post) => (
+          <PostCard key={post.slug} post={post} />
+        ))}
       </section>
     </main>
   );
