@@ -13,11 +13,15 @@ MDX unlocks the ability to mix JavaScript and UI Components into your Markdown c
 
 ## Example
 
-Here is a simple interactive element written inline in MDX:
+Here is a simple example of MDX content:
 
-<a href="#" onClick={() => alert('clicked!')}>
-  Embedded component in MDX
-</a>
+```jsx
+export const Button = ({ children }) => (
+  <button>{children}</button>
+)
+```
+
+MDX allows you to use interactive components. The [MDX documentation](https://mdxjs.com) has great examples of what you can do.
 
 ## More Links
 
