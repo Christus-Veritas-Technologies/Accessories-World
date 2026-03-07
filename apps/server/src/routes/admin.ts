@@ -686,71 +686,76 @@ admin.post("/sales", async (c) => {
     const agentUrl = process.env.AGENT_URL ?? "http://localhost:3004";
     const businessWhatsapp = process.env.BUSINESS_WHATSAPP ?? "+263784923973";
 
+    // ─── Respond immediately — background tasks run after 201 is sent ─────────
     if (customerPhone) {
-      // Try to send WhatsApp receipt — await so we can detect failure
-      const agentRes = await fetch(`${agentUrl}/api/receipt/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type: "receipt",
-          phone: customerPhone,
-          receipt: {
-            customerName: sale.customerName,
-            customerPhone,
-            products,
-            revenue: Number(sale.amount),
-          },
-        }),
-      }).catch(() => null);
+      const session = c.get("session") as any;
+      const rawName: string = session?.admin?.name ?? "admin";
+      const senderName =
+        rawName.toLowerCase() === "admin"
+          ? "Kelvin"
+          : rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
 
-      const receiptSent = agentRes?.ok === true;
+      // Fire-and-forget: never awaited so the response is not blocked
+      Promise.resolve().then(async () => {
+        try {
+          // 1. Send WhatsApp receipt
+          const agentRes = await fetch(`${agentUrl}/api/receipt/send`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "receipt",
+              phone: customerPhone,
+              receipt: {
+                customerName: sale.customerName,
+                customerPhone,
+                products,
+                revenue: Number(sale.amount),
+              },
+            }),
+          }).catch(() => null);
 
-      console.log(`[POST /api/admin/sales] Receipt delivery status: ${receiptSent ? "✅ SUCCESS" : "❌ FAILED"}`);
+          const receiptSent = agentRes?.ok === true;
+          console.log(`[POST /api/admin/sales] Receipt delivery status: ${receiptSent ? "✅ SUCCESS" : "❌ FAILED"}`);
 
-      if (receiptSent && body.customerName && products.length > 0) {
-        // Receipt sent successfully — schedule personalized follow-up message
-        console.log(`[POST /api/admin/sales] Scheduling follow-up message...`);
-        const productNames = products.map((p) => p.name);
+          if (receiptSent && body.customerName && products.length > 0) {
+            // 2. Schedule follow-up CRON job
+            console.log(`[POST /api/admin/sales] Scheduling follow-up message...`);
+            scheduleFollowUp({
+              customerName: body.customerName,
+              customerPhone,
+              productNames: products.map((p) => p.name),
+              agentUrl,
+              businessWhatsapp,
+              senderName,
+            });
+          } else if (!receiptSent) {
+            // 3. Fallback: notify the business directly
+            console.log(`[POST /api/admin/sales] Receipt failed, sending fallback notification to business...`);
+            const productList = products
+              .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
+              .join("\n");
 
-        // Get the logged-in admin's name for the follow-up message
-        const session = c.get("session") as any;
-        const rawName: string = session?.admin?.name ?? "admin";
-        const senderName =
-          rawName.toLowerCase() === "admin"
-            ? "Kelvin"
-            : rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+            const followUpMessage = [
+              `Follow-up needed for sale ${saleNumber}.`,
+              ``,
+              `${body.customerName || "A customer"} bought the following:`,
+              productList,
+              `Total: $${revenueNumber.toFixed(2)}`,
+              ``,
+              `Their number is ${customerPhone} but the WhatsApp receipt could not be delivered.`,
+              `Please reach out to them directly at ${customerPhone}.`,
+            ].join("\n");
 
-        scheduleFollowUp({
-          customerName: body.customerName,
-          customerPhone,
-          productNames,
-          agentUrl,
-          businessWhatsapp,
-          senderName,
-        });
-      } else if (!receiptSent) {
-        console.log(`[POST /api/admin/sales] Receipt failed, sending fallback notification to business...`);
-        const productList = products
-          .map((p) => `  - ${p.name}: $${Number(p.price).toFixed(2)}`)
-          .join("\n");
-
-        const followUpMessage = [
-          `Follow-up needed for sale ${saleNumber}.`,
-          ``,
-          `${body.customerName || "A customer"} bought the following:`,
-          productList,
-          `Total: $${revenueNumber.toFixed(2)}`,
-          ``,
-          `Their number is ${customerPhone} but the WhatsApp receipt could not be delivered.`,
-          `Please reach out to them directly at ${customerPhone}.`,
-        ].join("\n");
-
-        fetch(`${agentUrl}/api/whatsapp/send`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ phone: businessWhatsapp, message: followUpMessage }),
-        }).catch((err) => console.error("Failed to send follow-up:", err));
-      }
+            fetch(`${agentUrl}/api/whatsapp/send`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ phone: businessWhatsapp, message: followUpMessage }),
+            }).catch((err) => console.error("Failed to send fallback notification:", err));
+          }
+        } catch (err) {
+          console.error(`[POST /api/admin/sales] Background task error:`, err);
+        }
+      });
     }
 
     return c.json(sale, 201);
