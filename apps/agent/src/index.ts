@@ -84,10 +84,24 @@ client.on("ready", () => {
 client.on("disconnected", (reason) => {
   whatsappReady = false;
   console.log("❌ WhatsApp disconnected:", reason);
+  // Try to reconnect after 5 seconds
+  setTimeout(() => {
+    console.log("🔄 Attempting to reconnect WhatsApp...");
+    client.initialize().catch((err) => {
+      console.error("Failed to reconnect WhatsApp:", err);
+    });
+  }, 5000);
 });
 
 client.on("auth_failure", (msg) => {
   console.error("🔒 WhatsApp auth failure:", msg);
+  whatsappReady = false;
+});
+
+// Listen for any errors that might crash the browser
+client.on("error", (err) => {
+  console.error("❌ WhatsApp client error:", err?.message);
+  whatsappReady = false;
 });
 
 // Initialize the client
@@ -145,7 +159,16 @@ async function sendWhatsAppMessage(phone: string, message: string) {
   console.log(`[${requestId}] 📱 sendWhatsAppMessage called for ${phone}`);
 
   // Use proper WhatsApp validation
-  const chatId = await toChatId(phone, requestId);
+  let chatId: string;
+  try {
+    chatId = await toChatId(phone, requestId);
+  } catch (err: any) {
+    // If browser lost context, mark as not ready for future requests
+    if (err?.message?.includes("detached Frame") || err?.message?.includes("context lost")) {
+      whatsappReady = false;
+    }
+    throw err;
+  }
 
   return new Promise<{ success: boolean; chatId: string }>((resolve, reject) => {
     console.log(`[${requestId}] 📤 Adding message to send queue for ${chatId}`);
@@ -156,7 +179,11 @@ async function sendWhatsAppMessage(phone: string, message: string) {
           await retryWithBackoff(() => client.sendMessage(chatId, message), 2, 500);
           console.log(`[${requestId}] ✅ Message sent via queue to ${chatId}`);
           resolve({ success: true, chatId });
-        } catch (err) {
+        } catch (err: any) {
+          // If send fails with detached frame, mark as disconnected
+          if (err?.message?.includes("detached Frame")) {
+            whatsappReady = false;
+          }
           console.error(`[${requestId}] ❌ Queue send failed for ${chatId}:`, err);
           reject(err);
         }
@@ -184,10 +211,17 @@ async function toChatId(rawPhone: string, requestId: string): Promise<string> {
     console.log(`📞 [${requestId}] Converted local format (0...) to international: ${phone}`);
   }
   
-  // Step 3: Validate with WhatsApp
+  // Step 3: Validate with WhatsApp (with timeout)
   console.log(`📞 [${requestId}] Validating with WhatsApp (getNumberId)...`);
   try {
-    const numberId = await client.getNumberId(phone);
+    // Wrap getNumberId with a 10-second timeout to prevent hanging
+    const getNumberIdPromise = client.getNumberId(phone);
+    const timeoutPromise = new Promise<never>((_, reject) => 
+      setTimeout(() => reject(new Error("getNumberId() timed out after 10 seconds")), 10000)
+    );
+    
+    const numberId = await Promise.race([getNumberIdPromise, timeoutPromise]);
+    
     if (!numberId) {
       console.error(`❌ [${requestId}] Phone number validation failed: not registered on WhatsApp`);
       throw new Error(`Phone number ${rawPhone} is not registered on WhatsApp (or invalid format). Validated as: ${phone}`);
@@ -197,6 +231,18 @@ async function toChatId(rawPhone: string, requestId: string): Promise<string> {
     console.log(`✓ [${requestId}] Phone number validated and converted to chat ID: ${chatId}`);
     return chatId;
   } catch (err: any) {
+    const isDetachedFrameError = err?.message?.includes("detached Frame") || 
+                                  err?.message?.includes("Target page, context or frame was detached");
+    
+    if (isDetachedFrameError) {
+      console.error(`❌ [${requestId}] Browser context lost (detached frame). Marking client as disconnected.`);
+      whatsappReady = false;
+      // Try to reconnect in background
+      client.initialize().catch((e) => {
+        console.error("Failed to reinitialize client:", e);
+      });
+    }
+    
     console.error(`❌ [${requestId}] WhatsApp validation error:`, err?.message);
     throw new Error(`Failed to validate WhatsApp number: ${err?.message || "Unknown error"}`);
   }
