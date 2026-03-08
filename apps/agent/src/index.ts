@@ -81,33 +81,94 @@ client.on("ready", () => {
   console.log("✅ WhatsApp client is ready!");
 });
 
+let initAttempt = 0;
+let lastInitAttemptTime = 0;
+
 client.on("disconnected", (reason) => {
   whatsappReady = false;
   console.log("❌ WhatsApp disconnected:", reason);
   // Try to reconnect after 5 seconds
   setTimeout(() => {
     console.log("🔄 Attempting to reconnect WhatsApp...");
-    client.initialize().catch((err) => {
-      console.error("Failed to reconnect WhatsApp:", err);
-    });
+    scheduleInitialize();
   }, 5000);
 });
 
 client.on("auth_failure", (msg) => {
   console.error("🔒 WhatsApp auth failure:", msg);
   whatsappReady = false;
+  // Clear auth and try again
+  console.log("🔄 Clearing auth and attempting re-initialization...");
+  setTimeout(() => {
+    scheduleInitialize();
+  }, 2000);
 });
 
 // Listen for any errors that might crash the browser
 client.on("error", (err) => {
   console.error("❌ WhatsApp client error:", err?.message);
   whatsappReady = false;
+  // Trigger reconnect on error
+  setTimeout(() => {
+    console.log("🔄 Reconnecting after browser error...");
+    scheduleInitialize();
+  }, 3000);
 });
 
-// Initialize the client
-client.initialize().catch((err) => {
-  console.error("Failed to initialize WhatsApp client:", err);
-});
+/** Initialize with timeout and retry logic */
+async function scheduleInitialize() {
+  const now = Date.now();
+  // Prevent hammering - wait at least 5 seconds between attempts
+  if (now - lastInitAttemptTime < 5000) {
+    console.log("⏳ Init already scheduled recently, skipping...");
+    return;
+  }
+  
+  lastInitAttemptTime = now;
+  initAttempt++;
+  console.log(`🚀 Initialize attempt #${initAttempt} at ${new Date().toISOString()}`);
+  
+  try {
+    // Create a timeout promise
+    const initPromise = client.initialize();
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Initialize timeout after 30 seconds")), 30000)
+    );
+    
+    await Promise.race([initPromise, timeoutPromise]);
+    console.log(`✅ Initialize resolved successfully on attempt #${initAttempt}`);
+  } catch (err: any) {
+    console.error(`❌ Initialize failed on attempt #${initAttempt}:`, err?.message);
+    
+    // If it keeps failing, destroy and recreate after longer delay
+    if (initAttempt >= 3) {
+      console.log("⚠️  Multiple init failures. Destroying client and retrying...");
+      try {
+        await client.destroy();
+      } catch (e) {
+        console.error("Error destroying client:", e);
+      }
+      // Wait 10 seconds before next attempt
+      setTimeout(() => scheduleInitialize(), 10000);
+    }
+  }
+}
+
+// Initialize the client on startup
+scheduleInitialize();
+
+// ─── Health Check ─────────────────────────────────────────────────────────────
+// Periodically check if client is stuck and needs recovery
+setInterval(() => {
+  const now = Date.now();
+  const timeSinceLastInit = now - lastInitAttemptTime;
+  
+  // If client should be ready but isn't, and we haven't tried init in 5+ minutes
+  if (!whatsappReady && timeSinceLastInit > 300000) {
+    console.warn("⚠️  Health check: Client stuck in not-ready state for 5+ minutes. Attempting recovery...");
+    scheduleInitialize();
+  }
+}, 60000); // Check every 60 seconds
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
