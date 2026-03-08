@@ -1,11 +1,13 @@
 /**
  * Scheduler for delayed follow-up messages
- * Dev: 10 seconds
- * Prod: 3 days (259200000 ms)
+ * Default: 72 hours (259200000 ms)
+ * Override for dev/testing: set FOLLOW_UP_DELAY_MS in .env (e.g. FOLLOW_UP_DELAY_MS=10000)
  */
 
-const isDev = process.env.NODE_ENV !== "production";
-const DELAY_MS = isDev ? 10 * 1000 : 3 * 24 * 60 * 60 * 1000; // 10s dev, 3 days prod
+const SEVENTY_TWO_HOURS_MS = 72 * 60 * 60 * 1000; // 259200000 ms
+const DELAY_MS = process.env.FOLLOW_UP_DELAY_MS
+  ? Number(process.env.FOLLOW_UP_DELAY_MS)
+  : SEVENTY_TWO_HOURS_MS;
 
 export interface FollowUpData {
   customerName: string;
@@ -17,21 +19,18 @@ export interface FollowUpData {
 }
 
 /**
- * Schedule a follow-up message to be sent after the delay
- * In dev: 10 seconds
- * In prod: 3 days
+ * Schedule a follow-up message to be sent after the delay (default: 72 hours)
  */
 export function scheduleFollowUp(data: FollowUpData) {
-  const delaySeconds = DELAY_MS / 1000;
-  const scheduledTime = new Date(Date.now() + DELAY_MS).toLocaleTimeString();
+  const delayHours = (DELAY_MS / 1000 / 60 / 60).toFixed(1);
+  const scheduledAt = new Date(Date.now() + DELAY_MS).toISOString();
   
   console.log(`[SCHEDULER] 📅 Scheduled follow-up for ${data.customerPhone}`);
-  console.log(`[SCHEDULER]    Delay: ${delaySeconds} seconds`);
-  console.log(`[SCHEDULER]    Scheduled send time: ${scheduledTime}`);
-  console.log(`[SCHEDULER]    Message will be sent to: ${data.customerPhone}`);
+  console.log(`[SCHEDULER]    Delay: ${delayHours} hours (${DELAY_MS} ms)`);
+  console.log(`[SCHEDULER]    Will send at: ${scheduledAt}`);
   console.log(`[SCHEDULER]    Products: ${data.productNames.join(", ")}`);
   
-  const timeoutId = setTimeout(async () => {
+  setTimeout(async () => {
     console.log(`[SCHEDULER] ⏰ Timer fired! Sending follow-up to ${data.customerPhone}...`);
     try {
       await sendFollowUpMessage(data);
@@ -39,10 +38,6 @@ export function scheduleFollowUp(data: FollowUpData) {
       console.error(`[SCHEDULER] ❌ Failed to send scheduled follow-up:`, err);
     }
   }, DELAY_MS);
-
-  if (isDev) {
-    console.log(`[SCHEDULER] Timeout ID: ${timeoutId}`);
-  }
 }
 
 /**
