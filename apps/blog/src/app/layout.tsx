@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { MaintenancePage } from "@/components/maintenance-page";
 import { SITE_DESCRIPTION, SITE_TITLE, SITE_URL } from "@/lib/consts";
 import "./globals.css";
 
@@ -118,9 +119,15 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <Header />
-        {children}
-        <Footer />
+        {process.env.NEXT_PUBLIC_DOWN === "true" ? (
+          <MaintenancePage />
+        ) : (
+          <>
+            <Header />
+            {children}
+            <Footer />
+          </>
+        )}
       </body>
     </html>
   );

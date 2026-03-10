@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Footer } from "@/components/footer";
+import { MaintenancePage } from "@/components/maintenance-page";
 import { Navbar } from "@/components/navbar";
 import { siteConfig } from "@/lib/site";
 import { Providers } from "./providers";
@@ -49,16 +50,22 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isDown = process.env.NEXT_PUBLIC_DOWN === "true";
+
   return (
     <html lang="en" className={inter.variable}>
       <body className="font-sans text-black antialiased">
-        <Providers>
-          <div className="flex min-h-screen flex-col bg-white">
-            <Navbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
-          </div>
-        </Providers>
+        {isDown ? (
+          <MaintenancePage />
+        ) : (
+          <Providers>
+            <div className="flex min-h-screen flex-col bg-white">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+              </div>
+          </Providers>
+        )}
       </body>
     </html>
   );

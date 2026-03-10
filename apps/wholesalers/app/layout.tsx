@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { MaintenancePage } from "@/components/maintenance-page";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -33,9 +34,13 @@ export default function RootLayout({
         <meta name="theme-color" content="#DC2626" />
       </head>
       <body className="min-h-screen antialiased">
-        <Providers>
-          {children}
-        </Providers>
+        {process.env.NEXT_PUBLIC_DOWN === "true" ? (
+          <MaintenancePage />
+        ) : (
+          <Providers>
+            {children}
+          </Providers>
+        )}
       </body>
     </html>
   );
