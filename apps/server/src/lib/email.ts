@@ -97,7 +97,7 @@ export async function sendContactConfirmation(data: {
           </p>
         </div>
         <div style="padding: 16px; text-align: center; color: #6b7280; font-size: 12px; background: #f9fafb;">
-          <p style="margin: 4px 0;">📍 49-51 Second Street, Mutare, Zimbabwe</p>
+          <p style="margin: 4px 0;">📍 43 First Street, Mutare, Zimbabwe</p>
           <p style="margin: 4px 0;">📞 +263 78 492 3973</p>
           <p style="margin: 4px 0;">📧 info@accessoriesworld.co.zw</p>
           <p style="margin: 8px 0 0 0;">&copy; ${new Date().getFullYear()} Accessories World Zimbabwe</p>

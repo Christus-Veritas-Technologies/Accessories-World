@@ -74,7 +74,7 @@ export function Footer() {
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               <li><a href="tel:+263784923973" style={{ color: 'rgb(75,85,99)', textDecoration: 'none', fontSize: '0.875rem' }}>+263 78 492 3973</a></li>
               <li><a href="https://wa.me/263784923973" target="_blank" rel="noopener noreferrer" style={{ color: 'rgb(75,85,99)', textDecoration: 'none', fontSize: '0.875rem' }}>WhatsApp</a></li>
-              <li style={{ fontSize: '0.875rem', color: 'rgb(75,85,99)' }}>49, 51 Second Street, Mutare</li>
+              <li style={{ fontSize: '0.875rem', color: 'rgb(75,85,99)' }}>43 First Street, Mutare</li>
             </ul>
           </div>
         </div>
