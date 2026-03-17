@@ -172,6 +172,8 @@ setInterval(() => {
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Serialize all sends — whatsapp-web.js can't handle concurrent sendMessage calls
 let sendQueue: Promise<void> = Promise.resolve();
 
@@ -275,19 +277,55 @@ async function toChatId(rawPhone: string, requestId: string): Promise<string> {
   // Step 3: Validate with WhatsApp (with timeout)
   console.log(`📞 [${requestId}] Validating with WhatsApp (getNumberId)...`);
   try {
-    // Wrap getNumberId with a 10-second timeout to prevent hanging
-    const getNumberIdPromise = client.getNumberId(phone);
-    const timeoutPromise = new Promise<never>((_, reject) => 
-      setTimeout(() => reject(new Error("getNumberId() timed out after 10 seconds")), 10000)
-    );
-    
-    const numberId = await Promise.race([getNumberIdPromise, timeoutPromise]);
-    
+    // Retry with a longer timeout before giving up — network hiccups can make getNumberId slow
+    const attempts = [
+      { timeoutMs: 15000, delayMs: 600 },
+      { timeoutMs: 25000, delayMs: 0 },
+    ];
+
+    const getNumberIdWithTimeout = (timeoutMs: number) => {
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(
+          () => reject(new Error(`getNumberId() timed out after ${Math.round(timeoutMs / 1000)} seconds`)),
+          timeoutMs
+        )
+      );
+      return Promise.race([client.getNumberId(phone), timeoutPromise]);
+    };
+
+    let numberId: any = null;
+    for (let i = 0; i < attempts.length; i++) {
+      const { timeoutMs, delayMs } = attempts[i];
+      try {
+        numberId = await getNumberIdWithTimeout(timeoutMs);
+        break;
+      } catch (err: any) {
+        const message = String(err?.message ?? "");
+        const timedOut = message.includes("timed out");
+        if (!timedOut) {
+          throw err;
+        }
+
+        console.warn(`⚠️  [${requestId}] getNumberId attempt ${i + 1}/${attempts.length} timed out after ${timeoutMs}ms`);
+
+        if (i === attempts.length - 1) {
+          console.error(`❌ [${requestId}] WhatsApp validation still timing out. Triggering reconnection...`);
+          whatsappReady = false;
+          scheduleInitialize();
+          throw new Error("WhatsApp validation timed out. Reconnecting WhatsApp client, please retry.");
+        }
+
+        if (delayMs > 0) {
+          await sleep(delayMs);
+        }
+      }
+    }
+
     if (!numberId) {
       console.error(`❌ [${requestId}] Phone number validation failed: not registered on WhatsApp`);
       throw new Error(`Phone number ${rawPhone} is not registered on WhatsApp (or invalid format). Validated as: ${phone}`);
     }
-    
+
     const chatId = numberId._serialized;
     console.log(`✓ [${requestId}] Phone number validated and converted to chat ID: ${chatId}`);
     return chatId;
