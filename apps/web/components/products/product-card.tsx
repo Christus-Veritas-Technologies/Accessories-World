@@ -16,18 +16,34 @@ interface ProductCardProps {
 
 declare global {
   interface Window {
-    gtag_report_conversion?: (url?: string) => boolean;
+    gtag?: (...args: unknown[]) => void;
   }
 }
 
-function handleConversionClick(
-  event: React.MouseEvent<HTMLAnchorElement>,
-  url: string
-) {
-  if (typeof window.gtag_report_conversion === "function") {
-    event.preventDefault();
-    window.gtag_report_conversion(url);
+function gtagReportConversion(url?: string) {
+  const callback = function () {
+    if (typeof url !== "undefined") {
+      window.location.href = url;
+    }
+  };
+
+  if (typeof window.gtag === "function") {
+    window.gtag("event", "conversion", {
+      send_to: "AW-18040131212/WcBoCJryhKYcEIydmppD",
+      value: 1.0,
+      currency: "USD",
+      event_callback: callback,
+    });
+    return false;
   }
+
+  callback();
+  return false;
+}
+
+function handleConversionClick(event: React.MouseEvent<HTMLAnchorElement>, url: string) {
+  event.preventDefault();
+  gtagReportConversion(url);
 }
 
 export function ProductCard({ product }: ProductCardProps) {
