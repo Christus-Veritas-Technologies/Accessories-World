@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,8 +14,25 @@ interface ProductCardProps {
   product: StorefrontProduct;
 }
 
+declare global {
+  interface Window {
+    gtag_report_conversion?: (url?: string) => boolean;
+  }
+}
+
+function handleConversionClick(
+  event: React.MouseEvent<HTMLAnchorElement>,
+  url: string
+) {
+  if (typeof window.gtag_report_conversion === "function") {
+    event.preventDefault();
+    window.gtag_report_conversion(url);
+  }
+}
+
 export function ProductCard({ product }: ProductCardProps) {
   const imageSrc = getProductImage(product.images);
+  const phoneUrl = `tel:${siteConfig.phone.replace(/\s+/g, "")}`;
 
   console.log("Image src: ", imageSrc);
   console.log("Product: ", product);
@@ -49,7 +68,8 @@ export function ProductCard({ product }: ProductCardProps) {
       <CardFooter>
         <div className="flex flex-col gap-2 w-full">
           <a
-            href={`tel:${siteConfig.phone.replace(/\s+/g, "")}`}
+            href={phoneUrl}
+            onClick={(event) => handleConversionClick(event, phoneUrl)}
             className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Phone className="h-4 w-4" />
@@ -57,6 +77,7 @@ export function ProductCard({ product }: ProductCardProps) {
           </a>
           <a
             href={WA_ME_LINK}
+            onClick={(event) => handleConversionClick(event, WA_ME_LINK)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 rounded-md bg-green-500 px-4 py-2 text-sm font-medium text-white hover:bg-green-600 transition-colors"

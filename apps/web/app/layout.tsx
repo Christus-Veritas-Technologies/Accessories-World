@@ -70,6 +70,26 @@ export default function RootLayout({
             gtag('config', 'AW-18040131212');
           `}
         </Script>
+        <Script id="gtag-begin-checkout" strategy="afterInteractive">
+          {`
+            function gtag_report_conversion(url) {
+              var callback = function () {
+                if (typeof(url) != 'undefined') {
+                  window.location = url;
+                }
+              };
+              gtag('event', 'conversion', {
+                'send_to': 'AW-18040131212/x7t3CL7Bno8cEIydmppD',
+                'value': 1.0,
+                'currency': 'USD',
+                'event_callback': callback
+              });
+              return false;
+            }
+
+            window.gtag_report_conversion = gtag_report_conversion;
+          `}
+        </Script>
         {/* Meta Pixel Code */}
         <Script id="meta-pixel" strategy="afterInteractive">
           {`
