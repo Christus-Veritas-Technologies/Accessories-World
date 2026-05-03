@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import type { StorefrontProduct } from "@/lib/api";
@@ -55,15 +56,17 @@ export function ProductCard({ product }: ProductCardProps) {
 
   return (
     <Card className="h-full overflow-hidden flex flex-col">
-      <div className="relative aspect-square w-full border-b border-gray-100 bg-gray-50">
-        <img
-          src={imageSrc}
-          alt={product.images[0]?.alt ?? product.name}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="object-cover"
-        />
-      </div>
+      <Link href={`/products/${product.slug}`} className="block">
+        <div className="relative aspect-square w-full border-b border-gray-100 bg-gray-50">
+          <Image
+            src={imageSrc}
+            alt={product.images[0]?.alt ?? product.name}
+            fill
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            className="object-cover"
+          />
+        </div>
+      </Link>
 
       <CardHeader className="space-y-3 pb-4">
         <div className="flex items-center gap-2 flex-wrap">
@@ -71,7 +74,11 @@ export function ProductCard({ product }: ProductCardProps) {
             <Badge variant="secondary">{product.category.name}</Badge>
           ) : null}
         </div>
-        <CardTitle className="line-clamp-2 text-lg leading-6">{product.name}</CardTitle>
+        <CardTitle className="line-clamp-2 text-lg leading-6">
+          <Link href={`/products/${product.slug}`} className="hover:text-red-600 transition-colors">
+            {product.name}
+          </Link>
+        </CardTitle>
       </CardHeader>
 
       <CardContent className="space-y-3 pb-4 flex-grow">
