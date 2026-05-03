@@ -3,6 +3,11 @@ import { prisma } from "@repo/db";
 import { requireAdmin } from "../middleware/auth.js";
 import { generatePassword } from "../lib/email.js";
 import { scheduleFollowUp } from "../lib/scheduler.js";
+import {
+  deleteProductFromMerchantCenter,
+  isMerchantSyncBlocking,
+  upsertProductInMerchantCenter,
+} from "../lib/merchant.js";
 
 const admin = new Hono();
 
@@ -538,6 +543,26 @@ admin.post("/products", async (c) => {
     },
   });
 
+  try {
+    await upsertProductInMerchantCenter({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      retailPrice: product.retailPrice.toString(),
+      active: product.active,
+      images: product.images,
+    });
+  } catch (err) {
+    console.error(`[MerchantSync] Create failed for product ${product.id}:`, err);
+    if (isMerchantSyncBlocking()) {
+      return c.json(
+        { error: "Product saved, but Merchant Center sync failed. Please retry after checking Merchant credentials." },
+        502
+      );
+    }
+  }
+
   return c.json(product, 201);
 });
 
@@ -563,12 +588,50 @@ admin.patch("/products/:id", async (c) => {
     },
   });
 
+  try {
+    await upsertProductInMerchantCenter({
+      id: product.id,
+      name: product.name,
+      slug: product.slug,
+      description: product.description,
+      retailPrice: product.retailPrice.toString(),
+      active: product.active,
+      images: product.images,
+    });
+  } catch (err) {
+    console.error(`[MerchantSync] Update failed for product ${product.id}:`, err);
+    if (isMerchantSyncBlocking()) {
+      return c.json(
+        { error: "Product updated, but Merchant Center sync failed. Please retry after checking Merchant credentials." },
+        502
+      );
+    }
+  }
+
   return c.json(product);
 });
 
 /** DELETE /api/admin/products/:id */
 admin.delete("/products/:id", async (c) => {
   const { id } = c.req.param();
+
+  const existing = await prisma.product.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) {
+    return c.json({ error: "Product not found" }, 404);
+  }
+
+  try {
+    await deleteProductFromMerchantCenter(existing.id);
+  } catch (err) {
+    console.error(`[MerchantSync] Delete failed for product ${existing.id}:`, err);
+    if (isMerchantSyncBlocking()) {
+      return c.json(
+        { error: "Merchant Center delete failed. Product was not removed from the database." },
+        502
+      );
+    }
+  }
+
   await prisma.productImage.deleteMany({ where: { productId: id } });
   await prisma.orderItem.deleteMany({ where: { productId: id } });
   await prisma.product.delete({ where: { id } });
