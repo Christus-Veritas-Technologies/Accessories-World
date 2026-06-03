@@ -10,7 +10,7 @@ export function Footer() {
     <footer className="border-t border-gray-200 bg-white">
       {/* Main footer content */}
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Brand section */}
           <div>
             <Link href="/" className="inline-flex items-center gap-3">
@@ -56,6 +56,31 @@ export function Footer() {
                       {item.label}
                     </Link>
                   )}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Shop by Category section */}
+          <div>
+            <h3 className="text-sm font-semibold text-black uppercase tracking-wider">
+              Shop by Category
+            </h3>
+            <ul className="mt-4 space-y-2">
+              {[
+                { href: "/chargers", label: "Cables & Chargers" },
+                { href: "/audio", label: "Speakers & Earbuds" },
+                { href: "/flash-drives", label: "Flash Drives" },
+                { href: "/powerbanks", label: "Powerbanks" },
+                { href: "/dstv", label: "DSTV & OpenView" },
+              ].map((item) => (
+                <li key={item.href}>
+                  <Link
+                    href={item.href}
+                    className="text-sm text-gray-600 hover:text-red-500 transition-colors"
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
