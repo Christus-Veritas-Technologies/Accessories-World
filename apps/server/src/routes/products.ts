@@ -6,16 +6,19 @@ const products = new Hono();
 /**
  * GET /api/products
  * Public — returns active products with retail price and discount.
- * Query params: category (slug), featured, search, page, limit, price (0-50, 50-100, 100-500, 500+), stock (in-stock, out-of-stock)
+ * Query params: category (slug), categories (comma-separated category names), featured, search, page, limit, price (0-50, 50-100, 100-500, 500+), sort (price_asc, price_desc, name_asc)
  */
 products.get("/", async (c) => {
-  const { category, featured, search, page = "1", limit = "20", price } = c.req.query();
+  const { category, categories: categoriesParam, featured, search, page = "1", limit = "20", price, sort } = c.req.query();
 
   const skip = (Number(page) - 1) * Number(limit);
 
   const where: Record<string, any> = { active: true };
-  
-  if (category) {
+
+  if (categoriesParam) {
+    const names = categoriesParam.split(",").map((n) => n.trim()).filter(Boolean);
+    where.category = { name: { in: names } };
+  } else if (category) {
     where.category = { slug: category };
   }
   if (featured === "true") {
@@ -68,7 +71,11 @@ products.get("/", async (c) => {
       },
       skip,
       take: Number(limit),
-      orderBy: { createdAt: "desc" },
+      orderBy:
+        sort === "price_asc" ? { retailPrice: "asc" }
+        : sort === "price_desc" ? { retailPrice: "desc" }
+        : sort === "name_asc" ? { name: "asc" }
+        : { createdAt: "desc" },
     }),
     prisma.product.count({ where }),
   ]);
