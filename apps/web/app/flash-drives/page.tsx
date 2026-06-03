@@ -1,3 +1,5 @@
+"use client";
+
 import { LandingPage, type LandingConfig } from "@/components/landing/landing-page";
 import { HardDrive } from "lucide-react";
 
