@@ -30,23 +30,27 @@ interface ProductsResponse {
 
 interface UseProductsOptions {
   category?: string;
+  categories?: string[];
   priceRange?: string;
   search?: string;
   page?: number;
   limit?: number;
+  sort?: string;
 }
 
 export function useProducts(options: UseProductsOptions = {}) {
-  const { category, priceRange = "all", search, page = 1, limit = 10 } = options;
+  const { category, categories, priceRange = "all", search, page = 1, limit = 10, sort } = options;
 
   return useQuery({
-    queryKey: ["products", { category, priceRange, search, page, limit }],
+    queryKey: ["products", { category, categories, priceRange, search, page, limit, sort }],
     queryFn: async () => {
       const params = new URLSearchParams();
 
-      if (category) params.append("category", category);
+      if (categories && categories.length > 0) params.append("categories", categories.join(","));
+      else if (category) params.append("category", category);
       if (priceRange && priceRange !== "all") params.append("price", priceRange);
       if (search) params.append("search", search);
+      if (sort) params.append("sort", sort);
 
       params.append("page", String(page));
       params.append("limit", String(limit));
