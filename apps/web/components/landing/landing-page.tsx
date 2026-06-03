@@ -19,7 +19,12 @@ export interface LandingConfig {
   floatImages: string[];
   productItems: { name: string; desc: string }[];
   waMessage: string;
+  /** Category names to filter products by (matched against DB category name) */
+  categories?: string[];
+  /** Legacy text search fallback */
   searchTerm?: string;
+  /** Sort order for products in the Shop Now section */
+  sortOrder?: "price_asc" | "price_desc" | "name_asc";
   trustPoints?: { icon: LucideIcon; title: string; desc: string }[];
 }
 
@@ -203,7 +208,9 @@ export function LandingPage({
   floatImages,
   productItems,
   waMessage,
+  categories,
   searchTerm,
+  sortOrder,
   trustPoints,
 }: LandingConfig) {
   const waUrl = buildWaUrl(waMessage);
@@ -215,9 +222,11 @@ export function LandingPage({
   }
 
   const { data: productsData, isLoading } = useProducts({
+    categories,
     search: searchTerm,
     limit: PRODUCTS_PER_PAGE,
     page,
+    sort: sortOrder,
   });
 
   const products = productsData?.items ?? [];
