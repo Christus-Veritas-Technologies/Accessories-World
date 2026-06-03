@@ -36,7 +36,7 @@ const config: LandingConfig = {
   waMessage:
     "Hi! I saw your Google ad for speakers and earbuds. I'm interested — what do you have available and what are the prices?",
 
-  searchTerm: "speaker",
+  categories: ["Speakers", "Audio accessories"],
 };
 
 export default function AudioPage() {

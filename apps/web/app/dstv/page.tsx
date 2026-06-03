@@ -36,7 +36,7 @@ const config: LandingConfig = {
   waMessage:
     "Hi! I saw your Google ad for DSTV and OpenView accessories. I'm interested — what remotes and chargers do you have available and what are the prices?",
 
-  searchTerm: "remote",
+  categories: ["Television accessories"],
 };
 
 export default function DSTVPage() {

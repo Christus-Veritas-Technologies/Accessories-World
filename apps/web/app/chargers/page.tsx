@@ -36,7 +36,8 @@ const config: LandingConfig = {
   waMessage:
     "Hi! I saw your Google ad for charging cables and chargers. I'm interested — what do you have available and what are the prices?",
 
-  searchTerm: "charger",
+  categories: ["Chargers"],
+  sortOrder: "price_asc",
 };
 
 export default function ChargersPage() {

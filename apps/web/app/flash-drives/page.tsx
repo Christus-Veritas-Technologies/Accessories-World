@@ -36,7 +36,7 @@ const config: LandingConfig = {
   waMessage:
     "Hi! I saw your Google ad for flash drives. I'm interested — what sizes and prices do you have available?",
 
-  searchTerm: "flash",
+  categories: ["Storage devices"],
 };
 
 export default function FlashDrivesPage() {

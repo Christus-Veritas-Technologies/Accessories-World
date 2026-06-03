@@ -36,7 +36,7 @@ const config: LandingConfig = {
   waMessage:
     "Hi! I saw your Google ad for powerbanks. I'm interested — what brands, capacities and prices do you have?",
 
-  searchTerm: "powerbank",
+  categories: ["Power Banks"],
 };
 
 export default function PowerbanksPage() {
