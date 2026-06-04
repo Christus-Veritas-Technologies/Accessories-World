@@ -79,7 +79,7 @@ export default function RootLayout({
                 }
               };
               gtag('event', 'conversion', {
-                'send_to': 'AW-18040131212/WcBoCJryhKYcEIydmppD',
+                'send_to': 'AW-18040131212/oFtaCNik77gcEIydmppD',
                 'value': 1.0,
                 'currency': 'USD',
                 'event_callback': callback
