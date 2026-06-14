@@ -14,6 +14,22 @@ const admin = new Hono();
 // ─── All routes require admin auth ───────────────────────────────────────────
 admin.use("*", requireAdmin);
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Generate a URL-safe slug from a name, guaranteed unique in the products table. */
+async function generateUniqueSlug(name: string): Promise<string> {
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/, "");
+  let slug = base;
+  let counter = 1;
+  while (await prisma.product.findUnique({ where: { slug } })) {
+    slug = `${base}-${counter++}`;
+  }
+  return slug;
+}
+
 // ─── Dashboard Stats ─────────────────────────────────────────────────────────
 
 /**
@@ -513,9 +529,9 @@ admin.get("/products/:id", async (c) => {
 admin.post("/products", async (c) => {
   const body = await c.req.json<{
     name: string;
-    slug: string;
+    slug?: string;
     description?: string;
-    sku: string;
+    sku?: string;
     retailPrice: number;
     wholesalePrice: number;
     retailDiscount?: number;
@@ -528,9 +544,12 @@ admin.post("/products", async (c) => {
 
   const { imageUrl, ...productData } = body;
 
+  const slug = await generateUniqueSlug(productData.name);
+
   const product = await prisma.product.create({
     data: {
       ...productData,
+      slug,
       retailDiscount: productData.retailDiscount ?? 0,
       wholesaleDiscount: productData.wholesaleDiscount ?? 0,
       ...(imageUrl && {

@@ -176,10 +176,7 @@ export function ProductDialog({ open, onOpenChange, product }: ProductDialogProp
         await updateProductMutation.mutateAsync({ id: product.id, data: payload });
         toast.success('Product updated successfully');
       } else {
-        await createProductMutation.mutateAsync({
-          ...payload,
-          slug: formData.name.toLowerCase().replace(/\s+/g, '-'),
-        });
+        await createProductMutation.mutateAsync(payload);
         toast.success('Product created successfully');
       }
       onOpenChange(false);
